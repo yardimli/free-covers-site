@@ -76,6 +76,11 @@
 											</div>
 										@endforeach
 									</div>
+									<div class="text-center mt-4">
+										<a href="{{ route('shop.index', ['category' => $genre]) }}" class="bj_theme_btn strock_btn blue_strock_btn">
+											Show all covers in {{ $genre }}
+										</a>
+									</div>
 								@else
 									<p class="p-3">No covers found for {{ $genre }}.</p>
 								@endif

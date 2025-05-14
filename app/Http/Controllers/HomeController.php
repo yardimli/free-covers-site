@@ -16,7 +16,7 @@ class HomeController extends Controller
 		foreach ($allCoversForCategories as $cover) {
 			if (is_array($cover->categories)) {
 				foreach ($cover->categories as $category) {
-					$categoryName = Str::title(trim($category));
+					$categoryName = Str::title(trim($category)); // Normalize to TitleCase
 					if (!empty($categoryName)) {
 						$genreCounts[$categoryName] = ($genreCounts[$categoryName] ?? 0) + 1;
 					}
@@ -30,13 +30,24 @@ class HomeController extends Controller
 		arsort($filteredGenreCounts);
 
 		$coversForFirstTab = [];
-		$firstGenreName = null;
+		$firstGenreName = null; // This will be TitleCase
+
 		if (!empty($filteredGenreCounts)) {
 			$firstGenreName = array_key_first($filteredGenreCounts);
 			if ($firstGenreName) {
-				$dbQueryGenreName = Str::lower($firstGenreName);
+				$dbQueryGenreNameLower = Str::lower($firstGenreName); // e.g., "fiction"
+				// $firstGenreName itself is TitleCase, e.g., "Fiction"
+
 				$coversForFirstTab[$firstGenreName] = Cover::with('templates') // Eager load templates
-				->whereJsonContains('categories', $dbQueryGenreName)
+				->where(function ($query) use ($dbQueryGenreNameLower, $firstGenreName) {
+					$query->whereJsonContains('categories', $dbQueryGenreNameLower); // Check for "fiction"
+					if ($dbQueryGenreNameLower !== $firstGenreName) {
+						$query->orWhereJsonContains('categories', $firstGenreName); // Check for "Fiction"
+					}
+					// As an alternative, more direct way:
+					// $query->whereJsonContains('categories', $dbQueryGenreNameLower)
+					//       ->orWhereJsonContains('categories', $firstGenreName);
+				})
 					->where('cover_type_id', 1) // Added this condition
 					->inRandomOrder()
 					->take(18)
@@ -53,7 +64,6 @@ class HomeController extends Controller
 					$cover['random_template_overlay_url'] = null;
 					if ($cover->templates->isNotEmpty()) {
 						$randomTemplate = $cover->templates->random();
-						// Assuming template's thumbnail_path stores the transparent PNG overlay
 						if ($randomTemplate->thumbnail_path) {
 							$cover['random_template_overlay_url'] = asset('storage/' . $randomTemplate->thumbnail_path);
 						}
@@ -68,7 +78,6 @@ class HomeController extends Controller
 			->where('cover_type_id', 1)
 			->take(6)
 			->get();
-
 		foreach ($newArrivals as &$cover) {
 			if ($cover->image_path) {
 				$cover['mockup'] = str_replace('covers/', 'cover-mockups/', $cover->image_path);
@@ -99,17 +108,19 @@ class HomeController extends Controller
 	 */
 	public function getCoversForGenre(Request $request, $genreSlug)
 	{
-		$genreDisplayName = $request->query('name');
+		$genreDisplayName = $request->query('name'); // This is TitleCase from the JS (e.g., "Fiction")
 		if (empty($genreDisplayName)) {
 			Log::warning("Required 'name' query parameter missing or empty for genre slug: " . $genreSlug . ". AJAX call might be misconfigured from JS.");
 			return response()->json(['covers' => [], 'message' => 'Genre specification is incomplete. The "name" query parameter is missing.'], 400);
 		}
 
-		$dbQueryGenreName = Str::lower($genreDisplayName);
+		$dbQueryGenreNameLower = Str::lower($genreDisplayName); // e.g., "fiction"
+
 		$covers = Cover::with('templates') // Eager load templates
-		->where(function ($query) use ($dbQueryGenreName, $genreDisplayName) { // Group OR conditions
-			$query->whereJsonContains('categories', $dbQueryGenreName)
-				->orWhereJsonContains('categories', $genreDisplayName);
+		->where(function ($query) use ($dbQueryGenreNameLower, $genreDisplayName) {
+			// Group OR conditions
+			$query->whereJsonContains('categories', $dbQueryGenreNameLower) // Check for "fiction"
+			->orWhereJsonContains('categories', $genreDisplayName);  // Check for "Fiction"
 		})
 			->where('cover_type_id', 1)
 			->inRandomOrder()
@@ -122,26 +133,23 @@ class HomeController extends Controller
 				$mockupPath = str_replace('covers/', 'cover-mockups/', $cover->image_path);
 				$mockupPath = str_replace('.jpg', '-front-mockup.png', $mockupPath);
 			}
-
 			$randomTemplateOverlayUrl = null;
 			if ($cover->templates->isNotEmpty()) {
 				$randomTemplate = $cover->templates->random();
-				if ($randomTemplate->thumbnail_path) { // Assuming thumbnail_path is the overlay
-					$randomTemplateOverlayUrl = asset('storage/' . $randomTemplate->thumbnail_path); // Full URL
+				if ($randomTemplate->thumbnail_path) {
+					$randomTemplateOverlayUrl = asset('storage/' . $randomTemplate->thumbnail_path);
 				}
 			}
-
 			return [
 				'id' => $cover->id,
 				'name' => $cover->name,
-				'mockup' => $mockupPath, // This is relative to /storage/ for JS
-				'random_template_overlay_url' => $randomTemplateOverlayUrl, // Full URL for direct use in <img> src
+				'mockup' => $mockupPath,
+				'random_template_overlay_url' => $randomTemplateOverlayUrl,
 				'show_url' => route('covers.show', $cover->id),
 				'limited_name' => Str::limit($cover->caption, 40),
 				'caption' => $cover->caption,
 			];
 		});
-
 		return response()->json(['covers' => $formattedCovers]);
 	}
 }

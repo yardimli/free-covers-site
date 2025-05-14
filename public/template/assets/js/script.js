@@ -180,6 +180,16 @@ $(document).ready(function () {
 							});
 						}
 						
+						// START: Add the "Show all covers in category" button
+						var shopUrl = '/shop?category=' + encodeURIComponent(genreName);
+						var buttonHtml = `
+                            <div class="text-center mt-4">
+                                <a href="${shopUrl}" class="bj_theme_btn strock_btn blue_strock_btn">
+                                    Show all covers in ${genreName}
+                                </a>
+                            </div>`;
+						$targetPane.append(buttonHtml);
+						
 						// Re-initialize tooltips for new content
 						if (typeof bootstrap !== 'undefined' && typeof bootstrap.Tooltip === 'function') {
 							var tooltipTriggerList = [].slice.call($targetPane[0].querySelectorAll('[data-bs-toggle="tooltip"]'));

@@ -17,7 +17,8 @@
 							</a>
 							<div class="bj_new_pr_content_two">
 								@if($cover->categories && !empty($cover->categories[0]))
-									<a href="#" class="category">{{ Str::title($cover->categories[0]) }}</a> {{-- Link to category page later --}}
+									@php $categoryName = Str::title($cover->categories[0]); @endphp
+									<a href="{{ route('shop.index', ['category' => $categoryName]) }}" class="category">{{ $categoryName }}</a>
 								@endif
 								<a href="{{ route('covers.show', $cover->id) }}">
 									<h4 class="bj_new_pr_title">#{{ $cover->id }}</h4>
