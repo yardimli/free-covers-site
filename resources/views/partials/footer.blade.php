@@ -80,6 +80,6 @@
 		</div>
 	</div>
 	<div class="footer_bottom text-center wow fadeInUp" data-wow-delay="0.6s">
-		<p>© {{ date('Y') }} Free Kindle Civers. All Rights Reserved</p>
+		<p>© {{ date('Y') }} Free Kindle Covers. All Rights Reserved</p>
 	</div>
 </footer>

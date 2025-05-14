@@ -9,13 +9,18 @@
 				@foreach($newArrivals as $cover)
 					<div class="col-xl-4 col-md-6">
 						<div class="bj_new_pr_item_two d-flex wow fadeInUp" data-wow-delay="0.{{ $loop->iteration + 1 }}s">
-							<a href="{{ route('covers.show', $cover->id) }}" class="img"><img src="{{ asset('storage/' . $cover->mockup) }}" alt="{{ $cover->name }}" /></a>
+							<a href="{{ route('covers.show', $cover->id) }}" class="img cover-image-container">
+								<img src="{{ asset('storage/' . $cover->mockup) }}" alt="{{ $cover->name }}" class="cover-mockup-image" />
+								@if($cover->random_template_overlay_url)
+									<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image" />
+								@endif
+							</a>
 							<div class="bj_new_pr_content_two">
 								@if($cover->categories && !empty($cover->categories[0]))
 									<a href="#" class="category">{{ Str::title($cover->categories[0]) }}</a> {{-- Link to category page later --}}
 								@endif
 								<a href="{{ route('covers.show', $cover->id) }}">
-									<h4 class="bj_new_pr_title">#{{  $cover->id }}</h4>
+									<h4 class="bj_new_pr_title">#{{ $cover->id }}</h4>
 								</a>
 								<div class="writer_name">{{ $cover->caption ? Str::limit($cover->caption, 60) : '' }}</div>
 								<a href="#" class="bj_theme_btn">Customize</a>

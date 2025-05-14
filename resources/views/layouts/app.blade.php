@@ -16,6 +16,7 @@
 	<link href="{{ asset('template/assets/vendors/icomoon/style.css') }}" rel="stylesheet" />
 	<link href="{{ asset('template/assets/css/style.css') }}" rel="stylesheet" />
 	<link href="{{ asset('template/assets/css/responsive.css') }}" rel="stylesheet" />
+	<link href="{{ asset('/css/style.css') }}" rel="stylesheet" />
 	
 	<link rel="apple-touch-icon" sizes="180x180" href="template/assets/img/apple-touch-icon.png">
 	<link rel="icon" type="image/png" sizes="32x32" href="template/assets/img/favicon-32x32.png">
@@ -48,8 +49,8 @@
 <script src="{{ asset('template/assets/js/jquery.waypoints.min.js') }}"></script>
 <script src="{{ asset('template/assets/vendors/swiper/swiper-bundle.min.js') }}"></script>
 <script src="{{ asset('template/assets/vendors/wow/wow.min.js') }}"></script>
+@stack('scripts') {{-- For page-specific scripts --}}
 <script src="{{ asset('template/assets/js/custom.js') }}"></script>
 <script src="{{ asset('template/assets/js/script.js') }}"></script>
-@stack('scripts') {{-- For page-specific scripts --}}
 </body>
 </html>

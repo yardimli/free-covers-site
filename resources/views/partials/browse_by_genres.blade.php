@@ -47,7 +47,6 @@
 						     role="tabpanel"
 						     aria-labelledby="pills-{{ $genreSlug }}-tab"
 						     data-loaded="{{ $isFirstLoop && $currentCovers && $currentCovers->isNotEmpty() ? 'true' : 'false' }}">
-							
 							@if($isFirstLoop)
 								@if($currentCovers && $currentCovers->isNotEmpty())
 									<div class="tab_slider_content slick_slider_tab">
@@ -55,8 +54,11 @@
 											<div class="item">
 												@foreach($coverPair as $cover)
 													<div class="bj_new_pr_item {{ !$loop->last ? 'mb-3' : '' }}">
-														<a href="{{ route('covers.show', $cover->id) }}" class="img">
-															<img src="{{ asset('storage/' .$cover->mockup) }}" alt="{{ $cover->name }}" />
+														<a href="{{ route('covers.show', $cover->id) }}" class="img cover-image-container">
+															<img src="{{ asset('storage/' .$cover->mockup) }}" alt="{{ $cover->name }}" class="cover-mockup-image" />
+															@if($cover->random_template_overlay_url)
+																<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image" />
+															@endif
 														</a>
 														<div class="bj_new_pr_content_two">
 															<div class="d-flex justify-content-between">
@@ -65,7 +67,7 @@
 																</a>
 															</div>
 															<div class="writer_name">
-																 {{ $cover->caption ? Str::limit($cover->caption, 40) : '' }}
+																{{ $cover->caption ? Str::limit($cover->caption, 40) : '' }}
 															</div>
 															<a href="#" class="bj_theme_btn">Customize</a> <!-- Placeholder link -->
 														</div>

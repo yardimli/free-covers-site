@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Free Kindle Civers - Your Next Favorite Book')
+@section('title', 'Free Kindle Covers - Your Next Premium Book For Free')
 
 @section('content')
 	

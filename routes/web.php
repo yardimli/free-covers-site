@@ -3,6 +3,7 @@
 	use App\Http\Controllers\Admin\DashboardController;
 	use App\Http\Controllers\HomeController;
 	use App\Http\Controllers\ProfileController;
+	use App\Http\Controllers\ShopController;
 	use Illuminate\Support\Facades\Route;
 
 	/*
@@ -41,16 +42,34 @@
 	Route::get('/', [HomeController::class, 'index'])->name('home');
 	Route::get('/api/genres/{genreSlug}/covers', [HomeController::class, 'getCoversForGenre'])->name('api.genres.covers');
 
-	Route::get('/shop', function () {
-		return "Shop Page (Covers Index)";
-	})->name('shop.index');
+	Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
+
 
 	Route::get('/blog', function () {
 		return "Blog Page";
 	})->name('blog.index');
 
 	Route::get('/covers/{cover}', function (App\Models\Cover $cover) {
-		return "Cover Details Page for: " . $cover->name;
+		// This is a placeholder. You'll want a dedicated controller method for showing a single cover.
+		// For now, let's pass the cover to a simple view.
+		// Ensure you create `resources/views/covers/show.blade.php`
+		// Eager load templates for the single cover view
+		$cover->load('templates');
+		if ($cover->image_path) {
+			$cover->mockup_url = asset('storage/' . str_replace(['covers/', '.jpg'], ['cover-mockups/', '-front-mockup.png'], $cover->image_path));
+		} else {
+			$cover->mockup_url = asset('template/assets/img/placeholder-mockup.png'); // Fallback mockup
+		}
+		$cover->random_template_overlay_url = null;
+		if ($cover->templates->isNotEmpty()) {
+			$randomTemplate = $cover->templates->random();
+			if ($randomTemplate->thumbnail_path) {
+				$cover->random_template_overlay_url = asset('storage/' . $randomTemplate->thumbnail_path);
+			}
+		}
+		// You would typically pass this to a view:
+		// return view('covers.show', compact('cover'));
+		return "Cover Details Page for: " . $cover->name . " (ID: " . $cover->id . ")";
 	})->name('covers.show');
 
 
