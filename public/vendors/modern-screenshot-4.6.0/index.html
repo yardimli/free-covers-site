@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Playground</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body, html {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+<div>
+  <div id="root">Playground</div>
+</div>
+
+<script type="module" async>
+  import { domToImage } from './src'
+
+  document.body.appendChild(
+    await domToImage(
+      document.querySelector('#root'),
+      { debug: true, scale: 2 },
+    ),
+  )
+</script>
+</body>
+</html>

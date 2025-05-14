@@ -44,11 +44,6 @@
 <script src="{{ asset('template/assets/vendors/swiper/swiper-bundle.min.js') }}"></script>
 <script src="{{ asset('template/assets/vendors/wow/wow.min.js') }}"></script>
 <script src="{{ asset('template/assets/js/custom.js') }}"></script>
-<script>
-	window.routes = {
-		apiCoversByGenreName: '{{ route("api.covers.byGenreName") }}'
-	};
-</script>
 <script src="{{ asset('template/assets/js/script.js') }}"></script>
 @stack('scripts') {{-- For page-specific scripts --}}
 </body>

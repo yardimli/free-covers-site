@@ -1,0 +1,32 @@
+<style>
+  #root {
+    width: 100px;
+    overflow: hidden;
+  }
+</style>
+
+<script type="module">
+  const root = document.querySelector('#root')
+
+  const shadowHost = () => {
+    const host = document.createElement('div')
+    host.style.backgroundColor = 'red'
+    host.style.width = '80px'
+    host.style.height = '80px'
+    const nestedhost = document.createElement('div')
+    nestedhost.style.backgroundColor = 'blue'
+    nestedhost.style.width = '50px'
+    nestedhost.style.height = '50px'
+    const div = document.createElement('div')
+    div.style.backgroundColor = 'black'
+    div.style.width = '20px'
+    div.style.height = '20px'
+    nestedhost.attachShadow({ mode: 'open' }).appendChild(div)
+    host.attachShadow({ mode: 'open' }).appendChild(nestedhost)
+    return host
+  }
+
+  root.appendChild(shadowHost())
+
+  export default window.modernScreenshot.domToPng(root)
+</script>

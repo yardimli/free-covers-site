@@ -52,37 +52,22 @@
 								@if($currentCovers && $currentCovers->isNotEmpty())
 									<div class="tab_slider_content slick_slider_tab">
 										@foreach($currentCovers->chunk(2) as $coverPair)
-											<div class="item"> {{-- Each item is a slick-slide --}}
+											<div class="item">
 												@foreach($coverPair as $cover)
-													<div class="bj_new_pr_item {{ !$loop->last ? 'mb-3' : '' }}"> {{-- Stacked cover item, add margin if not last in pair --}}
+													<div class="bj_new_pr_item {{ !$loop->last ? 'mb-3' : '' }}">
 														<a href="{{ route('covers.show', $cover->id) }}" class="img">
 															<img src="{{ asset('storage/' .$cover->mockup) }}" alt="{{ $cover->name }}" />
 														</a>
-														<a href="#" data-bs-toggle="tooltip" data-bs-placement="top" title="Add to Wishlist" class="wish_btn" tabindex="-1"><i class="icon_heart_alt"></i></a>
 														<div class="bj_new_pr_content_two">
 															<div class="d-flex justify-content-between">
 																<a href="{{ route('covers.show', $cover->id) }}">
-																	<h5>{{ Str::limit($cover->name, 30) }}</h5>
+																	<h5>#{{$cover->id }}</h5>
 																</a>
-																<div class="book_price">
-																	<sup>$</sup>25<sup>.00</sup> <!-- Static Price -->
-																</div>
 															</div>
 															<div class="writer_name">
-																<i class="icon-user"></i><a href="#">Author Name</a> <!-- Placeholder Author -->
-																{{-- Or use actual data: {{ $cover->caption ? Str::limit($cover->caption, 40) : 'Author Name' }} --}}
+																 {{ $cover->caption ? Str::limit($cover->caption, 40) : '' }}
 															</div>
-															<div class="ratting">
-																<div class="ratting_icon">
-																	<i class="fa-solid fa-star"></i>
-																	<i class="fa-solid fa-star"></i>
-																	<i class="fa-solid fa-star"></i>
-																	<i class="fa-solid fa-star"></i>
-																	<i class="fa-solid fa-star-half-alt"></i> <!-- Static Rating -->
-																</div>
-																<span>(252)</span> <!-- Static Review Count -->
-															</div>
-															<a href="#" class="bj_theme_btn">Buy Now</a> <!-- Placeholder link -->
+															<a href="#" class="bj_theme_btn">Customize</a> <!-- Placeholder link -->
 														</div>
 													</div>
 												@endforeach

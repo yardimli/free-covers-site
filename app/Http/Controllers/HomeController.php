@@ -4,6 +4,7 @@ use App\Models\Cover;
 use App\Models\Template; // Although not directly used for display logic on index page based on clarification
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log; // Import Log facade
 
 class HomeController extends Controller
 {
@@ -14,8 +15,9 @@ class HomeController extends Controller
 		$genreCounts = [];
 		foreach ($allCoversForCategories as $cover) {
 			if (is_array($cover->categories)) {
+//				echo "Category: " . json_encode($cover->categories) . "<br>"; // Debugging output
 				foreach ($cover->categories as $category) {
-					$categoryName = Str::title(trim($category));
+					$categoryName = Str::title(trim($category)); // This is TitleCased, e.g., "Action & Adventure"
 					if (!empty($categoryName)) {
 						$genreCounts[$categoryName] = ($genreCounts[$categoryName] ?? 0) + 1;
 					}
@@ -25,20 +27,20 @@ class HomeController extends Controller
 
 		// Filter genres to include only those with 4 or more covers
 		$filteredGenreCounts = array_filter($genreCounts, function ($count) {
-			return $count >= 4; // Keep this filter, or adjust if 16 items are mandatory even if less are available
+			return $count >= 4; // Or $count >= 6 if you want at least one full 3x2 slide
 		});
 		ksort($filteredGenreCounts); // Sort filtered genres alphabetically
 
 		$coversForFirstTab = [];
-		$firstGenreName = null;
+		$firstGenreName = null; // This will be TitleCased
 		if (!empty($filteredGenreCounts)) {
-			// Get the first genre name from the filtered list
 			$firstGenreName = array_key_first($filteredGenreCounts);
 			if ($firstGenreName) {
-				$dbQueryGenreName = Str::lower($firstGenreName);
+				// Convert TitleCased name to lowercase for DB query, consistent with expected DB storage
+				$dbQueryGenreName = Str::lower($firstGenreName); // e.g., "action & adventure"
 				$coversForFirstTab[$firstGenreName] = Cover::whereJsonContains('categories', $dbQueryGenreName)
 					->inRandomOrder()
-					->take(16) // Number of items for the slider (changed from 4 to 16)
+					->take(18) // Changed from 16 to 18 (for 3 slides of 3x2)
 					->get();
 				foreach ($coversForFirstTab[$firstGenreName] as &$cover) {
 					if ($cover->image_path) {
@@ -48,7 +50,7 @@ class HomeController extends Controller
 						$cover['mockup'] = 'path/to/default/mockup.png'; // Fallback mockup
 					}
 				}
-				unset($cover); // Unset reference
+				unset($cover);
 			}
 		}
 
@@ -61,11 +63,11 @@ class HomeController extends Controller
 				$cover['mockup'] = 'path/to/default/mockup.png'; // Fallback mockup
 			}
 		}
-		unset($cover); // Unset reference
+		unset($cover);
 
 		return view('index', [
-			'genreCounts' => $filteredGenreCounts, // Pass filtered counts
-			'coversForTabs' => $coversForFirstTab, // Covers for the first tab only
+			'genreCounts' => $filteredGenreCounts,
+			'coversForTabs' => $coversForFirstTab,
 			'newArrivals' => $newArrivals,
 		]);
 	}
@@ -75,11 +77,18 @@ class HomeController extends Controller
 	 */
 	public function getCoversForGenre(Request $request, $genreSlug)
 	{
-		// Convert slug (e.g., "science-fiction") to lowercase category name for DB query (e.g., "science fiction")
-		$dbQueryGenreName = Str::lower(str_replace('-', ' ', $genreSlug));
+		$genreDisplayName = $request->query('name'); // Sent by JS, e.g., "Action & Adventure"
+		if (empty($genreDisplayName)) {
+			Log::warning("Required 'name' query parameter missing or empty for genre slug: " . $genreSlug . ". AJAX call might be misconfigured from JS.");
+			return response()->json(['covers' => [], 'message' => 'Genre specification is incomplete. The "name" query parameter is missing.'], 400);
+		}
+
+		$dbQueryGenreName = Str::lower($genreDisplayName); // e.g., "action & adventure"
 		$covers = Cover::whereJsonContains('categories', $dbQueryGenreName)
+			->orWhereJsonContains('categories', $genreDisplayName)
+			->where('cover_type_id', 1)
 			->inRandomOrder()
-			->take(16) // Number of items for the slider (changed from 4 to 16)
+			->take(18) // Changed from 16 to 18
 			->get();
 
 		$formattedCovers = $covers->map(function ($cover) {
@@ -93,9 +102,8 @@ class HomeController extends Controller
 				'name' => $cover->name,
 				'mockup' => $mockupPath,
 				'show_url' => route('covers.show', $cover->id),
-				'limited_name' => Str::limit($cover->name, 30), // Add any other fields needed by the JS template
-				// Ensure all fields used by the JS template are present
-				'caption' => $cover->caption, // Example: if caption is needed
+				'limited_name' => Str::limit($cover->caption, 40),
+				'caption' => $cover->caption,
 			];
 		});
 

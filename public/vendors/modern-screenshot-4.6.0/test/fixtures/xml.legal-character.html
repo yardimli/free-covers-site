@@ -1,0 +1,26 @@
+<template>
+  <div id="root" style="width: 10px; height: 10px; background-color: red;"></div>
+</template>
+
+<script type="module">
+  const root = document.querySelector('#root')
+
+  ;[
+    // \u0000-\u0008
+    ...Array.from({ length: 0x0008 }, (_, i) => String.fromCharCode(i)),
+    // \u000B-\u000C
+    '\u000B', '\u000C',
+    // \u000E-\u001F
+    ...Array.from({ length: 0x001F - 0x000E }, (_, i) => String.fromCharCode(0x000E + i)),
+    // \uD800-\uDFFF
+    ...Array.from({ length: 0xDFFF - 0xD800 }, (_, i) => String.fromCharCode(0xD800 + i)),
+    // \uFFFE-\uFFFF
+    '\uFFFE', '\uFFFF',
+  ].forEach(unicode => {
+    const span = document.createElement('span')
+    span.innerHTML = unicode
+    root.appendChild(span)
+  })
+
+  export default window.modernScreenshot.domToPng(root)
+</script>

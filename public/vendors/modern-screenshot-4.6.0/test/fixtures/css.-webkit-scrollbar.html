@@ -1,0 +1,26 @@
+<style>
+  .scrollbar {
+    display: block;
+    width: 100px;
+    overflow: auto;
+    height: 100px;
+  }
+
+  .scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 8px;
+    background-color: #aaa;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    background: #000;
+  }
+</style>
+
+<template>
+  <div id="root" class="scrollbar">
+    <div style="width: 200px; height: 400px;"></div>
+  </div>
+</template>
+
+<skip-expect />

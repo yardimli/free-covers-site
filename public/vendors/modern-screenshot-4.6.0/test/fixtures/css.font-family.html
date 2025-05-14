@@ -1,0 +1,28 @@
+<style>
+  @import url(__BASE_URL__/font/font.css);
+
+  #root {
+    width: 380px;
+    font-size: 40px;
+  }
+
+  .font-family-custom {
+    font-family: 'CustomFont';
+  }
+
+  .font-family-multiple {
+    font-family: -apple-system, SegoeUI, "Segoe UI", "Helvetica Neue", Helvetica, "Microsoft YaHei", "Meiryo UI", Meiryo, Arial Unicode MS, sans-serif;
+  }
+</style>
+
+<template>
+  <div id="root">
+    <div class="font-family-custom">custom</div>
+    <div class="font-family-multiple">multiple</div>
+    <div style="color: rgb(0, 255, 255);">
+      <div style="font-family: unset; color: rgb(0, 0, 0);">COLOR</div>
+    </div>
+  </div>
+</template>
+
+<skip-expect />

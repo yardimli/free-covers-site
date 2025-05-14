@@ -1,0 +1,593 @@
+<?php namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use App\Models\Cover;
+use App\Models\Template;
+use App\Models\Element;
+use App\Models\Overlay;
+use App\Models\CoverType;
+use App\Services\ImageUploadService;
+use App\Services\OpenAiService;
+use Illuminate\Support\Facades\Log; // For logging
+
+class DashboardController extends Controller
+{
+	protected ImageUploadService $imageUploadService;
+	protected OpenAiService $openAiService;
+
+	public function __construct(ImageUploadService $imageUploadService, OpenAiService $openAiService)
+	{
+		$this->imageUploadService = $imageUploadService;
+		$this->openAiService = $openAiService;
+		// $this->middleware('auth'); // Add auth middleware if needed
+	}
+
+	public function index()
+	{
+		return view('admin.dashboard.index');
+	}
+
+	public function listCoverTypes()
+	{
+		try {
+			$types = CoverType::orderBy('type_name')->get(['id', 'type_name']);
+			return response()->json(['success' => true, 'data' => ['cover_types' => $types]]);
+		} catch (\Exception $e) {
+			Log::error("Error fetching cover types: " . $e->getMessage());
+			return response()->json(['success' => false, 'message' => 'Error fetching cover types: ' . $e->getMessage()], 500);
+		}
+	}
+
+	private function getModelInstance(string $itemType)
+	{
+		return match ($itemType) {
+			'covers' => new Cover(),
+			'templates' => new Template(),
+			'elements' => new Element(),
+			'overlays' => new Overlay(),
+			default => null,
+		};
+	}
+
+	public function listItems(Request $request)
+	{
+		$validator = Validator::make($request->all(), [
+			'type' => ['required', Rule::in(['covers', 'templates', 'elements', 'overlays'])],
+			'page' => 'integer|min:1',
+			'limit' => 'integer|min:1',
+			'search' => 'nullable|string|max:255',
+			'cover_type_id' => 'nullable|integer|exists:cover_types,id',
+		]);
+
+		if ($validator->fails()) {
+			return response()->json(['success' => false, 'message' => 'Invalid input.', 'errors' => $validator->errors()], 422);
+		}
+
+		$itemType = $request->input('type');
+		$page = $request->input('page', 1);
+		$limit = $request->input('limit', config('admin_settings.items_per_page', 30));
+		$search = $request->input('search');
+		$coverTypeIdFilter = $request->input('cover_type_id');
+
+		$model = $this->getModelInstance($itemType);
+		if (!$model) {
+			return response()->json(['success' => false, 'message' => 'Invalid item type.'], 400);
+		}
+
+		$query = $model->query();
+
+		if ($itemType === 'covers') {
+			$query->with(['coverType:id,type_name', 'templates:id,name']); // Eager load templates for covers
+		} elseif ($itemType === 'templates') {
+			$query->with('coverType:id,type_name');
+		}
+
+
+		if ($search) {
+			$query->where(function ($q) use ($search, $itemType) {
+				$q->where('name', 'LIKE', "%{$search}%");
+				if ($itemType === 'covers') {
+					$q->orWhere('caption', 'LIKE', "%{$search}%")
+						->orWhereJsonContains('keywords', $search)
+						->orWhereJsonContains('categories', $search);
+				} elseif (in_array($itemType, ['elements', 'overlays', 'templates'])) {
+					$q->orWhereJsonContains('keywords', $search);
+				}
+			});
+		}
+
+		if (($itemType === 'covers' || $itemType === 'templates') && $coverTypeIdFilter) {
+			$query->where('cover_type_id', $coverTypeIdFilter);
+		}
+
+		$paginatedItems = $query->orderBy('id', 'desc')->paginate($limit, ['*'], 'page', $page);
+
+		$items = $paginatedItems->getCollection()->map(function ($item) use ($itemType) {
+			if (isset($item->thumbnail_path)) {
+				$item->thumbnail_url = $this->imageUploadService->getUrl($item->thumbnail_path);
+			}
+			if (isset($item->image_path)) {
+				$item->image_url = $this->imageUploadService->getUrl($item->image_path);
+			}
+
+			if ($itemType === 'covers') {
+				$item->cover_type_name = $item->coverType->type_name ?? null;
+				$item->assigned_templates_count = $item->templates->count();
+				$item->assigned_templates_names = $item->templates->isNotEmpty()
+					? $item->templates->pluck('name')->implode(', ')
+					: 'None';
+			} elseif ($itemType === 'templates') {
+				$item->cover_type_name = $item->coverType->type_name ?? null;
+			}
+			// Keywords and categories are already cast to arrays by the model
+			return $item;
+		});
+
+		return response()->json([
+			'success' => true,
+			'data' => [
+				'items' => $items,
+				'pagination' => [
+					'totalItems' => $paginatedItems->total(),
+					'itemsPerPage' => $paginatedItems->perPage(),
+					'currentPage' => $paginatedItems->currentPage(),
+					'totalPages' => $paginatedItems->lastPage(),
+				],
+			]
+		]);
+	}
+
+	public function uploadItem(Request $request)
+	{
+		$itemType = $request->input('item_type');
+		$rules = [
+			'item_type' => ['required', Rule::in(['covers', 'templates', 'elements', 'overlays'])],
+			'name' => 'required_without:image_file,json_file|nullable|string|max:255',
+			'keywords' => 'nullable|string|max:1000',
+		];
+
+		if ($itemType === 'covers' || $itemType === 'templates') {
+			$rules['cover_type_id'] = 'nullable|integer|exists:cover_types,id';
+		}
+		if ($itemType === 'covers') {
+			$rules['caption'] = 'nullable|string|max:500';
+			$rules['categories'] = 'nullable|string|max:1000';
+			$rules['image_file'] = 'required|image|mimes:jpg,jpeg,png,gif|max:5120';
+		} elseif ($itemType === 'elements' || $itemType === 'overlays') {
+			$rules['image_file'] = 'required|image|mimes:jpg,jpeg,png,gif|max:5120';
+		} elseif ($itemType === 'templates') {
+			$rules['json_file'] = 'required|file|mimes:json|max:2048';
+			$rules['thumbnail_file'] = 'required|image|mimes:jpg,jpeg,png,gif|max:5120';
+		}
+
+		$validator = Validator::make($request->all(), $rules);
+		if ($validator->fails()) {
+			return response()->json(['success' => false, 'message' => 'Validation failed.', 'errors' => $validator->errors()], 422);
+		}
+
+		$model = $this->getModelInstance($itemType);
+		if (!$model) return response()->json(['success' => false, 'message' => 'Invalid item type.'], 400);
+
+		$data = [
+			'name' => $request->input('name'),
+			'keywords' => $request->input('keywords') ? json_encode(array_map('trim', explode(',', $request->input('keywords')))) : json_encode([]),
+		];
+
+		if ($itemType === 'covers' || $itemType === 'templates') {
+			$data['cover_type_id'] = $request->input('cover_type_id');
+		}
+
+		try {
+			if ($itemType === 'covers' || $itemType === 'elements' || $itemType === 'overlays') {
+				$imageFile = $request->file('image_file');
+				if (!$request->input('name')) {
+					$data['name'] = Str::title(str_replace(['-', '_'], ' ', pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME)));
+				}
+				$paths = $this->imageUploadService->uploadImageWithThumbnail($imageFile, $itemType);
+				$data['image_path'] = $paths['original_path'];
+				$data['thumbnail_path'] = $paths['thumbnail_path'];
+				if ($itemType === 'covers') {
+					$data['caption'] = $request->input('caption');
+					$data['categories'] = $request->input('categories') ? json_encode(array_map('trim', explode(',', $request->input('categories')))) : json_encode([]);
+				}
+			} elseif ($itemType === 'templates') {
+				$jsonFile = $request->file('json_file');
+				$thumbnailFile = $request->file('thumbnail_file');
+				if (!$request->input('name')) {
+					$data['name'] = Str::title(str_replace(['-', '_'], ' ', pathinfo($jsonFile->getClientOriginalName(), PATHINFO_FILENAME)));
+				}
+				$jsonContent = file_get_contents($jsonFile->getRealPath());
+				if (json_decode($jsonContent) === null && json_last_error() !== JSON_ERROR_NONE) {
+					return response()->json(['success' => false, 'message' => 'Invalid JSON content: ' . json_last_error_msg()], 400);
+				}
+				$data['json_content'] = $jsonContent;
+				$paths = $this->imageUploadService->uploadImageWithThumbnail($thumbnailFile, $itemType);
+				$data['thumbnail_path'] = $paths['thumbnail_path'];
+			}
+
+			$item = $model->create($data);
+			return response()->json(['success' => true, 'message' => ucfirst(Str::singular($itemType)) . ' uploaded successfully.', 'data' => ['id' => $item->id]]);
+		} catch (\Exception $e) {
+			Log::error("Upload item error ({$itemType}): " . $e->getMessage() . "\n" . $e->getTraceAsString());
+			return response()->json(['success' => false, 'message' => 'Upload failed: ' . $e->getMessage()], 500);
+		}
+	}
+
+	public function getItemDetails(Request $request)
+	{
+		$validator = Validator::make($request->all(), [
+			'item_type' => ['required', Rule::in(['covers', 'templates', 'elements', 'overlays'])],
+			'id' => 'required|integer',
+		]);
+
+		if ($validator->fails()) return response()->json(['success' => false, 'message' => 'Invalid input.', 'errors' => $validator->errors()], 422);
+
+		$itemType = $request->input('item_type');
+		$id = $request->input('id');
+		$model = $this->getModelInstance($itemType);
+		if (!$model) return response()->json(['success' => false, 'message' => 'Invalid item type.'], 400);
+
+		$query = $model->query();
+		if ($itemType === 'covers') {
+			$query->with(['coverType:id,type_name', 'templates:id']); // Eager load template IDs for covers
+		} elseif ($itemType === 'templates') {
+			$query->with('coverType:id,type_name');
+		}
+
+		$item = $query->find($id);
+		if (!$item) return response()->json(['success' => false, 'message' => ucfirst(Str::singular($itemType)) . ' not found.'], 404);
+
+		$item->keywords = is_array($item->keywords) ? implode(', ', $item->keywords) : '';
+		if ($itemType === 'covers') {
+			$item->categories = is_array($item->categories) ? implode(', ', $item->categories) : '';
+			$item->assigned_template_ids = $item->templates->pluck('id')->toArray(); // For potential future use in edit modal
+			unset($item->templates); // Don't send the full template objects here unless needed
+		}
+
+		if (isset($item->thumbnail_path)) $item->thumbnail_url = $this->imageUploadService->getUrl($item->thumbnail_path);
+		if (isset($item->image_path)) $item->image_url = $this->imageUploadService->getUrl($item->image_path);
+
+		if ($itemType === 'covers' || $itemType === 'templates') {
+			$item->cover_type_name = $item->coverType->type_name ?? null;
+		}
+
+		return response()->json(['success' => true, 'data' => $item]);
+	}
+
+	public function updateItem(Request $request)
+	{
+		$itemType = $request->input('item_type');
+		$id = $request->input('id');
+		$rules = [
+			'id' => 'required|integer',
+			'item_type' => ['required', Rule::in(['covers', 'templates', 'elements', 'overlays'])],
+			'name' => 'required|string|max:255',
+			'keywords' => 'nullable|string|max:1000',
+			'image_file' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120',
+			'thumbnail_file' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120',
+			'json_file' => 'nullable|file|mimes:json|max:2048',
+		];
+
+		if ($itemType === 'covers' || $itemType === 'templates') {
+			$rules['cover_type_id'] = 'nullable|integer|exists:cover_types,id';
+		}
+		if ($itemType === 'covers') {
+			$rules['caption'] = 'nullable|string|max:500';
+			$rules['categories'] = 'nullable|string|max:1000';
+		}
+
+		$validator = Validator::make($request->all(), $rules);
+		if ($validator->fails()) return response()->json(['success' => false, 'message' => 'Validation failed.', 'errors' => $validator->errors()], 422);
+
+		$model = $this->getModelInstance($itemType);
+		if (!$model) return response()->json(['success' => false, 'message' => 'Invalid item type.'], 400);
+
+		$item = $model->find($id);
+		if (!$item) return response()->json(['success' => false, 'message' => ucfirst(Str::singular($itemType)) . ' not found.'], 404);
+
+		$data = [
+			'name' => $request->input('name'),
+			'keywords' => $request->input('keywords') ? json_encode(array_map('trim', explode(',', $request->input('keywords')))) : ($item->keywords ?? json_encode([])),
+		];
+
+		if ($itemType === 'covers' || $itemType === 'templates') {
+			$data['cover_type_id'] = $request->input('cover_type_id', $item->cover_type_id);
+		}
+
+		try {
+			if ($itemType === 'covers' || $itemType === 'elements' || $itemType === 'overlays') {
+				if ($request->hasFile('image_file')) {
+					$paths = $this->imageUploadService->uploadImageWithThumbnail(
+						$request->file('image_file'),
+						$itemType,
+						$item->image_path,
+						$item->thumbnail_path
+					);
+					$data['image_path'] = $paths['original_path'];
+					$data['thumbnail_path'] = $paths['thumbnail_path'];
+				}
+				if ($itemType === 'covers') {
+					$data['caption'] = $request->input('caption', $item->caption);
+					$data['categories'] = $request->input('categories') ? json_encode(array_map('trim', explode(',', $request->input('categories')))) : ($item->categories ?? json_encode([]));
+				}
+			} elseif ($itemType === 'templates') {
+				if ($request->hasFile('thumbnail_file')) {
+					$paths = $this->imageUploadService->uploadImageWithThumbnail(
+						$request->file('thumbnail_file'),
+						$itemType,
+						null,
+						$item->thumbnail_path
+					);
+					$data['thumbnail_path'] = $paths['thumbnail_path'];
+				}
+				if ($request->hasFile('json_file')) {
+					$jsonContent = file_get_contents($request->file('json_file')->getRealPath());
+					if (json_decode($jsonContent) === null && json_last_error() !== JSON_ERROR_NONE) {
+						return response()->json(['success' => false, 'message' => 'Invalid JSON content for update: ' . json_last_error_msg()], 400);
+					}
+					$data['json_content'] = $jsonContent;
+				}
+			}
+			$item->update($data);
+			return response()->json(['success' => true, 'message' => ucfirst(Str::singular($itemType)) . ' updated successfully.']);
+		} catch (\Exception $e) {
+			Log::error("Update item error ({$itemType} ID {$id}): " . $e->getMessage() . "\n" . $e->getTraceAsString());
+			return response()->json(['success' => false, 'message' => 'Update failed: ' . $e->getMessage()], 500);
+		}
+	}
+
+	public function deleteItem(Request $request)
+	{
+		$validator = Validator::make($request->all(), [
+			'item_type' => ['required', Rule::in(['covers', 'templates', 'elements', 'overlays'])],
+			'id' => 'required|integer',
+		]);
+
+		if ($validator->fails()) return response()->json(['success' => false, 'message' => 'Invalid input.', 'errors' => $validator->errors()], 422);
+
+		$itemType = $request->input('item_type');
+		$id = $request->input('id');
+		$model = $this->getModelInstance($itemType);
+		if (!$model) return response()->json(['success' => false, 'message' => 'Invalid item type.'], 400);
+
+		$item = $model->find($id);
+		if (!$item) return response()->json(['success' => true, 'message' => ucfirst(Str::singular($itemType)) . ' not found or already deleted.']);
+
+		try {
+			// For covers, detaching templates is handled by onDelete('cascade') on the foreign key in the pivot table migration.
+			// If not using cascade, you would do: if ($itemType === 'covers') { $item->templates()->detach(); }
+
+			$originalPath = $item->image_path ?? null;
+			$thumbnailPath = $item->thumbnail_path ?? null;
+			$item->delete();
+			$this->imageUploadService->deleteImageFiles($originalPath, $thumbnailPath);
+			return response()->json(['success' => true, 'message' => ucfirst(Str::singular($itemType)) . ' deleted successfully.']);
+		} catch (\Exception $e) {
+			Log::error("Delete item error ({$itemType} ID {$id}): " . $e->getMessage());
+			return response()->json(['success' => false, 'message' => 'Deletion failed: ' . $e->getMessage()], 500);
+		}
+	}
+
+	public function generateAiMetadata(Request $request)
+	{
+		$validator = Validator::make($request->all(), [
+			'item_type' => ['required', Rule::in(['covers', 'templates', 'elements', 'overlays'])],
+			'id' => 'required|integer',
+		]);
+
+		if ($validator->fails()) return response()->json(['success' => false, 'message' => 'Invalid input.', 'errors' => $validator->errors()], 422);
+		$itemType = $request->input('item_type');
+		$id = $request->input('id');
+		$model = $this->getModelInstance($itemType);
+		if (!$model) return response()->json(['success' => false, 'message' => 'Invalid item type.'], 400);
+		$item = $model->find($id);
+		if (!$item) return response()->json(['success' => false, 'message' => ucfirst(Str::singular($itemType)) . ' not found.'], 404);
+
+		$imagePathForAi = null;
+		if ($itemType === 'templates') {
+			$imagePathForAi = $item->thumbnail_path;
+		} else {
+			$imagePathForAi = $item->image_path ?? $item->thumbnail_path;
+		}
+
+		if (!$imagePathForAi || !Storage::disk('public')->exists($imagePathForAi)) {
+			return response()->json(['success' => false, 'message' => 'Image file not found on server for AI processing.'], 404);
+		}
+
+		try {
+			$imageContent = Storage::disk('public')->get($imagePathForAi);
+			$base64Image = base64_encode($imageContent);
+			$mimeType = Storage::disk('public')->mimeType($imagePathForAi) ?: 'image/jpeg';
+			$aiGeneratedData = [];
+
+			$keywordsPrompt = "Generate a list of 10-15 relevant keywords for this image, suitable for search or tagging. Include single words and relevant two-word phrases. Focus on visual elements, style, and potential use case. Output only a comma-separated list.";
+			$keywordsResponse = $this->openAiService->generateMetadataFromImageBase64($keywordsPrompt, $base64Image, $mimeType);
+			if (isset($keywordsResponse['content'])) {
+				$parsedKeywords = $this->openAiService->parseAiListResponse($keywordsResponse['content']);
+				if (!empty($parsedKeywords)) $aiGeneratedData['keywords'] = $parsedKeywords;
+			} elseif (isset($keywordsResponse['error'])) {
+				Log::warning("AI Keywords Error for {$itemType} ID {$id}: " . $keywordsResponse['error']);
+			}
+
+			if ($itemType === 'covers') {
+				$captionPrompt = "Describe this book cover image concisely for use as an alt text or short caption. Focus on the main visual elements and mood. Do not include or describe any text visible on the image. Maximum 140 characters.";
+				$captionResponse = $this->openAiService->generateMetadataFromImageBase64($captionPrompt, $base64Image, $mimeType);
+				if (isset($captionResponse['content'])) {
+					$aiGeneratedData['caption'] = Str::limit(trim($captionResponse['content']), 250);
+				} elseif (isset($captionResponse['error'])) {
+					Log::warning("AI Caption Error for cover ID {$id}: " . $captionResponse['error']);
+				}
+
+				$categoriesPrompt = "Categorize this book cover image into 1-3 relevant genres from the following list: Mystery, Thriller & Suspense, Fantasy, Science Fiction, Horror, Romance, Erotica, Children's, Action & Adventure, Chick Lit, Historical Fiction, Literary Fiction, Teen & Young Adult, Royal Romance, Western, Surreal, Paranormal & Urban, Apocalyptic, Nature, Poetry, Travel, Religion & Spirituality, Business, Self-Improvement, Education, Health & Wellness, Cookbooks & Food, Environment, Politics & Society, Family & Parenting, Abstract, Medical, Fitness, Sports, Science, Music. Output only a comma-separated list of the chosen categories.";
+				$categoriesResponse = $this->openAiService->generateMetadataFromImageBase64($categoriesPrompt, $base64Image, $mimeType);
+				if (isset($categoriesResponse['content'])) {
+					$parsedCategories = $this->openAiService->parseAiListResponse($categoriesResponse['content']);
+					if (!empty($parsedCategories)) $aiGeneratedData['categories'] = $parsedCategories;
+				} elseif (isset($categoriesResponse['error'])) {
+					Log::warning("AI Categories Error for cover ID {$id}: " . $categoriesResponse['error']);
+				}
+			}
+
+			if (empty($aiGeneratedData)) {
+				return response()->json(['success' => false, 'message' => 'AI did not return any usable metadata or an error occurred. Check logs.'], 500);
+			}
+
+			$item->update($aiGeneratedData);
+			return response()->json(['success' => true, 'message' => ucfirst(Str::singular($itemType)) . ' AI metadata updated successfully.']);
+		} catch (\Exception $e) {
+			Log::error("AI Metadata generation error ({$itemType} ID {$id}): " . $e->getMessage());
+			return response()->json(['success' => false, 'message' => 'AI metadata generation failed: ' . $e->getMessage()], 500);
+		}
+	}
+
+	public function generateSimilarTemplate(Request $request)
+	{
+		$validator = Validator::make($request->all(), [
+			'original_template_id' => 'required|integer|exists:templates,id',
+			'user_prompt' => 'required|string|min:10|max:2000',
+			'original_json_content' => 'required|json',
+		]);
+
+		if ($validator->fails()) {
+			return response()->json(['success' => false, 'message' => 'Invalid input.', 'errors' => $validator->errors()], 422);
+		}
+
+		$originalTemplateId = $request->input('original_template_id');
+		$userPromptText = $request->input('user_prompt');
+		$originalJsonContent = $request->input('original_json_content');
+
+		$googleFontsConfig = config('googlefonts.fonts', []);
+		$googleFontNames = array_keys($googleFontsConfig);
+		$googleFontString = implode(', ', $googleFontNames);
+
+		$systemMessage = "You are an expert JSON template designer. Based on the provided example JSON and the user's request, generate a new, complete, and valid JSON object. The output MUST be ONLY the raw JSON content, without any surrounding text, explanations, or markdown ```json ... ``` tags. Ensure all structural elements from the example are considered and adapted according to the user's request. Choose suitable fonts to substitute the example from the following google fonts based on the users request: {$googleFontString}. Ensure the generated JSON is a single, valid JSON object.";
+		$userMessageContent = "User Request: \"{$userPromptText}\"\n\nExample JSON:\n{$originalJsonContent}";
+		$messages = [
+			["role" => "system", "content" => $systemMessage],
+			["role" => "user", "content" => $userMessageContent]
+		];
+
+		try {
+			$responseFormat = (str_contains(config('admin_settings.openai_text_model'), 'gpt-4') || str_contains(config('admin_settings.openai_text_model'), '1106')) ? ['type' => 'json_object'] : null;
+			$aiResponse = $this->openAiService->generateText($messages, 0.6, 4000, $responseFormat);
+
+			if (isset($aiResponse['error'])) {
+				Log::error("AI Similar Template Error for ID {$originalTemplateId}: " . $aiResponse['error']);
+				return response()->json(['success' => false, 'message' => "AI Error: " . $aiResponse['error']], 500);
+			}
+
+			$generatedJsonString = $aiResponse['content'];
+			if (!$responseFormat && preg_match('/```json\s*([\s\S]*?)\s*```/', $generatedJsonString, $matches)) {
+				$generatedJsonString = $matches[1];
+			}
+			$generatedJsonString = trim($generatedJsonString);
+			$decodedJson = json_decode($generatedJsonString);
+
+			if (json_last_error() !== JSON_ERROR_NONE) {
+				Log::error("AI Similar Template: Invalid JSON response for ID {$originalTemplateId}. Error: " . json_last_error_msg() . ". Raw: " . $aiResponse['content']);
+				return response()->json(['success' => false, 'message' => 'AI returned invalid JSON: ' . json_last_error_msg() . ". Raw AI output: " . Str::limit($aiResponse['content'], 200) . "..."], 500);
+			}
+
+			$filename = "template_ai_origID{$originalTemplateId}_" . time() . ".json";
+			$prettyJsonToDownload = json_encode($decodedJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+			return response()->json([
+				'success' => true,
+				'message' => 'AI-generated template ready for download.',
+				'data' => [
+					'filename' => $filename,
+					'generated_json_content' => $prettyJsonToDownload
+				]
+			]);
+		} catch (\Exception $e) {
+			Log::error("AI Similar Template generation error (ID {$originalTemplateId}): " . $e->getMessage());
+			return response()->json(['success' => false, 'message' => 'AI template generation failed: ' . $e->getMessage()], 500);
+		}
+	}
+
+	// New methods for Cover-Template assignment
+
+	/**
+	 * List templates assignable to a specific cover (must match cover_type_id).
+	 */
+	public function listAssignableTemplates(Request $request, Cover $cover) // Using route model binding
+	{
+		if (!$cover->cover_type_id) {
+			return response()->json([
+				'success' => true, // Still success, but with a message for UI
+				'data' => [
+					'cover_name' => $cover->name,
+					'cover_type_name' => 'N/A (Not Set)',
+					'templates' => [],
+				],
+				'message' => 'Cover does not have a cover type assigned. Cannot list templates.'
+			]);
+		}
+
+		$assignableTemplates = Template::where('cover_type_id', $cover->cover_type_id)
+			->orderBy('name')
+			->get(['id', 'name']);
+
+		$assignedTemplateIds = $cover->templates()->pluck('template_id')->toArray();
+
+		$templatesData = $assignableTemplates->map(function ($template) use ($assignedTemplateIds) {
+			return [
+				'id' => $template->id,
+				'name' => $template->name,
+				'is_assigned' => in_array($template->id, $assignedTemplateIds),
+			];
+		});
+
+		return response()->json([
+			'success' => true,
+			'data' => [
+				'cover_name' => $cover->name,
+				'cover_type_name' => $cover->coverType->type_name ?? 'N/A',
+				'templates' => $templatesData,
+			]
+		]);
+	}
+
+	/**
+	 * Update the templates assigned to a specific cover.
+	 */
+	public function updateCoverTemplateAssignments(Request $request, Cover $cover) // Using route model binding
+	{
+		$validator = Validator::make($request->all(), [
+			'template_ids' => 'nullable|array',
+			'template_ids.*' => 'integer|exists:templates,id', // Ensure template IDs exist
+		]);
+
+		if ($validator->fails()) {
+			return response()->json(['success' => false, 'message' => 'Invalid input.', 'errors' => $validator->errors()], 422);
+		}
+
+		$templateIds = $request->input('template_ids', []);
+
+		// Optional: Further validation to ensure all selected templates match the cover's cover_type_id
+		if (!empty($templateIds) && $cover->cover_type_id) {
+			$validTemplatesCount = Template::where('cover_type_id', $cover->cover_type_id)
+				->whereIn('id', $templateIds)
+				->count();
+			if ($validTemplatesCount !== count($templateIds)) {
+				return response()->json(['success' => false, 'message' => 'One or more selected templates do not match the cover\'s type or are invalid.'], 400);
+			}
+		} elseif (!empty($templateIds) && !$cover->cover_type_id) {
+			return response()->json(['success' => false, 'message' => 'Cannot assign templates to a cover without a cover type.'], 400);
+		}
+
+
+		try {
+			$cover->templates()->sync($templateIds); // sync() will add new, remove old, and keep existing
+			return response()->json(['success' => true, 'message' => 'Template assignments updated successfully.']);
+		} catch (\Exception $e) {
+			Log::error("Error updating template assignments for Cover ID {$cover->id}: " . $e->getMessage());
+			return response()->json(['success' => false, 'message' => 'Failed to update assignments: ' . $e->getMessage()], 500);
+		}
+	}
+}

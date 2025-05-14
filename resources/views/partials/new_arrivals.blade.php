@@ -15,11 +15,10 @@
 									<a href="#" class="category">{{ Str::title($cover->categories[0]) }}</a> {{-- Link to category page later --}}
 								@endif
 								<a href="{{ route('covers.show', $cover->id) }}">
-									<h4 class="bj_new_pr_title">{{ Str::limit($cover->name, 25) }}</h4>
+									<h4 class="bj_new_pr_title">#{{  $cover->id }}</h4>
 								</a>
-								<div class="writer_name">by <a href="#">Author Name</a></div> {{-- Placeholder Author --}}
-								<div class="book_price"><sup>$</sup>{{ rand(10, 50) }}<sup>.00</sup></div> {{-- Random Static Price --}}
-								<a href="#" class="bj_theme_btn">Buy Now</a> {{-- Placeholder link --}}
+								<div class="writer_name">{{ $cover->caption ? Str::limit($cover->caption, 60) : '' }}</div>
+								<a href="#" class="bj_theme_btn">Customize</a>
 							</div>
 						</div>
 					</div>

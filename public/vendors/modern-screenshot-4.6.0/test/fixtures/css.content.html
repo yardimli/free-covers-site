@@ -1,0 +1,35 @@
+<style>
+  @import url(__BASE_URL__/font/font.css);
+
+  #root {
+    font-family: 'CustomFont';
+    font-size: 20px;
+    width: 200px;
+  }
+
+  .with-before::before {
+    content: 'BEFORE';
+  }
+
+  .with-after::after {
+    content: 'AFTER';
+  }
+
+  .with-both::before {
+    content: 'BEFORE-';
+  }
+
+  .with-both::after {
+    content: 'AFTER';
+  }
+</style>
+
+<template>
+  <div id="root">
+    <div class="with-before"></div>
+    <div class="with-after"></div>
+    <div class="with-both"></div>
+  </div>
+</template>
+
+<skip-expect />

@@ -84,7 +84,7 @@ $(document).ready(function () {
 		if (!$firstActivePane.find(".slick_slider_tab").hasClass('slick-initialized')) {
 			$firstActivePane.find(".slick_slider_tab").slick({
 				infinite: true,
-				slidesToShow: 2,
+				slidesToShow: 3, // Changed from 2 to 3
 				slidesToScroll: 1,
 				responsive: [
 					{breakpoint: 1199, settings: {slidesToShow: 2}},
@@ -93,6 +93,7 @@ $(document).ready(function () {
 			});
 		}
 	}
+
 
 // Initialize tooltips for initially loaded content
 	if (typeof bootstrap !== 'undefined' && typeof bootstrap.Tooltip === 'function') {
@@ -122,7 +123,9 @@ $(document).ready(function () {
                     <p>Loading covers for ${genreName}...</p>
                 </div>
             `);
-			var ajaxUrl = '/api/genres/' + genreSlug + '/covers';
+			
+			var genreName = $tabLink.data('genre-name'); // Ensure genreName is captured
+			var ajaxUrl = '/api/genres/' + genreSlug + '/covers?name=' + encodeURIComponent(genreName);
 			
 			$.ajax({
 				url: ajaxUrl,
@@ -132,83 +135,38 @@ $(document).ready(function () {
 					$targetPane.empty();
 					if (response.covers && response.covers.length > 0) {
 						var sliderHtml = '<div class="tab_slider_content slick_slider_tab">';
-						
-						for (var i = 0; i < response.covers.length; i += 2) {
+						for (var i = 0; i < response.covers.length; i += 3) { // Changed from i += 2 to i += 3
 							sliderHtml += '<div class="item">'; // Start a new slick-slide item
 							
-							// First cover in the pair
-							var cover1 = response.covers[i];
-							var mockupSrc1 = '/storage/' + cover1.mockup;
-							sliderHtml += `
-                                <div class="bj_new_pr_item ${(i + 1 < response.covers.length) ? 'mb-3' : ''}"> <!-- Add margin if there's a second item in pair -->
-                                    <a href="${cover1.show_url}" class="img">
-                                        <img src="${mockupSrc1}" alt="${cover1.name}" />
-                                    </a>
-                                    <a href="#" data-bs-toggle="tooltip" data-bs-placement="top" title="Add to Wishlist" class="wish_btn" tabindex="-1"><i class="icon_heart_alt"></i></a>
-                                    <div class="bj_new_pr_content_two">
-                                        <div class="d-flex justify-content-between">
-                                            <a href="${cover1.show_url}">
-                                                <h5>${cover1.limited_name}</h5>
-                                            </a>
-                                            <div class="book_price">
-                                                <sup>$</sup>25<sup>.00</sup> <!-- Static Price -->
-                                            </div>
-                                        </div>
-                                        <div class="writer_name">
-                                            <i class="icon-user"></i><a href="#">Author Name</a> <!-- Placeholder Author -->
-                                        </div>
-                                        <div class="ratting">
-                                            <div class="ratting_icon">
-                                                <i class="fa-solid fa-star"></i>
-                                                <i class="fa-solid fa-star"></i>
-                                                <i class="fa-solid fa-star"></i>
-                                                <i class="fa-solid fa-star"></i>
-                                                <i class="fa-solid fa-star-half-alt"></i> <!-- Static Rating -->
-                                            </div>
-                                            <span>(252)</span> <!-- Static Review Count -->
-                                        </div>
-                                        <a href="#" class="bj_theme_btn">Buy Now</a> <!-- Placeholder link -->
-                                    </div>
-                                </div>
-                            `;
-							
-							// Second cover in the pair, if it exists
-							if (i + 1 < response.covers.length) {
-								var cover2 = response.covers[i + 1];
-								var mockupSrc2 = '/storage/' + cover2.mockup;
-								sliderHtml += `
-                                    <div class="bj_new_pr_item">
-                                        <a href="${cover2.show_url}" class="img">
-                                            <img src="${mockupSrc2}" alt="${cover2.name}" />
-                                        </a>
-                                        <a href="#" data-bs-toggle="tooltip" data-bs-placement="top" title="Add to Wishlist" class="wish_btn" tabindex="-1"><i class="icon_heart_alt"></i></a>
-                                        <div class="bj_new_pr_content_two">
-                                            <div class="d-flex justify-content-between">
-                                                <a href="${cover2.show_url}">
-                                                    <h5>${cover2.limited_name}</h5>
-                                                </a>
-                                                <div class="book_price">
-                                                    <sup>$</sup>25<sup>.00</sup> <!-- Static Price -->
-                                                </div>
-                                            </div>
-                                            <div class="writer_name">
-                                                <i class="icon-user"></i><a href="#">Author Name</a> <!-- Placeholder Author -->
-                                            </div>
-                                            <div class="ratting">
-                                                <div class="ratting_icon">
-                                                    <i class="fa-solid fa-star"></i>
-                                                    <i class="fa-solid fa-star"></i>
-                                                    <i class="fa-solid fa-star"></i>
-                                                    <i class="fa-solid fa-star"></i>
-                                                    <i class="fa-solid fa-star-half-alt"></i> <!-- Static Rating -->
-                                                </div>
-                                                <span>(252)</span> <!-- Static Review Count -->
-                                            </div>
-                                            <a href="#" class="bj_theme_btn">Buy Now</a> <!-- Placeholder link -->
-                                        </div>
-                                    </div>
-                                `;
+							// Process up to 3 covers in each slider item
+							for (var j = 0; j < 2; j++) {
+								if (i + j < response.covers.length) {
+									var cover = response.covers[i + j];
+									var mockupSrc = '/storage/' + cover.mockup;
+									
+									// Add bottom margin except for the last cover in a group
+									var marginClass = (j < 2 && i + j + 1 < response.covers.length) ? 'mb-3' : '';
+									
+									sliderHtml += `
+                    <div class="bj_new_pr_item ${marginClass}">
+                        <a href="${cover.show_url}" class="img">
+                            <img src="${mockupSrc}" alt="${cover.name}" />
+                        </a>
+                        <div class="bj_new_pr_content_two">
+                            <div class="d-flex justify-content-between">
+                                <a href="${cover.show_url}">
+                                    <h5>#${cover.id}</h5>
+                                </a>
+                            </div>
+                            <div class="writer_name">
+                                ${cover.limited_name}
+                            </div>
+                            <a href="#" class="bj_theme_btn">Customize</a>
+                        </div>
+                    </div>`;
+								}
 							}
+							
 							sliderHtml += '</div>'; // End slick-slide item
 						}
 						sliderHtml += '</div>'; // End tab_slider_content
@@ -218,7 +176,7 @@ $(document).ready(function () {
 						if (typeof $.fn.slick === 'function') {
 							$targetPane.find(".slick_slider_tab").slick({
 								infinite: true,
-								slidesToShow: 2,
+								slidesToShow: 3, // Changed from 2 to 3
 								slidesToScroll: 1,
 								responsive: [
 									{breakpoint: 1199, settings: {slidesToShow: 2}},
