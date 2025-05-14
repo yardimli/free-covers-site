@@ -2,8 +2,7 @@
 	<nav class="navbar navbar-expand-lg menu_one menu_white" id="header">
 		<div class="container">
 			<a class="navbar-brand sticky_logo" href="{{ route('home') }}">
-				<img src="{{ asset('template/assets/img/home/logo-white.svg') }}" alt="logo" />
-				<img src="{{ asset('template/assets/img/home-two/logo-dark.svg') }}" alt="logo" />
+				<img src="{{ asset('template/assets/img/home/logo-dark.png') }}" alt="logo" />
 			</a>
 			<button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="menu_toggle">

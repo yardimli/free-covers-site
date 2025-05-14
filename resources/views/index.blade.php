@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Bookjar - Your Next Favorite Book')
+@section('title', 'Free Kindle Civers - Your Next Favorite Book')
 
 @section('content')
 	

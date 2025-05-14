@@ -54,11 +54,27 @@
 		deleteItem: "{{ route('admin.items.delete') }}",
 		generateAiMetadata: "{{ route('admin.items.generate-ai-metadata') }}",
 		generateSimilarTemplate: "{{ route('admin.templates.generate-similar') }}",
-		listAssignableTemplatesBase: "{{ url('admin/covers') }}",
-		updateCoverTemplateAssignmentsBase: "{{ url('admin/covers') }}"
+		listAssignableTemplatesBase: "{{ url('admin/covers') }}", // Base URL for constructing specific routes
+		updateCoverTemplateAssignmentsBase: "{{ url('admin/covers') }}" // Base URL
 	};
+	window.AppAdmin = window.AppAdmin || {}; // Initialize the global namespace
 </script>
+
+<!-- Modular Admin Scripts (Order Matters!) -->
+<script src="{{ asset('js/admin/utils.js') }}"></script>
+<script src="{{ asset('js/admin/state.js') }}"></script>
+<script src="{{ asset('js/admin/coverTypes.js') }}"></script>
+<script src="{{ asset('js/admin/items.js') }}"></script>
+<script src="{{ asset('js/admin/upload.js') }}"></script>
+<script src="{{ asset('js/admin/edit.js') }}"></script>
+<script src="{{ asset('js/admin/delete.js') }}"></script>
+<script src="{{ asset('js/admin/aiMetadata.js') }}"></script>
+<script src="{{ asset('js/admin/aiSimilarTemplate.js') }}"></script>
+<script src="{{ asset('js/admin/assignTemplates.js') }}"></script>
+
+<!-- Main Admin Orchestrator -->
 <script src="{{ asset('js/admin.js') }}"></script>
+
 @stack('scripts')
 </body>
 </html>

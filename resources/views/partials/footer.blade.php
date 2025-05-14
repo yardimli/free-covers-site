@@ -57,7 +57,7 @@
 			<div class="row">
 				<div class="col-lg-4 col-md-12 text-center text-lg-start">
 					<a href="{{ route('home') }}" class="f_logo">
-						<img src="{{ asset('template/assets/img/home/logo-white.svg') }}" alt="f_logo" />
+						<img src="{{ asset('template/assets/img/home/logo-light.png') }}" alt="f_logo" style="max-width:160px;" />
 					</a>
 				</div>
 				<div class="col-lg-4 col-md-6">
@@ -80,6 +80,6 @@
 		</div>
 	</div>
 	<div class="footer_bottom text-center wow fadeInUp" data-wow-delay="0.6s">
-		<p>© {{ date('Y') }} Bookjar. All Rights Reserved</p>
+		<p>© {{ date('Y') }} Free Kindle Civers. All Rights Reserved</p>
 	</div>
 </footer>
