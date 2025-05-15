@@ -834,13 +834,9 @@ class DashboardController extends Controller
 			// Prompt for AI
 
 			$prompt = "Analyze the following image, which is a book cover with a text template overlaid. The underlying image should show: '". $cover->caption ."'
-Evaluate based on TWO MANDATORY criteria:
-
+Evaluate based on  MANDATORY criteria:
 Is the title and author text in the template completely legible and easy to read?
-				Are ALL the key visual elements from the caption mostly visible and NOT obscured totally by the text overlay?
-
-				Respond with the single word 'YES' ONLY if BOTH criteria are fully satisfied. If the image is partially obscured but the text is readable and the result is esthetically pleasing, respond with 'YES'.
-			Respond with 'NO' followed by a brief explanation if EITHER criterion fails, specifying which elements are problematic.";
+Are either ALL the key visual elements from the caption visible and NOT obscured totally by the text overlay. OR If the image is partially obscured but the text is readable and the result is esthetically pleasing, respond with the single word 'YES'. Otherwise Respond with only 'NO'. Don't add any explenation only respond with 'YES' or 'NO'.";
 
 
 			$aiResponse = $this->openAiService->generateMetadataFromImageBase64($prompt, $base64CompositeImage, $mimeType, 30);
@@ -851,7 +847,7 @@ Is the title and author text in the template completely legible and easy to read
 			}
 
 			$decisionString = trim(strtoupper($aiResponse['content'] ?? ''));
-			$shouldAssign = ($decisionString === 'YES');
+			$shouldAssign = str_contains($decisionString, 'YES');
 
 			Log::info("AI Template Fit Evaluation: Cover {$cover->id}, Template {$template->id}. BaseW:{$baseImageWidth}, OverlayTargetW:{$targetOverlayWidth}, MarginT:{$marginTop}, MarginL:{$marginLeft}. AI Raw: '{$aiResponse['content']}'. Parsed Decision: " . ($shouldAssign ? 'YES' : 'NO'));
 
