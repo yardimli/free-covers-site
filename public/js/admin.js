@@ -2,7 +2,8 @@
 $(document).ready(function() {
 	const requiredModules = [
 		'Utils', 'CoverTypes', 'Items', 'Upload', 'Edit', 'Delete',
-		'AiMetadata', 'AiSimilarTemplate', 'AssignTemplates', 'TextPlacements', 'AutoAssignTemplates'
+		'AiMetadata', 'AiSimilarTemplate', 'AssignTemplates', 'TextPlacements',
+		'BatchAutoAssignTemplates'
 	];
 	for (const moduleName of requiredModules) {
 		if (!window.AppAdmin || !window.AppAdmin[moduleName]) {
@@ -27,7 +28,7 @@ $(document).ready(function() {
 	AppAdmin.AiSimilarTemplate.init();
 	AppAdmin.AssignTemplates.init();
 	AppAdmin.TextPlacements.init();
-	AppAdmin.AutoAssignTemplates.init();
+	AppAdmin.BatchAutoAssignTemplates.init();
 	
 	let popStateHandlingActive = false; // Flag to manage popstate-triggered loads
 	

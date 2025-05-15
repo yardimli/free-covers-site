@@ -81,7 +81,8 @@
 		listAssignableTemplatesBase: "{{ url('admin/covers') }}",
 		updateCoverTemplateAssignmentsBase: "{{ url('admin/covers') }}",
 		updateTextPlacementsBase: "{{ url('admin/items') }}",
-		autoAssignTemplates: "{{ route('admin.covers.auto-assign-templates') }}",
+		aiEvaluateTemplateFitBase: "{{ url('admin/covers') }}",
+		getCoversWithoutTemplates: "{{ route('admin.covers.without-templates') }}",
 	};
 	window.AppAdmin = window.AppAdmin || {}; // Initialize the global namespace
 </script>
@@ -97,8 +98,8 @@
 <script src="{{ asset('js/admin/aiSimilarTemplate.js') }}"></script>
 <script src="{{ asset('js/admin/assignTemplates.js') }}"></script>
 <script src="{{ asset('js/admin/textPlacements.js') }}"></script>
-<script src="{{ asset('js/admin/autoAssignTemplates.js') }}"></script>
 <script src="{{ asset('js/admin/batchCoverTextPlacement.js') }}"></script>
+<script src="{{ asset('js/admin/batchAutoAssignTemplates.js') }}"></script>
 
 
 <!-- Main Admin Orchestrator -->

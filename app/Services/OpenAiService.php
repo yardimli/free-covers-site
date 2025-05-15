@@ -23,6 +23,28 @@
 			}
 		}
 
+		// Helper method to sanitize content arrays
+		private function sanitizeContentArray($message) {
+			$sanitizedContent = [];
+
+			foreach ($message['content'] as $item) {
+				$itemCopy = $item;
+
+				// If this is an image_url item
+				if (isset($item['type']) && $item['type'] === 'image_url' && isset($item['image_url']['url'])) {
+					// Replace base64 image data
+					if (strpos($item['image_url']['url'], 'data:image') === 0) {
+						$itemCopy['image_url']['url'] = '[BASE64_IMAGE]';
+					}
+				}
+
+				$sanitizedContent[] = $itemCopy;
+			}
+
+			$message['content'] = $sanitizedContent;
+			return $message;
+		}
+
 		private function callOpenAI(array $messages, string $model, float $temperature = 0.5, int $maxTokens = 1000, ?array $responseFormat = null)
 		{
 			if (empty($this->apiKey)) {
@@ -45,7 +67,19 @@
 				$payload['response_format'] = $responseFormat;
 			}
 
-			Log::debug("OpenAI Request to model {$model}: ", $messages);
+
+			// Create a copy of messages for logging, sanitizing image data
+			$messagesCopy = array_map(function ($message) {
+				if (isset($message['content'])) {
+					// Handle array content (like in vision API)
+					if (is_array($message['content'])) {
+						return $this->sanitizeContentArray($message);
+					}
+				}
+				return $message;
+			}, $messages);
+
+			Log::debug("OpenAI Request to model {$model}: ", $messagesCopy);
 
 			$response = Http::withToken($this->apiKey)
 				->timeout(180) // seconds

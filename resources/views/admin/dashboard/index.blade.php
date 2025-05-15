@@ -379,7 +379,19 @@
 								<p class="mb-1"><strong>Cover Type:</strong> <span id="assignTemplatesCoverTypeName"></span></p>
 								<hr class="my-1">
 								<h6 class="mb-1">Available Templates (for this cover type):</h6>
-								<div id="assignableTemplatesList" style="max-height: 400px; overflow-y: auto; padding: 5px; padding-left: 15px; border: 1px solid #eee; border-radius: 4px;">
+								
+								{{-- AI Choice Progress Area --}}
+								<div id="aiChoiceProgressArea" class="my-2" style="display: none;">
+									<div class="d-flex justify-content-between align-items-center mb-1">
+										<h6 class="mb-0 small">AI Processing Templates:</h6>
+										<span id="aiChoiceProgressText" class="small text-muted"></span>
+									</div>
+									<div class="progress" style="height: 10px;">
+										<div id="aiChoiceProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+									</div>
+								</div>
+								
+								<div id="assignableTemplatesList" style="max-height: 450px; overflow-y: auto; padding: 5px; padding-left: 15px; border: 1px solid #eee; border-radius: 4px;">
 									<!-- Checkboxes will be populated by JS -->
 									<p class="text-center mb-0">Loading templates...</p>
 								</div>
@@ -398,6 +410,10 @@
 						</div>
 					</div>
 					<div class="modal-footer py-1 px-2">
+						{{-- AI Choose Button --}}
+						<button type="button" class="btn btn-info btn-sm me-auto" id="aiChooseTemplatesButton">
+							<i class="fas fa-robot"></i> Use AI to Choose
+						</button>
 						<button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
 						<button type="submit" class="btn btn-primary btn-sm" id="saveTemplateAssignmentsButton">Save Assignments</button>
 					</div>
@@ -454,42 +470,4 @@
 		</div>
 	</div>
 	
-	<!-- Auto Assign Templates Modal -->
-	<div class="modal fade" id="autoAssignTemplatesModal" tabindex="-1" aria-labelledby="autoAssignTemplatesModalLabel" aria-hidden="true">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header">
-					<h5 class="modal-title" id="autoAssignTemplatesModalLabel">Auto Assign Templates to Covers</h5>
-					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-				</div>
-				<div class="modal-body">
-					<p>This action will attempt to automatically assign templates to covers based on matching cover types and inverse text placements (e.g., cover 'top-light' → template 'top-dark').</p>
-					<p>How should existing template assignments on covers be handled?</p>
-					<div class="form-check">
-						<input class="form-check-input" type="radio" name="assignmentMode" id="assignmentModeAppend" value="append" checked>
-						<label class="form-check-label" for="assignmentModeAppend">
-							Add to existing assignments (default)
-						</label>
-					</div>
-					<div class="form-check">
-						<input class="form-check-input" type="radio" name="assignmentMode" id="assignmentModeReplace" value="replace">
-						<label class="form-check-label" for="assignmentModeReplace">
-							Replace all existing assignments
-						</label>
-					</div>
-					<div id="autoAssignProgressArea" class="mt-3" style="display: none;">
-						<h6>Progress:</h6>
-						<div class="progress" style="height: 20px;">
-							<div id="autoAssignProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
-						</div>
-						<p id="autoAssignProgressText" class="mt-2 mb-0 small"></p>
-					</div>
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-					<button type="button" class="btn btn-primary" id="startAutoAssignButton">Start Auto-Assignment</button>
-				</div>
-			</div>
-		</div>
-	</div>
 @endsection

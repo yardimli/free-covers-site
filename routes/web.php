@@ -38,9 +38,11 @@
 		// New routes for Cover-Template assignments
 		Route::get('/covers/{cover}/assignable-templates', [DashboardController::class, 'listAssignableTemplates'])->name('covers.list-assignable-templates');
 		Route::post('/covers/{cover}/assign-templates', [DashboardController::class, 'updateCoverTemplateAssignments'])->name('covers.update-assignments');
-		Route::post('/covers/auto-assign-templates', [DashboardController::class, 'autoAssignTemplatesToCovers'])->name('covers.auto-assign-templates');
 
 		Route::post('/items/{item_type}/{id}/update-text-placements', [DashboardController::class, 'updateTextPlacements'])->name('items.update-text-placements');
+
+		Route::get('/covers/without-templates', [DashboardController::class, 'getCoversWithoutTemplates'])->name('covers.without-templates');
+		Route::post('/covers/{cover}/templates/{template}/ai-evaluate-fit', [DashboardController::class, 'aiEvaluateTemplateFit'])->name('covers.templates.ai-evaluate-fit');
 
 		// }); // End auth middleware group
 	});

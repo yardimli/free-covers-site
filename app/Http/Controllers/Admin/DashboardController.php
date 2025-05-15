@@ -13,7 +13,10 @@ use App\Models\Overlay;
 use App\Models\CoverType;
 use App\Services\ImageUploadService;
 use App\Services\OpenAiService;
-use Illuminate\Support\Facades\Log; // For logging
+use Illuminate\Support\Facades\Log;
+use Intervention\Image\Laravel\Facades\Image;
+
+// For logging
 
 class DashboardController extends Controller
 {
@@ -776,107 +779,91 @@ class DashboardController extends Controller
 		return null; // Should not be reached if preg_match passes and Str::endsWith works
 	}
 
-	public function autoAssignTemplatesToCovers(Request $request)
+	public function aiEvaluateTemplateFit(Request $request, Cover $cover, Template $template) {
+		if (!$cover->thumbnail_path) {
+			return response()->json(['success' => false, 'message' => 'Cover image not found.'], 404);
+		}
+		if (!$template->thumbnail_path) { // This is the template's own thumbnail, which we'll use as the overlay
+			return response()->json(['success' => false, 'message' => 'Template thumbnail (overlay image) not found.'], 404);
+		}
+
+		$coverImagePath = $cover->thumbnail_path; // Prefer full image for the base
+
+		if (!Storage::disk('public')->exists($coverImagePath) || !Storage::disk('public')->exists($template->thumbnail_path)) {
+			return response()->json(['success' => false, 'message' => 'One or more image files not found on server.'], 404);
+		}
+
+		try {
+			$coverImageContent = Storage::disk('public')->get($coverImagePath);
+			$templateOverlayImageContent = Storage::disk('public')->get($template->thumbnail_path); // This is the template's image
+
+			// For Intervention Image 3.x
+			$baseImage = Image::read($coverImageContent);
+			$overlayImage = Image::read($templateOverlayImageContent);
+
+			// Get dimensions of the base image (the cover)
+			$baseImageWidth = $baseImage->width();
+			$baseImageHeight = $baseImage->height();
+
+			// Calculate the target width for the overlay (95% of the base image's width)
+			$targetOverlayWidth = (int) round($baseImageWidth * 0.95);
+
+			$overlayImage->scale(width : $targetOverlayWidth);
+
+			// Calculate margins for placement
+			// 3% top margin of the base image's height
+			$marginTop = (int) round($baseImageHeight * 0.03);
+			// 3% left margin of the base image's width
+			$marginLeft = (int) round($baseImageWidth * 0.03);
+
+			// Place the resized overlay onto the base image with the calculated margins.
+			// The `place` method's x and y are offsets from the specified position.
+			$baseImage->place($overlayImage, 'top-left', $marginLeft, $marginTop);
+
+			//save to temp folder in storage
+			// Ensure the temp directory exists
+			Storage::makeDirectory('public/temp', 0755, true);
+			$tempPath = storage_path('app/public/temp/composite_image.png');
+			$baseImage->save($tempPath);
+
+			// Get the composite image data as a PNG string
+			$encodedImage = $baseImage->toPng();
+			$base64CompositeImage = base64_encode((string) $encodedImage);
+			$mimeType = 'image/png';
+
+			// Prompt for AI
+			$prompt = "The caption of the underlying image is: \"". $cover->caption ."\". Analyze the following image, which is a book cover with a text template overlaid. Key questions: 1. Is all the text in the template easy to read? 2. Does the template allow whats described in the caption of the underlying image to remain visible? Based on these, decide if this is a good combination. Respond with only the single word 'YES' if the text is readable AND the core visual elements remain visible, or the word 'NO' with a short explanation if the text is unreadable OR central visual elements are obscured. Do not provide any explanation or other words.";
+
+			$aiResponse = $this->openAiService->generateMetadataFromImageBase64($prompt, $base64CompositeImage, $mimeType, 30);
+
+			if (isset($aiResponse['error'])) {
+				Log::error("AI Template Fit Error for Cover ID {$cover->id}, Template ID {$template->id}: " . $aiResponse['error']);
+				return response()->json(['success' => false, 'message' => "AI Error: " . $aiResponse['error']], 500);
+			}
+
+			$decisionString = trim(strtoupper($aiResponse['content'] ?? ''));
+			$shouldAssign = ($decisionString === 'YES');
+
+			Log::info("AI Template Fit Evaluation: Cover {$cover->id}, Template {$template->id}. BaseW:{$baseImageWidth}, OverlayTargetW:{$targetOverlayWidth}, MarginT:{$marginTop}, MarginL:{$marginLeft}. AI Raw: '{$aiResponse['content']}'. Parsed Decision: " . ($shouldAssign ? 'YES' : 'NO'));
+
+			return response()->json(['success' => true, 'data' => ['should_assign' => $shouldAssign]]);
+
+		} catch (\Exception $e) {
+			Log::error("Error in aiEvaluateTemplateFit (Cover ID {$cover->id}, Template ID {$template->id}): " . $e->getMessage() . "\n" . $e->getTraceAsString());
+			return response()->json(['success' => false, 'message' => 'Failed to evaluate template fit: ' . $e->getMessage()], 500);
+		}
+	}
+
+	public function getCoversWithoutTemplates(Request $request)
 	{
-		$validator = Validator::make($request->all(), [
-			'assignment_mode' => ['required', Rule::in(['replace', 'append'])],
-		]);
-
-		if ($validator->fails()) {
-			return response()->json(['success' => false, 'message' => 'Invalid assignment mode.', 'errors' => $validator->errors()], 422);
+		try {
+			$covers = Cover::whereDoesntHave('templates')
+				->orderBy('name') // Process in a consistent order
+				->get(['id', 'name']); // Fetch name for better logging/UI
+			return response()->json(['success' => true, 'data' => ['covers' => $covers]]);
+		} catch (\Exception $e) {
+			Log::error("Error fetching covers without templates: " . $e->getMessage());
+			return response()->json(['success' => false, 'message' => 'Error fetching covers: ' . $e->getMessage()], 500);
 		}
-
-		$assignmentMode = $request->input('assignment_mode');
-
-		// Eager load existing template IDs to optimize and for comparison
-		$covers = Cover::with('templates:id')->get();
-
-		$summary = [
-			'covers_scanned' => 0,
-			'covers_processed' => 0, // Had cover_type_id and text_placements
-			'skipped_no_type_or_placements' => 0,
-			'covers_with_new_assignments' => 0,
-			'total_templates_assigned' => 0, // Counts new links made
-		];
-
-		foreach ($covers as $cover) {
-			$summary['covers_scanned']++;
-
-			if (!$cover->cover_type_id || empty($cover->text_placements) || !is_array($cover->text_placements)) {
-				$summary['skipped_no_type_or_placements']++;
-				continue;
-			}
-
-			$summary['covers_processed']++;
-			$inversePlacements = [];
-			foreach ($cover->text_placements as $placement) {
-				if (!is_string($placement)) continue; // Skip non-string placements
-				$inverse = $this->getInversePlacement($placement);
-				if ($inverse) {
-					$inversePlacements[] = $inverse;
-				}
-			}
-
-			if (empty($inversePlacements)) {
-				Log::info("Cover ID {$cover->id} had text_placements but no valid inverses found: " . json_encode($cover->text_placements));
-				continue;
-			}
-
-			$uniqueInversePlacements = array_unique($inversePlacements);
-
-			$matchingTemplateQuery = Template::where('cover_type_id', $cover->cover_type_id);
-
-			// Find templates that contain ANY of the uniqueInversePlacements
-			$matchingTemplateQuery->where(function ($query) use ($uniqueInversePlacements) {
-				foreach ($uniqueInversePlacements as $ip) {
-					$query->orWhereJsonContains('text_placements', $ip);
-				}
-			});
-			$newlyFoundTemplateIds = $matchingTemplateQuery->pluck('id')->toArray();
-
-			if (empty($newlyFoundTemplateIds)) {
-				continue; // No matching templates found for this cover
-			}
-
-			$existingTemplateIds = $cover->templates->pluck('id')->toArray();
-			$finalTemplateIds = [];
-
-			if ($assignmentMode === 'append') {
-				$finalTemplateIds = array_unique(array_merge($existingTemplateIds, $newlyFoundTemplateIds));
-			} else { // 'replace'
-				$finalTemplateIds = array_unique($newlyFoundTemplateIds); // Ensure uniqueness if AI returns duplicates somehow
-			}
-
-			// Sort arrays for consistent comparison
-			$currentAssignedIdsSorted = $existingTemplateIds;
-			sort($currentAssignedIdsSorted);
-			$finalTemplateIdsSorted = $finalTemplateIds;
-			sort($finalTemplateIdsSorted);
-
-			if ($currentAssignedIdsSorted != $finalTemplateIdsSorted) {
-				$cover->templates()->sync($finalTemplateIds);
-				$summary['covers_with_new_assignments']++;
-
-				// Calculate how many *new* links were effectively made
-				if ($assignmentMode === 'append') {
-					$actuallyAddedCount = count(array_diff($newlyFoundTemplateIds, $existingTemplateIds));
-					$summary['total_templates_assigned'] += $actuallyAddedCount;
-				} else { // 'replace'
-					// All newlyFoundTemplateIds are considered "assigned" in this operation,
-					// but to count "new links", we compare to what was there before.
-					// If replacing [1,2] with [2,3], new links = 1 (for 3), removed links = 1 (for 1).
-					// For simplicity, let's count how many of the $finalTemplateIds were not in $existingTemplateIds.
-					// This is effectively the same as array_diff($finalTemplateIds, $existingTemplateIds)
-					$newlyLinkedCount = count(array_diff($finalTemplateIds, $existingTemplateIds));
-					$summary['total_templates_assigned'] += $newlyLinkedCount;
-				}
-			}
-		}
-
-		return response()->json([
-			'success' => true,
-			'message' => 'Auto-assignment process completed.',
-			'data' => $summary
-		]);
 	}
 }
