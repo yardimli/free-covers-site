@@ -2,7 +2,6 @@
 window.AppAdmin = window.AppAdmin || {};
 AppAdmin.AssignTemplates = (function() {
 	const { showAlert, escapeHtml } = AppAdmin.Utils;
-	const { getCurrentState } = AppAdmin.State;
 	const { loadItems } = AppAdmin.Items;
 	let $assignTemplatesModal, assignTemplatesModal, $assignTemplatesForm,
 		$assignableTemplatesList, $noAssignableTemplatesMessage, $saveTemplateAssignmentsButton,
@@ -52,7 +51,7 @@ AppAdmin.AssignTemplates = (function() {
 						response.data.templates.forEach(template => {
 							const thumbnailUrlData = template.thumbnail_url ? `data-thumbnail-url="${escapeHtml(template.thumbnail_url)}"` : '';
 							const checkboxHtml = `
-                                <div class="form-check template-item-host" ${thumbnailUrlData}>
+                                <div class="template-item-host d-inline-block" style="width:30%;" ${thumbnailUrlData}>
                                     <input class="form-check-input" type="checkbox" value="${template.id}" id="template_assign_${template.id}" name="template_ids[]" ${template.is_assigned ? 'checked' : ''}>
                                     <label class="form-check-label" for="template_assign_${template.id}">
                                         ${escapeHtml(template.name)}
@@ -101,8 +100,12 @@ AppAdmin.AssignTemplates = (function() {
 				if (response.success) {
 					showAlert(response.message || 'Template assignments updated successfully!', 'success');
 					assignTemplatesModal.hide();
-					const state = getCurrentState('covers');
-					loadItems('covers', state.page, state.search, state.coverTypeId, currentScrollY);
+					const params = new URLSearchParams(window.location.search);
+					const page = parseInt(params.get('page'), 10) || 1;
+					const search = params.get('search') || '';
+					const coverTypeIdFilter = params.get('filter') || '';
+					
+					loadItems('covers', page, search, coverTypeIdFilter, currentScrollY);
 				} else {
 					showAlert('Error updating assignments: ' + escapeHtml(response.message || 'Unknown error'), 'danger');
 				}

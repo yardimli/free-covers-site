@@ -49,7 +49,7 @@ body {
 }
 .item-table img.thumbnail-preview {
     max-width: 120px;
-    max-height: 180px;
+    max-height: 200px;
     object-fit: contain;
     border: 1px solid #eee;
     background-color: #fff; /* Add background for transparent images */
@@ -60,14 +60,13 @@ body {
 .table th, .table td {
     vertical-align: middle;
 }
-.item-table td:last-child { /* Actions column */
-    white-space: nowrap; /* Prevent buttons wrapping */
-    width: auto; /* Allow it to take necessary width for 3 buttons */
-    /* width: 1%; /* Try to minimize width - this might be too small now */
-}
+
 .item-table td:last-child .btn {
+    width: 33px;
     padding: 0.25rem 0.5rem; /* Slightly smaller padding for more buttons */
     font-size: 0.8rem; /* Slightly smaller font for icons */
+    margin-right: 2px;
+    margin-bottom: 2px;
 }
 .item-table td:last-child .btn i {
     font-size: 0.9em; /* Adjust icon size within button if needed */

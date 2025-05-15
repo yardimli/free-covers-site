@@ -2,7 +2,6 @@
 window.AppAdmin = window.AppAdmin || {};
 AppAdmin.Edit = (function() {
 	const { showAlert, escapeHtml, capitalizeFirstLetter } = AppAdmin.Utils;
-	const { getCurrentState } = AppAdmin.State;
 	const { loadItems } = AppAdmin.Items;
 	const { populateAllCoverTypeDropdowns } = AppAdmin.CoverTypes; // Ensure this is available
 	
@@ -100,8 +99,11 @@ AppAdmin.Edit = (function() {
 				if (response.success) {
 					showAlert(`${capitalizeFirstLetter(itemType).slice(0,-1)} updated successfully!`, 'success');
 					editModal.hide();
-					const state = getCurrentState(itemType);
-					loadItems(itemType, state.page, state.search, state.coverTypeId, currentScrollY );
+					const params = new URLSearchParams(window.location.search);
+					const page = parseInt(params.get('page'), 10) || 1;
+					const search = params.get('search') || '';
+					const coverTypeIdFilter = params.get('filter') || '';
+					loadItems(itemType, page, search, coverTypeIdFilter, currentScrollY );
 				} else {
 					let errorMsg = `Error updating ${itemType}: ${escapeHtml(response.message)}`;
 					if (response.errors) {

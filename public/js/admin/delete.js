@@ -3,7 +3,6 @@ window.AppAdmin = window.AppAdmin || {};
 
 AppAdmin.Delete = (function() {
 	const { showAlert, escapeHtml, capitalizeFirstLetter } = AppAdmin.Utils;
-	const { getCurrentState } = AppAdmin.State;
 	const { loadItems } = AppAdmin.Items;
 	
 	function handleDeleteItemClick() {
@@ -25,8 +24,11 @@ AppAdmin.Delete = (function() {
 				success: function(response) {
 					if (response.success) {
 						showAlert(`${capitalizeFirstLetter(itemType).slice(0,-1)} deleted successfully!`, 'success');
-						const state = getCurrentState(itemType);
-						loadItems(itemType, state.page, state.search, state.coverTypeId, currentScrollY);
+						const params = new URLSearchParams(window.location.search);
+						const page = parseInt(params.get('page'), 10) || 1;
+						const search = params.get('search') || '';
+						const coverTypeIdFilter = params.get('filter') || '';
+						loadItems(itemType, page, search, coverTypeIdFilter, currentScrollY);
 					} else {
 						showAlert(`Error deleting ${itemType}: ${escapeHtml(response.message)}`, 'danger');
 						$button.prop('disabled', false).html(originalButtonHtml);

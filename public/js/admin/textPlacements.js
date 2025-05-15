@@ -2,7 +2,6 @@
 window.AppAdmin = window.AppAdmin || {};
 AppAdmin.TextPlacements = (function() {
 	const { showAlert, escapeHtml } = AppAdmin.Utils;
-	const { getCurrentState } = AppAdmin.State;
 	const { loadItems } = AppAdmin.Items;
 	
 	let $modal, modalInstance, $form;
@@ -138,8 +137,11 @@ AppAdmin.TextPlacements = (function() {
 				if (response.success) {
 					showAlert(response.message || 'Text placements updated successfully!', 'success');
 					modalInstance.hide();
-					const state = getCurrentState(currentItemType);
-					loadItems(currentItemType, state.page, state.search, state.coverTypeId, currentScrollY);
+					const params = new URLSearchParams(window.location.search);
+					const page = parseInt(params.get('page'), 10) || 1;
+					const search = params.get('search') || '';
+					const coverTypeIdFilter = params.get('filter') || '';
+					loadItems(currentItemType, page, search, coverTypeIdFilter, currentScrollY);
 				} else {
 					let errorMsg = `Error: ${escapeHtml(response.message || 'Unknown error')}`;
 					if (response.errors) {

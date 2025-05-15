@@ -3,7 +3,6 @@ window.AppAdmin = window.AppAdmin || {};
 
 AppAdmin.Upload = (function() {
 	const { showAlert, escapeHtml, deriveNameFromFilename, capitalizeFirstLetter } = AppAdmin.Utils;
-	const { getCurrentState, setCurrentState } = AppAdmin.State;
 	const { loadItems } = AppAdmin.Items;
 	
 	function handleUploadFormSubmit(event) {
@@ -132,12 +131,12 @@ AppAdmin.Upload = (function() {
 			if (successCount > 0) {
 				$form[0].reset();
 				const currentActiveItemType = $('#adminTab button.active').data('bs-target').replace('#', '').replace('-panel', '');
-				const state = getCurrentState(itemType);
 				if (currentActiveItemType === itemType) {
-					loadItems(itemType, 1, '', state.coverTypeId);
-				} else {
-					// If uploading to a non-active tab, just set its state to refresh on next view
-					setCurrentState(itemType, 1, '', state.coverTypeId);
+					const params = new URLSearchParams(window.location.search);
+					const page = parseInt(params.get('page'), 10) || 1;
+					const search = params.get('search') || '';
+					const coverTypeIdFilter = params.get('filter') || '';
+					loadItems(itemType, 1, '', coverTypeIdFilter);
 				}
 			}
 			

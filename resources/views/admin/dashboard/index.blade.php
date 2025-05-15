@@ -79,14 +79,10 @@
 					<thead>
 					<tr>
 						<th>Preview</th>
-						<th>Name</th>
-						<th>Cover Type</th>
-						<th>Caption</th>
-						<th>Keywords</th>
-						<th>Categories</th>
-						<th>Text Placements</th>
-						<th>Assigned Templates</th>
-						<th>Actions</th>
+						<th style="min-width: 150px;">Name/Type</th>
+						<th>Caption/Keywords</th>
+						<th style="min-width: 250px;">Placements/Templates/Categories</th>
+						<th style="width: 135px;">Actions</th>
 					</tr>
 					</thead>
 					<tbody><!-- Populated by JS --></tbody>
@@ -151,10 +147,10 @@
 					<thead>
 					<tr>
 						<th>Preview</th>
-						<th>Name</th>
-						<th>Cover Type</th>
+						<th style="width: 200px;">Name/Cover Type</th>
 						<th>Keywords</th>
-						<th>Actions</th>
+						<th>Text Placements</th>
+						<th style="width: 135px;">Actions</th>
 					</tr>
 					</thead>
 					<tbody></tbody>
@@ -201,7 +197,7 @@
 						<th>Preview</th>
 						<th>Name</th>
 						<th>Keywords</th>
-						<th>Actions</th>
+						<th style="width: 135px;">Actions</th>
 					</tr>
 					</thead>
 					<tbody></tbody>
@@ -248,7 +244,7 @@
 						<th>Preview</th>
 						<th>Name</th>
 						<th>Keywords</th>
-						<th>Actions</th>
+						<th style="width: 135px;">Actions</th>
 					</tr>
 					</thead>
 					<tbody></tbody>
@@ -367,34 +363,32 @@
 	</div>
 	
 	<!-- Assign Templates Modal -->
-	<!-- Assign Templates Modal -->
 	<div class="modal fade" id="assignTemplatesModal" tabindex="-1" aria-labelledby="assignTemplatesModalLabel" aria-hidden="true">
-		<div class="modal-dialog modal-xl"> <!-- Increased modal size for better layout -->
-			<div class="modal-content">
+		<div class="modal-dialog modal-xl">
+			<div class="modal-content p-0">
 				<form id="assignTemplatesForm">
-					<div class="modal-header">
+					<div class="modal-header py-2 px-3">
 						<h5 class="modal-title" id="assignTemplatesModalLabel">Assign Templates</h5>
 						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
-					<div class="modal-body">
+					<div class="modal-body p-2">
 						<input type="hidden" id="assignTemplatesCoverId" name="cover_id">
-						<div class="row">
-							<div class="col-md-7"> <!-- Left Part: Details and Template List -->
-								<p><strong>Cover:</strong> <span id="assignTemplatesCoverName"></span></p>
-								<p><strong>Cover Type:</strong> <span id="assignTemplatesCoverTypeName"></span></p>
-								<hr>
-								<h6>Available Templates (for this cover type):</h6>
-								<div id="assignableTemplatesList" style="max-height: 350px; overflow-y: auto; padding: 10px; padding-left: 30px; border: 1px solid #eee; border-radius: 4px;">
+						<div class="row g-1">
+							<div class="col-md-7">
+								<p class="mb-0"><strong>Cover:</strong> <span id="assignTemplatesCoverName"></span></p>
+								<p class="mb-1"><strong>Cover Type:</strong> <span id="assignTemplatesCoverTypeName"></span></p>
+								<hr class="my-1">
+								<h6 class="mb-1">Available Templates (for this cover type):</h6>
+								<div id="assignableTemplatesList" style="max-height: 400px; overflow-y: auto; padding: 5px; padding-left: 15px; border: 1px solid #eee; border-radius: 4px;">
 									<!-- Checkboxes will be populated by JS -->
-									<p class="text-center">Loading templates...</p>
+									<p class="text-center mb-0">Loading templates...</p>
 								</div>
-								<div id="noAssignableTemplatesMessage" class="alert alert-info mt-2" style="display: none;">
+								<div id="noAssignableTemplatesMessage" class="alert alert-info mt-1 py-1 px-2" style="display: none;">
 									<!-- Message populated by JS -->
 								</div>
 							</div>
-							<div class="col-md-5"> <!-- Right Part: Cover Preview -->
-								<h6>Cover Preview:</h6>
-								{{-- Removed inline styles from the div and its children img/span tags --}}
+							<div class="col-md-5">
+								<h6 class="mb-1">Cover Preview:</h6>
 								<div id="assignTemplatesCoverPreviewContainer">
 									<img id="assignTemplatesCoverPreviewImage" src="" alt="Cover Preview">
 									<img id="assignTemplatesTemplateOverlay" src="" alt="Template Overlay">
@@ -403,9 +397,9 @@
 							</div>
 						</div>
 					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-						<button type="submit" class="btn btn-primary" id="saveTemplateAssignmentsButton">Save Assignments</button>
+					<div class="modal-footer py-1 px-2">
+						<button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+						<button type="submit" class="btn btn-primary btn-sm" id="saveTemplateAssignmentsButton">Save Assignments</button>
 					</div>
 				</form>
 			</div>
@@ -459,5 +453,43 @@
 			</div>
 		</div>
 	</div>
-
+	
+	<!-- Auto Assign Templates Modal -->
+	<div class="modal fade" id="autoAssignTemplatesModal" tabindex="-1" aria-labelledby="autoAssignTemplatesModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="autoAssignTemplatesModalLabel">Auto Assign Templates to Covers</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<p>This action will attempt to automatically assign templates to covers based on matching cover types and inverse text placements (e.g., cover 'top-light' → template 'top-dark').</p>
+					<p>How should existing template assignments on covers be handled?</p>
+					<div class="form-check">
+						<input class="form-check-input" type="radio" name="assignmentMode" id="assignmentModeAppend" value="append" checked>
+						<label class="form-check-label" for="assignmentModeAppend">
+							Add to existing assignments (default)
+						</label>
+					</div>
+					<div class="form-check">
+						<input class="form-check-input" type="radio" name="assignmentMode" id="assignmentModeReplace" value="replace">
+						<label class="form-check-label" for="assignmentModeReplace">
+							Replace all existing assignments
+						</label>
+					</div>
+					<div id="autoAssignProgressArea" class="mt-3" style="display: none;">
+						<h6>Progress:</h6>
+						<div class="progress" style="height: 20px;">
+							<div id="autoAssignProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+						</div>
+						<p id="autoAssignProgressText" class="mt-2 mb-0 small"></p>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+					<button type="button" class="btn btn-primary" id="startAutoAssignButton">Start Auto-Assignment</button>
+				</div>
+			</div>
+		</div>
+	</div>
 @endsection

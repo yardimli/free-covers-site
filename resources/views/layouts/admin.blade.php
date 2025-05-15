@@ -26,6 +26,11 @@
 				</button>
 			</li>
 			<li class="nav-item">
+				<button id="autoAssignTemplatesBtn" class="btn btn-sm btn-outline-success me-2" type="button">
+					Auto Assign Templates
+				</button>
+			</li>
+			<li class="nav-item">
 				<a href="{{ route('home') }}" class="btn btn-sm btn-outline-light me-2" target="_blank">View App</a>
 			</li>
 			@auth
@@ -71,18 +76,18 @@
 		deleteItem: "{{ route('admin.items.delete') }}",
 		generateAiMetadata: "{{ route('admin.items.generate-ai-metadata') }}",
 		generateSimilarTemplate: "{{ route('admin.templates.generate-similar') }}",
-		generateAiTextPlacementsBase: "{{ url('admin/covers') }}", // Base for specific cover actions
+		generateAiTextPlacementsBase: "{{ url('admin/covers') }}",
 		getUnprocessedCovers: "{{ route('admin.covers.unprocessed-list') }}",
-		listAssignableTemplatesBase: "{{ url('admin/covers') }}", // Base for specific cover actions
-		updateCoverTemplateAssignmentsBase: "{{ url('admin/covers') }}", // Base for specific cover actions
-		updateTextPlacementsBase: "{{ url('admin/items') }}", // New base URL for text placements update
+		listAssignableTemplatesBase: "{{ url('admin/covers') }}",
+		updateCoverTemplateAssignmentsBase: "{{ url('admin/covers') }}",
+		updateTextPlacementsBase: "{{ url('admin/items') }}",
+		autoAssignTemplates: "{{ route('admin.covers.auto-assign-templates') }}",
 	};
 	window.AppAdmin = window.AppAdmin || {}; // Initialize the global namespace
 </script>
 
 <!-- Modular Admin Scripts (Order Matters!) -->
 <script src="{{ asset('js/admin/utils.js') }}"></script>
-<script src="{{ asset('js/admin/state.js') }}"></script>
 <script src="{{ asset('js/admin/coverTypes.js') }}"></script>
 <script src="{{ asset('js/admin/items.js') }}"></script>
 <script src="{{ asset('js/admin/upload.js') }}"></script>
@@ -92,6 +97,9 @@
 <script src="{{ asset('js/admin/aiSimilarTemplate.js') }}"></script>
 <script src="{{ asset('js/admin/assignTemplates.js') }}"></script>
 <script src="{{ asset('js/admin/textPlacements.js') }}"></script>
+<script src="{{ asset('js/admin/autoAssignTemplates.js') }}"></script>
+<script src="{{ asset('js/admin/batchCoverTextPlacement.js') }}"></script>
+
 
 <!-- Main Admin Orchestrator -->
 <script src="{{ asset('js/admin.js') }}"></script>

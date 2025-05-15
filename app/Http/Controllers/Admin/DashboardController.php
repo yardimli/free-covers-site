@@ -760,4 +760,123 @@ class DashboardController extends Controller
 			return response()->json(['success' => false, 'message' => 'Update failed: ' . $e->getMessage()], 500);
 		}
 	}
+
+	private function getInversePlacement(string $placement): ?string
+	{
+		// Validate format 'area-tone'
+		if (!preg_match('/^(top|middle|bottom|left|right)-(light|dark)$/', $placement)) {
+			return null;
+		}
+
+		if (Str::endsWith($placement, '-light')) {
+			return Str::replaceLast('-light', '-dark', $placement);
+		} elseif (Str::endsWith($placement, '-dark')) {
+			return Str::replaceLast('-dark', '-light', $placement);
+		}
+		return null; // Should not be reached if preg_match passes and Str::endsWith works
+	}
+
+	public function autoAssignTemplatesToCovers(Request $request)
+	{
+		$validator = Validator::make($request->all(), [
+			'assignment_mode' => ['required', Rule::in(['replace', 'append'])],
+		]);
+
+		if ($validator->fails()) {
+			return response()->json(['success' => false, 'message' => 'Invalid assignment mode.', 'errors' => $validator->errors()], 422);
+		}
+
+		$assignmentMode = $request->input('assignment_mode');
+
+		// Eager load existing template IDs to optimize and for comparison
+		$covers = Cover::with('templates:id')->get();
+
+		$summary = [
+			'covers_scanned' => 0,
+			'covers_processed' => 0, // Had cover_type_id and text_placements
+			'skipped_no_type_or_placements' => 0,
+			'covers_with_new_assignments' => 0,
+			'total_templates_assigned' => 0, // Counts new links made
+		];
+
+		foreach ($covers as $cover) {
+			$summary['covers_scanned']++;
+
+			if (!$cover->cover_type_id || empty($cover->text_placements) || !is_array($cover->text_placements)) {
+				$summary['skipped_no_type_or_placements']++;
+				continue;
+			}
+
+			$summary['covers_processed']++;
+			$inversePlacements = [];
+			foreach ($cover->text_placements as $placement) {
+				if (!is_string($placement)) continue; // Skip non-string placements
+				$inverse = $this->getInversePlacement($placement);
+				if ($inverse) {
+					$inversePlacements[] = $inverse;
+				}
+			}
+
+			if (empty($inversePlacements)) {
+				Log::info("Cover ID {$cover->id} had text_placements but no valid inverses found: " . json_encode($cover->text_placements));
+				continue;
+			}
+
+			$uniqueInversePlacements = array_unique($inversePlacements);
+
+			$matchingTemplateQuery = Template::where('cover_type_id', $cover->cover_type_id);
+
+			// Find templates that contain ANY of the uniqueInversePlacements
+			$matchingTemplateQuery->where(function ($query) use ($uniqueInversePlacements) {
+				foreach ($uniqueInversePlacements as $ip) {
+					$query->orWhereJsonContains('text_placements', $ip);
+				}
+			});
+			$newlyFoundTemplateIds = $matchingTemplateQuery->pluck('id')->toArray();
+
+			if (empty($newlyFoundTemplateIds)) {
+				continue; // No matching templates found for this cover
+			}
+
+			$existingTemplateIds = $cover->templates->pluck('id')->toArray();
+			$finalTemplateIds = [];
+
+			if ($assignmentMode === 'append') {
+				$finalTemplateIds = array_unique(array_merge($existingTemplateIds, $newlyFoundTemplateIds));
+			} else { // 'replace'
+				$finalTemplateIds = array_unique($newlyFoundTemplateIds); // Ensure uniqueness if AI returns duplicates somehow
+			}
+
+			// Sort arrays for consistent comparison
+			$currentAssignedIdsSorted = $existingTemplateIds;
+			sort($currentAssignedIdsSorted);
+			$finalTemplateIdsSorted = $finalTemplateIds;
+			sort($finalTemplateIdsSorted);
+
+			if ($currentAssignedIdsSorted != $finalTemplateIdsSorted) {
+				$cover->templates()->sync($finalTemplateIds);
+				$summary['covers_with_new_assignments']++;
+
+				// Calculate how many *new* links were effectively made
+				if ($assignmentMode === 'append') {
+					$actuallyAddedCount = count(array_diff($newlyFoundTemplateIds, $existingTemplateIds));
+					$summary['total_templates_assigned'] += $actuallyAddedCount;
+				} else { // 'replace'
+					// All newlyFoundTemplateIds are considered "assigned" in this operation,
+					// but to count "new links", we compare to what was there before.
+					// If replacing [1,2] with [2,3], new links = 1 (for 3), removed links = 1 (for 1).
+					// For simplicity, let's count how many of the $finalTemplateIds were not in $existingTemplateIds.
+					// This is effectively the same as array_diff($finalTemplateIds, $existingTemplateIds)
+					$newlyLinkedCount = count(array_diff($finalTemplateIds, $existingTemplateIds));
+					$summary['total_templates_assigned'] += $newlyLinkedCount;
+				}
+			}
+		}
+
+		return response()->json([
+			'success' => true,
+			'message' => 'Auto-assignment process completed.',
+			'data' => $summary
+		]);
+	}
 }

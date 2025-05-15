@@ -1,6 +1,5 @@
 // public/js/admin/coverTypes.js
 window.AppAdmin = window.AppAdmin || {};
-
 AppAdmin.CoverTypes = (function() {
 	const { showAlert, escapeHtml } = AppAdmin.Utils;
 	let allCoverTypes = [];
@@ -13,7 +12,7 @@ AppAdmin.CoverTypes = (function() {
 			success: function(response) {
 				if (response.success && response.data.cover_types) {
 					allCoverTypes = response.data.cover_types;
-					populateAllCoverTypeDropdowns();
+					populateAllCoverTypeDropdowns(); // Ensure this is called
 				} else {
 					showAlert('Error fetching cover types: ' + escapeHtml(response.message), 'danger');
 				}
@@ -36,7 +35,13 @@ AppAdmin.CoverTypes = (function() {
 			allCoverTypes.forEach(function(type) {
 				$dropdown.append(`<option value="${escapeHtml(type.id)}">${escapeHtml(type.type_name)}</option>`);
 			});
-			$dropdown.val(currentValue); // Re-apply selection
+			
+			// Re-apply selection if it's still valid
+			if ($dropdown.find(`option[value="${currentValue}"]`).length > 0) {
+				$dropdown.val(currentValue);
+			} else {
+				$dropdown.val(firstOptionValue); // Reset to default if old value is gone
+			}
 		});
 	}
 	
@@ -46,7 +51,7 @@ AppAdmin.CoverTypes = (function() {
 	
 	return {
 		fetchCoverTypes,
-		populateAllCoverTypeDropdowns,
+		populateAllCoverTypeDropdowns, // Export if called externally, though fetchCoverTypes calls it internally
 		getAllCoverTypes
 	};
 })();

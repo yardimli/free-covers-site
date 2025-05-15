@@ -3,7 +3,6 @@ window.AppAdmin = window.AppAdmin || {};
 
 AppAdmin.AiMetadata = (function() {
 	const { showAlert, escapeHtml, capitalizeFirstLetter } = AppAdmin.Utils;
-	const { getCurrentState } = AppAdmin.State;
 	const { loadItems } = AppAdmin.Items;
 	
 	function handleGenerateAiMetadataClick() {
@@ -26,8 +25,11 @@ AppAdmin.AiMetadata = (function() {
 			success: function(response) {
 				if (response.success) {
 					showAlert(`${capitalizeFirstLetter(itemType).slice(0,-1)} AI metadata generated/updated successfully!`, 'success');
-					const state = getCurrentState(itemType);
-					loadItems(itemType, state.page, state.search, state.coverTypeId);
+					const params = new URLSearchParams(window.location.search);
+					const page = parseInt(params.get('page'), 10) || 1;
+					const search = params.get('search') || '';
+					const coverTypeIdFilter = params.get('filter') || '';
+					loadItems(itemType, page, search, coverTypeIdFilter);
 				} else {
 					showAlert(`Error generating AI metadata for ${itemType}: ${escapeHtml(response.message)}`, 'danger');
 				}
@@ -42,53 +44,9 @@ AppAdmin.AiMetadata = (function() {
 		});
 	}
 	
-	function handleAnalyzeTextPlacementsClick() {
-		const $button = $(this);
-		const itemId = $button.data('id');
-		const itemType = $button.data('type'); // Should be 'covers'
-		
-		if (itemType !== 'covers') {
-			showAlert('This action is only available for covers.', 'warning');
-			return;
-		}
-		
-		if (!confirm(`Are you sure you want to use AI to analyze text placements for Cover ID ${itemId}? This may overwrite existing text placement data.`)) {
-			return;
-		}
-		
-		const originalButtonHtml = $button.html();
-		$button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Analyzing...');
-		
-		// Construct the URL correctly using the base path from adminRoutes
-		const url = window.adminRoutes.generateAiTextPlacementsBase + '/' + itemId + '/generate-ai-text-placements';
-		
-		$.ajax({
-			url: url,
-			type: 'POST',
-			// data: { _token: $('meta[name="csrf-token"]').attr('content') }, // CSRF handled globally
-			dataType: 'json',
-			success: function(response) {
-				if (response.success) {
-					showAlert(response.message || 'Text placements analyzed successfully!', 'success');
-					const state = getCurrentState(itemType);
-					loadItems(itemType, state.page, state.search, state.coverTypeId);
-				} else {
-					showAlert(`Error analyzing text placements: ${escapeHtml(response.message)}`, 'danger');
-				}
-			},
-			error: function(xhr, status, error) {
-				showAlert(`AJAX Error analyzing text placements: ${escapeHtml(xhr.responseText || error)}`, 'danger');
-				console.error("AJAX Error (Text Placements):", status, error, xhr.responseText);
-			},
-			complete: function() {
-				$button.prop('disabled', false).html(originalButtonHtml);
-			}
-		});
-	}
 	
 	function init() {
 		$('.tab-content').on('click', '.generate-ai-metadata', handleGenerateAiMetadataClick)
-		$('.tab-content').on('click', '.analyze-text-placements', handleAnalyzeTextPlacementsClick); ;
 	}
 	
 	return {
