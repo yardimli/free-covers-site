@@ -1,7 +1,13 @@
 // public/js/admin.js (Main Orchestrator)
 $(document).ready(function() {
 	// Ensure AppAdmin and its modules are loaded
-	const requiredModules = ['Utils', 'State', 'CoverTypes', 'Items', 'Upload', 'Edit', 'Delete', 'AiMetadata', 'AiSimilarTemplate', 'AssignTemplates'];
+	const requiredModules = [
+		'Utils', 'State', 'CoverTypes', 'Items',
+		'Upload', 'Edit', 'Delete',
+		'AiMetadata', 'AiSimilarTemplate',
+		'AssignTemplates', 'TextPlacements' // Added TextPlacements
+	];
+	
 	for (const moduleName of requiredModules) {
 		if (!window.AppAdmin || !window.AppAdmin[moduleName]) {
 			console.error(`Critical Error: AppAdmin.${moduleName} module is missing. Ensure all JS files are loaded correctly and in order.`);
@@ -9,11 +15,11 @@ $(document).ready(function() {
 			return; // Stop execution if a module is missing
 		}
 	}
-	
-	const { showAlert, escapeHtml } = AppAdmin.Utils; // Added escapeHtml here if not already
+	const { showAlert, escapeHtml } = AppAdmin.Utils;
 	const { getCurrentState } = AppAdmin.State;
 	const { loadItems } = AppAdmin.Items;
 	const { fetchCoverTypes } = AppAdmin.CoverTypes;
+	
 	
 	$.ajaxSetup({
 		headers: {
@@ -28,12 +34,12 @@ $(document).ready(function() {
 	let processedItemsInBatch = 0;
 	let successItemsInBatch = 0;
 	let errorItemsInBatch = 0;
-	
 	const $batchProgressArea = $('#batchProgressArea');
 	const $batchProgressBar = $('#batchProgressBar');
 	const $batchProgressText = $('#batchProgressText');
 	const $batchProgressSummary = $('#batchProgressSummary');
 	const $batchAnalyzeButton = $('#batchAnalyzeTextPlacementsBtn'); // Cache the button
+	
 	
 	// Initialize modules that set up their own event listeners
 	AppAdmin.Upload.init();
@@ -42,6 +48,7 @@ $(document).ready(function() {
 	AppAdmin.AiMetadata.init();
 	AppAdmin.AiSimilarTemplate.init();
 	AppAdmin.AssignTemplates.init();
+	AppAdmin.TextPlacements.init(); // Initialize the new module
 	
 	function updateBatchProgress() {
 		const percentage = totalItemsInBatch > 0 ? (processedItemsInBatch / totalItemsInBatch) * 100 : 0;
@@ -49,6 +56,7 @@ $(document).ready(function() {
 		$batchProgressText.text(`${processedItemsInBatch}/${totalItemsInBatch} Processed`);
 		$batchProgressSummary.text(`Success: ${successItemsInBatch}, Errors: ${errorItemsInBatch}. Remaining: ${totalItemsInBatch - processedItemsInBatch}`);
 	}
+	
 	
 	// --- Main Event Handlers & Initialization ---
 	fetchCoverTypes().then(() => {
@@ -64,8 +72,9 @@ $(document).ready(function() {
 	}).catch(error => {
 		console.error("Failed to fetch cover types on initial load:", error);
 		AppAdmin.Utils.showAlert("Failed to initialize admin panel: Could not load cover types.", "danger");
-		loadItems('covers');
+		loadItems('covers'); // Attempt to load default tab even if cover types fail
 	});
+	
 	
 	$('#adminTab button[data-bs-toggle="tab"]').on('shown.bs.tab', function (event) {
 		const targetPanelId = $(event.target).data('bs-target');
@@ -79,7 +88,7 @@ $(document).ready(function() {
 		const itemType = $(this).data('type');
 		const coverTypeId = $(this).val();
 		const state = getCurrentState(itemType);
-		loadItems(itemType, 1, state.search, coverTypeId);
+		loadItems(itemType, 1, state.search, coverTypeId); // Reset to page 1 on filter change
 	});
 	
 	// Pagination Clicks
@@ -101,25 +110,19 @@ $(document).ready(function() {
 		const $form = $(this);
 		const itemType = $form.data('type');
 		const searchQuery = $form.find('.search-input').val().trim();
-		const coverTypeId = $form.find('.cover-type-filter').val() || '';
-		loadItems(itemType, 1, searchQuery, coverTypeId);
+		const coverTypeId = $form.find('.cover-type-filter').val() || ''; // Get filter value from within the form
+		loadItems(itemType, 1, searchQuery, coverTypeId); // Reset to page 1 on new search
 	});
 	
 	// --- Batch Analyze Text Placements Button ---
 	async function processSingleCover(coverId) {
-		// Use the existing route for single item analysis,
-		// which is now correctly named `generateAiTextPlacementsBase` + /id/ + action
-		// The route name in admin.blade.php for this is `generateAiTextPlacementsBase`
-		// and the controller method is `generateAiTextPlacements(Request $request, Cover $cover)`
 		const url = window.adminRoutes.generateAiTextPlacementsBase + '/' + coverId + '/generate-ai-text-placements';
-		
 		try {
 			const response = await $.ajax({
 				url: url,
 				type: 'POST',
 				dataType: 'json'
 			});
-			
 			if (response.success) {
 				successItemsInBatch++;
 			} else {
@@ -153,9 +156,8 @@ $(document).ready(function() {
 		successItemsInBatch = 0;
 		errorItemsInBatch = 0;
 		currentBatchQueue = [];
-		
 		$batchProgressBar.css('width', '0%').attr('aria-valuenow', 0)
-			.removeClass('bg-success bg-danger bg-warning bg-info progress-bar-animated')
+			.removeClass('bg-success bg-danger bg-warning bg-info progress-bar-animated') // remove all color classes
 			.addClass('progress-bar-striped progress-bar-animated'); // Add back animation for processing
 		$batchProgressText.text('Fetching items to process...');
 		$batchProgressSummary.text('');
@@ -164,7 +166,7 @@ $(document).ready(function() {
 		try {
 			// 1. Get list of unprocessed cover IDs
 			const listResponse = await $.ajax({
-				url: window.adminRoutes.getUnprocessedCovers, // New route defined in admin.blade.php
+				url: window.adminRoutes.getUnprocessedCovers,
 				type: 'GET',
 				dataType: 'json'
 			});
@@ -172,7 +174,6 @@ $(document).ready(function() {
 			if (!listResponse.success || !listResponse.data || !listResponse.data.cover_ids) {
 				throw new Error(listResponse.message || 'Failed to fetch list of unprocessed covers.');
 			}
-			
 			currentBatchQueue = listResponse.data.cover_ids;
 			totalItemsInBatch = currentBatchQueue.length;
 			
@@ -184,11 +185,9 @@ $(document).ready(function() {
 				finishBatchProcessing(originalButtonText);
 				return;
 			}
-			
 			updateBatchProgress(); // Initial display of 0/total
 			
 			// 2. Process each cover ID sequentially
-			// Using a for...of loop with await ensures sequential processing
 			for (const coverId of currentBatchQueue) {
 				await processSingleCover(coverId);
 				// Optional: Add a small delay to be nice to the server/API
@@ -205,10 +204,9 @@ $(document).ready(function() {
 				$batchProgressBar.addClass('bg-warning');
 			} else if (errorItemsInBatch > 0 && successItemsInBatch === 0) {
 				$batchProgressBar.addClass('bg-danger');
-			} else { // Should not happen if totalItems > 0
+			} else { // Should not happen if totalItems > 0 and no successes
 				$batchProgressBar.addClass('bg-info');
 			}
-			
 			
 		} catch (error) {
 			console.error("Error during batch processing orchestration:", error);
@@ -235,6 +233,6 @@ $(document).ready(function() {
 		// setTimeout(() => { $batchProgressArea.slideUp(); }, 15000);
 	}
 	
-	
 	$batchAnalyzeButton.on('click', startBatchProcessing);
+	
 });

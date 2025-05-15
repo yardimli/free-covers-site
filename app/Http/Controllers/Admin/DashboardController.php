@@ -87,7 +87,6 @@ class DashboardController extends Controller
 			$query->with('coverType:id,type_name');
 		}
 
-
 		if ($search) {
 			$query->where(function ($q) use ($search, $itemType) {
 				$q->where('name', 'LIKE', "%{$search}%");
@@ -118,13 +117,11 @@ class DashboardController extends Controller
 			if ($itemType === 'covers') {
 				$item->cover_type_name = $item->coverType->type_name ?? null;
 				$item->assigned_templates_count = $item->templates->count();
-				$item->assigned_templates_names = $item->templates->isNotEmpty()
-					? $item->templates->pluck('name')->implode(', ')
-					: 'None';
+				$item->assigned_templates_names = $item->templates->isNotEmpty() ? $item->templates->pluck('name')->implode(', ') : 'None';
 			} elseif ($itemType === 'templates') {
 				$item->cover_type_name = $item->coverType->type_name ?? null;
 			}
-			// Keywords and categories are already cast to arrays by the model
+			// Keywords, categories, text_placements are already cast to arrays by the model
 			return $item;
 		});
 
@@ -148,15 +145,16 @@ class DashboardController extends Controller
 		$rules = [
 			'item_type' => ['required', Rule::in(['covers', 'templates', 'elements', 'overlays'])],
 			'name' => 'required_without:image_file,json_file|nullable|string|max:255',
-			'keywords' => 'nullable|string|max:1000',
+			'keywords' => 'nullable|string|max:1000', // Comma-separated string from form
 		];
 
 		if ($itemType === 'covers' || $itemType === 'templates') {
 			$rules['cover_type_id'] = 'nullable|integer|exists:cover_types,id';
 		}
+
 		if ($itemType === 'covers') {
 			$rules['caption'] = 'nullable|string|max:500';
-			$rules['categories'] = 'nullable|string|max:1000';
+			$rules['categories'] = 'nullable|string|max:1000'; // Comma-separated string from form
 			$rules['image_file'] = 'required|image|mimes:jpg,jpeg,png,gif|max:5120';
 		} elseif ($itemType === 'elements' || $itemType === 'overlays') {
 			$rules['image_file'] = 'required|image|mimes:jpg,jpeg,png,gif|max:5120';
@@ -175,7 +173,7 @@ class DashboardController extends Controller
 
 		$data = [
 			'name' => $request->input('name'),
-			'keywords' => $request->input('keywords') ? json_encode(array_map('trim', explode(',', $request->input('keywords')))) : json_encode([]),
+			'keywords' => $request->input('keywords') ? array_map('trim', explode(',', $request->input('keywords'))) : [],
 		];
 
 		if ($itemType === 'covers' || $itemType === 'templates') {
@@ -191,10 +189,11 @@ class DashboardController extends Controller
 				$paths = $this->imageUploadService->uploadImageWithThumbnail($imageFile, $itemType);
 				$data['image_path'] = $paths['original_path'];
 				$data['thumbnail_path'] = $paths['thumbnail_path'];
+
 				if ($itemType === 'covers') {
 					$data['caption'] = $request->input('caption');
-					$data['categories'] = $request->input('categories') ? json_encode(array_map('trim', explode(',', $request->input('categories')))) : json_encode([]);
-					$data['text_placements'] = [];
+					$data['categories'] = $request->input('categories') ? array_map('trim', explode(',', $request->input('categories'))) : [];
+					$data['text_placements'] = []; // Initialize as empty array
 				}
 			} elseif ($itemType === 'templates') {
 				$jsonFile = $request->file('json_file');
@@ -206,9 +205,13 @@ class DashboardController extends Controller
 				if (json_decode($jsonContent) === null && json_last_error() !== JSON_ERROR_NONE) {
 					return response()->json(['success' => false, 'message' => 'Invalid JSON content: ' . json_last_error_msg()], 400);
 				}
-				$data['json_content'] = $jsonContent;
+				$data['json_content'] = $jsonContent; // Store as string, model will cast if needed (or not, if it's just text)
 				$paths = $this->imageUploadService->uploadImageWithThumbnail($thumbnailFile, $itemType);
 				$data['thumbnail_path'] = $paths['thumbnail_path'];
+				// Templates can also have text_placements, initialize if not already handled by model defaults
+				if (!isset($data['text_placements'])) {
+					$data['text_placements'] = [];
+				}
 			}
 
 			$item = $model->create($data);
@@ -231,25 +234,32 @@ class DashboardController extends Controller
 		$itemType = $request->input('item_type');
 		$id = $request->input('id');
 		$model = $this->getModelInstance($itemType);
+
 		if (!$model) return response()->json(['success' => false, 'message' => 'Invalid item type.'], 400);
 
 		$query = $model->query();
 		if ($itemType === 'covers') {
-			$query->with(['coverType:id,type_name', 'templates:id']); // Eager load template IDs for covers
+			$query->with(['coverType:id,type_name', 'templates:id']);
 		} elseif ($itemType === 'templates') {
 			$query->with('coverType:id,type_name');
 		}
 
 		$item = $query->find($id);
+
 		if (!$item) return response()->json(['success' => false, 'message' => ucfirst(Str::singular($itemType)) . ' not found.'], 404);
 
-		$item->keywords = is_array($item->keywords) ? implode(', ', $item->keywords) : '';
+		// Convert arrays to comma-separated strings for form fields that expect it
+		$item->keywords_string_for_form = is_array($item->keywords) ? implode(', ', $item->keywords) : '';
+
 		if ($itemType === 'covers') {
-			$item->categories = is_array($item->categories) ? implode(', ', $item->categories) : '';
-			$item->text_placements = is_array($item->text_placements) ? implode(', ', $item->text_placements) : '';
+			$item->categories_string_for_form = is_array($item->categories) ? implode(', ', $item->categories) : '';
+			$item->text_placements_string_for_form = is_array($item->text_placements) ? implode(', ', $item->text_placements) : '';
 			$item->assigned_template_ids = $item->templates->pluck('id')->toArray();
-			unset($item->templates); // Don't send the full template objects here unless needed
+			unset($item->templates);
+		} elseif ($itemType === 'templates') {
+			$item->text_placements_string_for_form = is_array($item->text_placements) ? implode(', ', $item->text_placements) : '';
 		}
+
 
 		if (isset($item->thumbnail_path)) $item->thumbnail_url = $this->imageUploadService->getUrl($item->thumbnail_path);
 		if (isset($item->image_path)) $item->image_url = $this->imageUploadService->getUrl($item->image_path);
@@ -257,6 +267,7 @@ class DashboardController extends Controller
 		if ($itemType === 'covers' || $itemType === 'templates') {
 			$item->cover_type_name = $item->coverType->type_name ?? null;
 		}
+		// text_placements itself is returned as an array due to model casting, used by the new modal
 
 		return response()->json(['success' => true, 'data' => $item]);
 	}
@@ -265,11 +276,12 @@ class DashboardController extends Controller
 	{
 		$itemType = $request->input('item_type');
 		$id = $request->input('id');
+
 		$rules = [
 			'id' => 'required|integer',
 			'item_type' => ['required', Rule::in(['covers', 'templates', 'elements', 'overlays'])],
 			'name' => 'required|string|max:255',
-			'keywords' => 'nullable|string|max:1000',
+			'keywords' => 'nullable|string|max:1000', // Comma-separated string from form
 			'image_file' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120',
 			'thumbnail_file' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120',
 			'json_file' => 'nullable|file|mimes:json|max:2048',
@@ -280,22 +292,34 @@ class DashboardController extends Controller
 		}
 		if ($itemType === 'covers') {
 			$rules['caption'] = 'nullable|string|max:500';
-			$rules['categories'] = 'nullable|string|max:1000';
+			$rules['categories'] = 'nullable|string|max:1000'; // Comma-separated string from form
+			$rules['text_placements'] = 'nullable|string|max:1000'; // Comma-separated string from form
 		}
+		if ($itemType === 'templates') {
+			$rules['text_placements'] = 'nullable|string|max:1000'; // Comma-separated string from form (if added to template main edit)
+		}
+
 
 		$validator = Validator::make($request->all(), $rules);
 		if ($validator->fails()) return response()->json(['success' => false, 'message' => 'Validation failed.', 'errors' => $validator->errors()], 422);
 
 		$model = $this->getModelInstance($itemType);
 		if (!$model) return response()->json(['success' => false, 'message' => 'Invalid item type.'], 400);
-
 		$item = $model->find($id);
 		if (!$item) return response()->json(['success' => false, 'message' => ucfirst(Str::singular($itemType)) . ' not found.'], 404);
 
-		$data = [
-			'name' => $request->input('name'),
-			'keywords' => $request->input('keywords') ? json_encode(array_map('trim', explode(',', $request->input('keywords')))) : ($item->keywords ?? json_encode([])),
-		];
+		$data = ['name' => $request->input('name')];
+
+		$keywordsInput = $request->input('keywords');
+		if ($keywordsInput !== null) {
+			$keywordsArray = $keywordsInput ? array_map('trim', explode(',', $keywordsInput)) : [];
+			$data['keywords'] = array_values(array_filter($keywordsArray, fn($value) => $value !== ''));
+		} elseif (isset($item->keywords)) {
+			$data['keywords'] = $item->keywords; // Keep existing if not provided
+		} else {
+			$data['keywords'] = []; // Default
+		}
+
 
 		if ($itemType === 'covers' || $itemType === 'templates') {
 			$data['cover_type_id'] = $request->input('cover_type_id', $item->cover_type_id);
@@ -313,22 +337,30 @@ class DashboardController extends Controller
 					$data['image_path'] = $paths['original_path'];
 					$data['thumbnail_path'] = $paths['thumbnail_path'];
 				}
-				if ($itemType === 'covers') {
-					$data['caption'] = $request->input('caption', $item->caption);
+			}
 
-					// Handle categories
-					$categoriesInput = $request->input('categories');
-					if ($categoriesInput !== null) {
-						$categoriesArray = $categoriesInput ? array_map('trim', explode(',', $categoriesInput)) : [];
-						$data['categories'] = array_filter($categoriesArray, fn($value) => $value !== '');
-					}
+			if ($itemType === 'covers') {
+				$data['caption'] = $request->input('caption', $item->caption);
 
-					// Handle text_placements
-					$tpInput = $request->input('text_placements');
-					if ($tpInput !== null) {
-						$tpArray = $tpInput ? array_map('trim', explode(',', $tpInput)) : [];
-						$data['text_placements'] = array_filter($tpArray, fn($value) => $value !== '');
+				$categoriesInput = $request->input('categories');
+				if ($categoriesInput !== null) {
+					$categoriesArray = $categoriesInput ? array_map('trim', explode(',', $categoriesInput)) : [];
+					$data['categories'] = array_values(array_filter($categoriesArray, fn($value) => $value !== ''));
+				}
+
+				$tpInput = $request->input('text_placements');
+				if ($tpInput !== null) {
+					$tpArray = $tpInput ? array_map('trim', explode(',', $tpInput)) : [];
+					$validTpArray = [];
+					$pattern = '/^(top|middle|bottom|left|right)-(light|dark)$/';
+					foreach ($tpArray as $placement) {
+						if (preg_match($pattern, $placement)) {
+							$validTpArray[] = $placement;
+						} else if (!empty($placement)) {
+							Log::warning("Invalid text_placement format '{$placement}' submitted via main edit form for Cover ID {$id}. Skipped.");
+						}
 					}
+					$data['text_placements'] = $validTpArray;
 				}
 			} elseif ($itemType === 'templates') {
 				if ($request->hasFile('thumbnail_file')) {
@@ -347,7 +379,23 @@ class DashboardController extends Controller
 					}
 					$data['json_content'] = $jsonContent;
 				}
+				// Handle text_placements for templates if submitted from main edit form
+				$tpInput = $request->input('text_placements');
+				if ($tpInput !== null) {
+					$tpArray = $tpInput ? array_map('trim', explode(',', $tpInput)) : [];
+					$validTpArray = [];
+					$pattern = '/^(top|middle|bottom|left|right)-(light|dark)$/';
+					foreach ($tpArray as $placement) {
+						if (preg_match($pattern, $placement)) {
+							$validTpArray[] = $placement;
+						} else if (!empty($placement)) {
+							Log::warning("Invalid text_placement format '{$placement}' submitted via main edit form for Template ID {$id}. Skipped.");
+						}
+					}
+					$data['text_placements'] = $validTpArray;
+				}
 			}
+
 			$item->update($data);
 			return response()->json(['success' => true, 'message' => ucfirst(Str::singular($itemType)) . ' updated successfully.']);
 		} catch (\Exception $e) {
@@ -368,15 +416,12 @@ class DashboardController extends Controller
 		$itemType = $request->input('item_type');
 		$id = $request->input('id');
 		$model = $this->getModelInstance($itemType);
-		if (!$model) return response()->json(['success' => false, 'message' => 'Invalid item type.'], 400);
 
+		if (!$model) return response()->json(['success' => false, 'message' => 'Invalid item type.'], 400);
 		$item = $model->find($id);
 		if (!$item) return response()->json(['success' => true, 'message' => ucfirst(Str::singular($itemType)) . ' not found or already deleted.']);
 
 		try {
-			// For covers, detaching templates is handled by onDelete('cascade') on the foreign key in the pivot table migration.
-			// If not using cascade, you would do: if ($itemType === 'covers') { $item->templates()->detach(); }
-
 			$originalPath = $item->image_path ?? null;
 			$thumbnailPath = $item->thumbnail_path ?? null;
 			$item->delete();
@@ -396,6 +441,7 @@ class DashboardController extends Controller
 		]);
 
 		if ($validator->fails()) return response()->json(['success' => false, 'message' => 'Invalid input.', 'errors' => $validator->errors()], 422);
+
 		$itemType = $request->input('item_type');
 		$id = $request->input('id');
 		$model = $this->getModelInstance($itemType);
@@ -418,6 +464,7 @@ class DashboardController extends Controller
 			$imageContent = Storage::disk('public')->get($imagePathForAi);
 			$base64Image = base64_encode($imageContent);
 			$mimeType = Storage::disk('public')->mimeType($imagePathForAi) ?: 'image/jpeg';
+
 			$aiGeneratedData = [];
 
 			$keywordsPrompt = "Generate a list of 10-15 relevant keywords for this image, suitable for search or tagging. Include single words and relevant two-word phrases. Focus on visual elements, style, and potential use case. Output only a comma-separated list.";
@@ -482,6 +529,7 @@ class DashboardController extends Controller
 
 		$systemMessage = "You are an expert JSON template designer. Based on the provided example JSON and the user's request, generate a new, complete, and valid JSON object. The output MUST be ONLY the raw JSON content, without any surrounding text, explanations, or markdown ```json ... ``` tags. Ensure all structural elements from the example are considered and adapted according to the user's request. Choose suitable fonts to substitute the example from the following google fonts based on the users request: {$googleFontString}. Ensure the generated JSON is a single, valid JSON object.";
 		$userMessageContent = "User Request: \"{$userPromptText}\"\n\nExample JSON:\n{$originalJsonContent}";
+
 		$messages = [
 			["role" => "system", "content" => $systemMessage],
 			["role" => "user", "content" => $userMessageContent]
@@ -527,10 +575,7 @@ class DashboardController extends Controller
 
 	public function generateAiTextPlacements(Request $request, Cover $cover)
 	{
-		// Note: Route model binding handles fetching the Cover instance.
-
 		$imagePathForAi = $cover->image_path ?? $cover->thumbnail_path;
-
 		if (!$imagePathForAi || !Storage::disk('public')->exists($imagePathForAi)) {
 			return response()->json(['success' => false, 'message' => 'Image file not found on server for AI processing.'], 404);
 		}
@@ -540,11 +585,8 @@ class DashboardController extends Controller
 			$base64Image = base64_encode($imageContent);
 			$mimeType = Storage::disk('public')->mimeType($imagePathForAi) ?: 'image/jpeg';
 
-			$prompt = "Analyze this image for suitable text placement. Identify clear, relatively flat areas (top, bottom, left, right) and determine if the background in that specific area is predominantly light or dark. Return ONLY a raw JSON array of strings, where each string is 'area-tone' (e.g., 'top-light', 'bottom-light', 'left-dark', 'right-light'). Only include areas genuinely suitable for overlaying text. If no area is clearly suitable, return an empty array. For example: [\"top-light\", \"bottom-dark\"]. Do not include any explanations or markdown.";
+			$prompt = "Analyze this image for suitable text placement. Identify clear, relatively flat areas (top, bottom, left, right, middle) and determine if the background in that specific area is predominantly light or dark. Return ONLY a raw JSON array of strings, where each string is 'area-tone' (e.g., 'top-light', 'bottom-light', 'left-dark', 'right-light', 'middle-dark'). Only include areas genuinely suitable for overlaying text. If no area is clearly suitable, return an empty array. Only return one pair. Choose the largest area suitable for text placement and return that. For example: [\"top-light\"] or [\"bottom-dark\"]. Do not include any explanations or markdown.";
 
-			// Assuming OpenAiService->generateMetadataFromImageBase64 can handle vision tasks
-			// and does not enforce json_object mode by default, or can be configured.
-			// If it strictly uses json_object, the prompt and parsing will need adjustment.
 			$aiResponse = $this->openAiService->generateMetadataFromImageBase64($prompt, $base64Image, $mimeType);
 
 			if (isset($aiResponse['error'])) {
@@ -553,14 +595,11 @@ class DashboardController extends Controller
 			}
 
 			$generatedJsonString = $aiResponse['content'];
-
-			// Clean potential markdown if AI includes it despite instructions
 			if (preg_match('/```json\s*([\s\S]*?)\s*```/', $generatedJsonString, $matches)) {
 				$generatedJsonString = $matches[1];
 			}
 			$generatedJsonString = trim($generatedJsonString);
-
-			$decodedPlacements = json_decode($generatedJsonString, true); // true for associative array
+			$decodedPlacements = json_decode($generatedJsonString, true);
 
 			if (json_last_error() !== JSON_ERROR_NONE) {
 				Log::error("AI Text Placements: Invalid JSON response for Cover ID {$cover->id}. Error: " . json_last_error_msg() . ". Raw: " . $aiResponse['content']);
@@ -582,11 +621,10 @@ class DashboardController extends Controller
 				return response()->json(['success' => false, 'message' => 'AI returned an unexpected JSON structure (not an array) for text placements.'], 500);
 			}
 
-			$cover->text_placements = $validPlacements; // Model cast will handle JSON encoding
+			$cover->text_placements = $validPlacements;
 			$cover->save();
 
 			return response()->json(['success' => true, 'message' => 'AI text placements analyzed and updated successfully.']);
-
 		} catch (\Exception $e) {
 			Log::error("AI Text Placements generation error (Cover ID {$cover->id}): " . $e->getMessage() . "\n" . $e->getTraceAsString());
 			return response()->json(['success' => false, 'message' => 'AI text placements generation failed: ' . $e->getMessage()], 500);
@@ -601,16 +639,9 @@ class DashboardController extends Controller
 		return response()->json(['success' => true, 'data' => ['cover_ids' => $coverIds]]);
 	}
 
-
-	// New methods for Cover-Template assignment
-
-	/**
-	 * List templates assignable to a specific cover (must match cover_type_id).
-	 */
-	public function listAssignableTemplates(Request $request, Cover $cover) // Using route model binding
+	public function listAssignableTemplates(Request $request, Cover $cover)
 	{
 		$coverImageUrl = null;
-		// Prefer full image for preview, fallback to thumbnail
 		if ($cover->image_path) {
 			$coverImageUrl = $this->imageUploadService->getUrl($cover->image_path);
 		} elseif ($cover->thumbnail_path) {
@@ -619,11 +650,11 @@ class DashboardController extends Controller
 
 		if (!$cover->cover_type_id) {
 			return response()->json([
-				'success' => true, // Still success, but with a message for UI
+				'success' => true,
 				'data' => [
 					'cover_name' => $cover->name,
 					'cover_type_name' => 'N/A (Not Set)',
-					'cover_image_url' => $coverImageUrl, // Send cover image URL even if no type
+					'cover_image_url' => $coverImageUrl,
 					'templates' => [],
 				],
 				'message' => 'Cover does not have a cover type assigned. Cannot list templates.'
@@ -632,7 +663,7 @@ class DashboardController extends Controller
 
 		$assignableTemplates = Template::where('cover_type_id', $cover->cover_type_id)
 			->orderBy('name')
-			->get(['id', 'name', 'thumbnail_path']); // Ensure thumbnail_path is fetched
+			->get(['id', 'name', 'thumbnail_path']);
 
 		$assignedTemplateIds = $cover->templates()->pluck('template_id')->toArray();
 
@@ -645,7 +676,7 @@ class DashboardController extends Controller
 				'id' => $template->id,
 				'name' => $template->name,
 				'is_assigned' => in_array($template->id, $assignedTemplateIds),
-				'thumbnail_url' => $thumbnailUrl, // Add template thumbnail URL
+				'thumbnail_url' => $thumbnailUrl,
 			];
 		});
 
@@ -654,20 +685,17 @@ class DashboardController extends Controller
 			'data' => [
 				'cover_name' => $cover->name,
 				'cover_type_name' => $cover->coverType->type_name ?? 'N/A',
-				'cover_image_url' => $coverImageUrl, // Add cover image URL
+				'cover_image_url' => $coverImageUrl,
 				'templates' => $templatesData,
 			]
 		]);
 	}
 
-	/**
-	 * Update the templates assigned to a specific cover.
-	 */
-	public function updateCoverTemplateAssignments(Request $request, Cover $cover) // Using route model binding
+	public function updateCoverTemplateAssignments(Request $request, Cover $cover)
 	{
 		$validator = Validator::make($request->all(), [
 			'template_ids' => 'nullable|array',
-			'template_ids.*' => 'integer|exists:templates,id', // Ensure template IDs exist
+			'template_ids.*' => 'integer|exists:templates,id',
 		]);
 
 		if ($validator->fails()) {
@@ -676,7 +704,6 @@ class DashboardController extends Controller
 
 		$templateIds = $request->input('template_ids', []);
 
-		// Optional: Further validation to ensure all selected templates match the cover's cover_type_id
 		if (!empty($templateIds) && $cover->cover_type_id) {
 			$validTemplatesCount = Template::where('cover_type_id', $cover->cover_type_id)
 				->whereIn('id', $templateIds)
@@ -688,13 +715,49 @@ class DashboardController extends Controller
 			return response()->json(['success' => false, 'message' => 'Cannot assign templates to a cover without a cover type.'], 400);
 		}
 
-
 		try {
-			$cover->templates()->sync($templateIds); // sync() will add new, remove old, and keep existing
+			$cover->templates()->sync($templateIds);
 			return response()->json(['success' => true, 'message' => 'Template assignments updated successfully.']);
 		} catch (\Exception $e) {
 			Log::error("Error updating template assignments for Cover ID {$cover->id}: " . $e->getMessage());
 			return response()->json(['success' => false, 'message' => 'Failed to update assignments: ' . $e->getMessage()], 500);
+		}
+	}
+
+	public function updateTextPlacements(Request $request, string $itemType, int $id)
+	{
+		$modelInstance = $this->getModelInstance($itemType);
+		if (!$modelInstance || !in_array($itemType, ['covers', 'templates'])) {
+			return response()->json(['success' => false, 'message' => 'Invalid item type for text placements.'], 400);
+		}
+
+		$item = $modelInstance->find($id);
+		if (!$item) {
+			return response()->json(['success' => false, 'message' => ucfirst(Str::singular($itemType)) . ' not found.'], 404);
+		}
+
+		$validator = Validator::make($request->all(), [
+			'text_placements' => 'nullable|array',
+			'text_placements.*' => ['nullable', 'string', Rule::in([
+				'top-light', 'top-dark',
+				'middle-light', 'middle-dark',
+				'bottom-light', 'bottom-dark',
+				'left-light', 'left-dark',
+				'right-light', 'right-dark'
+			])],
+		]);
+
+		if ($validator->fails()) {
+			return response()->json(['success' => false, 'message' => 'Validation failed.', 'errors' => $validator->errors()], 422);
+		}
+
+		try {
+			$item->text_placements = $request->input('text_placements', []); // Already an array from JS
+			$item->save();
+			return response()->json(['success' => true, 'message' => 'Text placements updated successfully.']);
+		} catch (\Exception $e) {
+			Log::error("Update text placements error ({$itemType} ID {$id}): " . $e->getMessage());
+			return response()->json(['success' => false, 'message' => 'Update failed: ' . $e->getMessage()], 500);
 		}
 	}
 }

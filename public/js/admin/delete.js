@@ -15,6 +15,8 @@ AppAdmin.Delete = (function() {
 			const originalButtonHtml = $button.html();
 			$button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
 			
+			const currentScrollY = window.scrollY;
+			
 			$.ajax({
 				url: window.adminRoutes.deleteItem,
 				type: 'POST',
@@ -24,7 +26,7 @@ AppAdmin.Delete = (function() {
 					if (response.success) {
 						showAlert(`${capitalizeFirstLetter(itemType).slice(0,-1)} deleted successfully!`, 'success');
 						const state = getCurrentState(itemType);
-						loadItems(itemType, state.page, state.search, state.coverTypeId);
+						loadItems(itemType, state.page, state.search, state.coverTypeId, currentScrollY);
 					} else {
 						showAlert(`Error deleting ${itemType}: ${escapeHtml(response.message)}`, 'danger');
 						$button.prop('disabled', false).html(originalButtonHtml);

@@ -39,6 +39,8 @@
 		Route::get('/covers/{cover}/assignable-templates', [DashboardController::class, 'listAssignableTemplates'])->name('covers.list-assignable-templates');
 		Route::post('/covers/{cover}/assign-templates', [DashboardController::class, 'updateCoverTemplateAssignments'])->name('covers.update-assignments');
 
+		Route::post('/items/{item_type}/{id}/update-text-placements', [DashboardController::class, 'updateTextPlacements'])->name('items.update-text-placements');
+
 		// }); // End auth middleware group
 	});
 

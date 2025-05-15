@@ -71,10 +71,11 @@
 		deleteItem: "{{ route('admin.items.delete') }}",
 		generateAiMetadata: "{{ route('admin.items.generate-ai-metadata') }}",
 		generateSimilarTemplate: "{{ route('admin.templates.generate-similar') }}",
-		generateAiTextPlacementsBase: "{{ url('admin/covers') }}",
+		generateAiTextPlacementsBase: "{{ url('admin/covers') }}", // Base for specific cover actions
 		getUnprocessedCovers: "{{ route('admin.covers.unprocessed-list') }}",
-		listAssignableTemplatesBase: "{{ url('admin/covers') }}",
-		updateCoverTemplateAssignmentsBase: "{{ url('admin/covers') }}",
+		listAssignableTemplatesBase: "{{ url('admin/covers') }}", // Base for specific cover actions
+		updateCoverTemplateAssignmentsBase: "{{ url('admin/covers') }}", // Base for specific cover actions
+		updateTextPlacementsBase: "{{ url('admin/items') }}", // New base URL for text placements update
 	};
 	window.AppAdmin = window.AppAdmin || {}; // Initialize the global namespace
 </script>
@@ -90,6 +91,7 @@
 <script src="{{ asset('js/admin/aiMetadata.js') }}"></script>
 <script src="{{ asset('js/admin/aiSimilarTemplate.js') }}"></script>
 <script src="{{ asset('js/admin/assignTemplates.js') }}"></script>
+<script src="{{ asset('js/admin/textPlacements.js') }}"></script>
 
 <!-- Main Admin Orchestrator -->
 <script src="{{ asset('js/admin.js') }}"></script>

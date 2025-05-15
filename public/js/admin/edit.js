@@ -1,12 +1,10 @@
 // public/js/admin/edit.js
 window.AppAdmin = window.AppAdmin || {};
-
 AppAdmin.Edit = (function() {
 	const { showAlert, escapeHtml, capitalizeFirstLetter } = AppAdmin.Utils;
 	const { getCurrentState } = AppAdmin.State;
 	const { loadItems } = AppAdmin.Items;
-	const { populateAllCoverTypeDropdowns } = AppAdmin.CoverTypes;
-	
+	const { populateAllCoverTypeDropdowns } = AppAdmin.CoverTypes; // Ensure this is available
 	
 	let $editModal, editModal, $editForm;
 	
@@ -20,15 +18,16 @@ AppAdmin.Edit = (function() {
 		$('#editCurrentImagePreview').empty().hide();
 		$('#editCurrentThumbnailPreview').empty().hide();
 		$('#editCurrentJsonInfo').hide();
-		$('.edit-field').hide();
-		// Ensure cover type dropdown is populated before trying to set its value
-		populateAllCoverTypeDropdowns();
+		$('.edit-field').hide(); // Hide all conditional fields first
 		
+		// Ensure cover type dropdown is populated before trying to set its value
+		// This might be better done once on page load and then just referenced
+		populateAllCoverTypeDropdowns();
 		
 		$.ajax({
 			url: window.adminRoutes.getItemDetails,
 			type: 'GET',
-			data: { item_type: itemType, id: itemId }, // 'action' key not used by backend
+			data: { item_type: itemType, id: itemId },
 			dataType: 'json',
 			success: function(response) {
 				if (response.success) {
@@ -38,25 +37,30 @@ AppAdmin.Edit = (function() {
 					$('#editItemType').val(itemType);
 					$('#editItemName').val(item.name);
 					
+					// Show relevant sections based on itemType
 					$(`.edit-field-${itemType}`).show();
+					
+					// Populate common fields that might exist as comma-separated strings in forms
+					$('#editItemKeywords').val(item.keywords_string_for_form || '');
+					
 					
 					if (itemType === 'covers') {
 						$('#editItemCaption').val(item.caption || '');
-						$('#editItemKeywords').val(item.keywords || '');
-						$('#editItemCategories').val(item.categories || '');
-						$('#editItemTextPlacements').val(item.text_placements || '');
+						$('#editItemCategories').val(item.categories_string_for_form || '');
+						$('#editItemTextPlacements').val(item.text_placements_string_for_form || '');
 						$('#editItemCoverType').val(item.cover_type_id || '');
 						if(item.image_url) {
 							$('#editCurrentImagePreview').html(`<p class="mb-1">Current Image:</p><img src="${escapeHtml(item.image_url)}" alt="Current Preview">`).show();
 						}
 					} else if (itemType === 'elements' || itemType === 'overlays') {
-						$('#editItemKeywords').val(item.keywords || '');
+						// Keywords already handled above
 						if(item.image_url) {
 							$('#editCurrentImagePreview').html(`<p class="mb-1">Current Image:</p><img src="${escapeHtml(item.image_url)}" alt="Current Preview">`).show();
 						}
 					} else if (itemType === 'templates') {
-						$('#editItemKeywords').val(item.keywords || '');
+						// Keywords already handled above
 						$('#editItemCoverType').val(item.cover_type_id || '');
+						$('#editItemTextPlacements').val(item.text_placements_string_for_form || ''); // For templates main edit form
 						if(item.thumbnail_url) {
 							$('#editCurrentThumbnailPreview').html(`<p class="mb-1">Current Thumbnail:</p><img src="${escapeHtml(item.thumbnail_url)}" alt="Current Thumbnail">`).show();
 						}
@@ -77,10 +81,12 @@ AppAdmin.Edit = (function() {
 	function handleEditFormSubmit(event) {
 		event.preventDefault();
 		const formData = new FormData(this);
-		// formData.append('action', 'update_item'); // Not needed, route implies action
 		const itemType = $('#editItemType').val();
 		const $submitButton = $('#saveEditButton');
 		const originalButtonText = $submitButton.html();
+		
+		const currentScrollY = window.scrollY;
+		
 		$submitButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
 		
 		$.ajax({
@@ -95,9 +101,19 @@ AppAdmin.Edit = (function() {
 					showAlert(`${capitalizeFirstLetter(itemType).slice(0,-1)} updated successfully!`, 'success');
 					editModal.hide();
 					const state = getCurrentState(itemType);
-					loadItems(itemType, state.page, state.search, state.coverTypeId);
+					loadItems(itemType, state.page, state.search, state.coverTypeId, currentScrollY );
 				} else {
-					showAlert(`Error updating ${itemType}: ${escapeHtml(response.message)}`, 'danger');
+					let errorMsg = `Error updating ${itemType}: ${escapeHtml(response.message)}`;
+					if (response.errors) {
+						errorMsg += '<ul>';
+						$.each(response.errors, function(field, messages) {
+							messages.forEach(function(message) {
+								errorMsg += `<li>${escapeHtml(message)}</li>`;
+							});
+						});
+						errorMsg += '</ul>';
+					}
+					showAlert(errorMsg, 'danger');
 				}
 			},
 			error: function(xhr, status, error) {
@@ -113,6 +129,7 @@ AppAdmin.Edit = (function() {
 	function init() {
 		$editModal = $('#editItemModal');
 		$editForm = $('#editItemForm');
+		
 		if ($editModal.length) {
 			editModal = new bootstrap.Modal($editModal[0]);
 		}
@@ -125,12 +142,18 @@ AppAdmin.Edit = (function() {
 		
 		if ($editModal.length) {
 			$editModal.on('hidden.bs.modal', function () {
+				// Clear file inputs
 				$('#editItemImageFile').val('');
 				$('#editItemThumbnailFile').val('');
 				$('#editItemJsonFile').val('');
+				// Clear previews
 				$('#editCurrentImagePreview').empty().hide();
 				$('#editCurrentThumbnailPreview').empty().hide();
+				// Reset select
 				$('#editItemCoverType').val('');
+				// Hide all conditional fields again
+				$('.edit-field').hide();
+				$editForm[0].reset(); // General reset for other fields
 			});
 		}
 	}

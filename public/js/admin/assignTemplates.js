@@ -89,7 +89,9 @@ AppAdmin.AssignTemplates = (function() {
 		const originalButtonText = $saveTemplateAssignmentsButton.html();
 		$saveTemplateAssignmentsButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
 		
+		const currentScrollY = window.scrollY; // Save scroll position
 		const url = window.adminRoutes.updateCoverTemplateAssignmentsBase + '/' + coverId + '/assign-templates';
+
 		$.ajax({
 			url: url,
 			type: 'POST',
@@ -100,7 +102,7 @@ AppAdmin.AssignTemplates = (function() {
 					showAlert(response.message || 'Template assignments updated successfully!', 'success');
 					assignTemplatesModal.hide();
 					const state = getCurrentState('covers');
-					loadItems('covers', state.page, state.search, state.coverTypeId);
+					loadItems('covers', state.page, state.search, state.coverTypeId, currentScrollY);
 				} else {
 					showAlert('Error updating assignments: ' + escapeHtml(response.message || 'Unknown error'), 'danger');
 				}

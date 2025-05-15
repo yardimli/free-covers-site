@@ -1,3 +1,5 @@
 [14-May-2025 16:42:16 UTC] PHP Fatal error:  Maximum execution time of 60 seconds exceeded in F:\GitHub\free-cover-site\vendor\guzzlehttp\guzzle\src\Handler\CurlFactory.php on line 693
 [14-May-2025 16:44:30 UTC] PHP Fatal error:  Maximum execution time of 60 seconds exceeded in F:\GitHub\free-cover-site\vendor\guzzlehttp\guzzle\src\Handler\CurlFactory.php on line 693
 [14-May-2025 17:27:25 UTC] PHP Fatal error:  Maximum execution time of 60 seconds exceeded in F:\GitHub\free-cover-site\vendor\guzzlehttp\guzzle\src\Handler\CurlFactory.php on line 381
+[15-May-2025 06:57:52 UTC] PHP Fatal error:  Maximum execution time of 60 seconds exceeded in F:\GitHub\free-cover-site\vendor\guzzlehttp\guzzle\src\Handler\CurlFactory.php on line 381
+[15-May-2025 07:12:23 UTC] PHP Fatal error:  Maximum execution time of 60 seconds exceeded in F:\GitHub\free-cover-site\vendor\guzzlehttp\guzzle\src\Handler\CurlFactory.php on line 381

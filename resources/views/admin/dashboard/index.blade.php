@@ -411,5 +411,53 @@
 			</div>
 		</div>
 	</div>
+	
+	<!-- Edit Text Placements Modal -->
+	<div class="modal fade" id="editTextPlacementsModal" tabindex="-1" aria-labelledby="editTextPlacementsModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<form id="editTextPlacementsForm">
+					<div class="modal-header">
+						<h5 class="modal-title" id="editTextPlacementsModalLabel">Edit Text Placements</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<input type="hidden" id="textPlacementsItemId" name="item_id">
+						<input type="hidden" id="textPlacementsItemType" name="item_type">
+						<p>For item: <strong id="textPlacementsItemName"></strong></p>
+						<hr>
+						@php
+							$areas = ['top', 'middle', 'bottom', 'left', 'right'];
+							$tones = ['light', 'dark'];
+						@endphp
+						@foreach ($areas as $area)
+							<div class="mb-3 row align-items-center">
+								<div class="col-sm-4 col-md-3"> <!-- Adjusted col size -->
+									<div class="form-check">
+										<input class="form-check-input area-checkbox" type="checkbox" value="{{ $area }}" id="tp_area_{{ $area }}">
+										<label class="form-check-label" for="tp_area_{{ $area }}">
+											{{ ucfirst($area) }}
+										</label>
+									</div>
+								</div>
+								<div class="col-sm-8 col-md-9 tp-tone-group" id="tp_tone_group_{{ $area }}" style="display: none;"> <!-- Adjusted col size -->
+									@foreach ($tones as $tone)
+										<div class="form-check form-check-inline">
+											<input class="form-check-input tone-radio" type="radio" name="tp_tone_{{ $area }}" id="tp_tone_{{ $area }}_{{ $tone }}" value="{{ $tone }}" disabled>
+											<label class="form-check-label" for="tp_tone_{{ $area }}_{{ $tone }}">{{ ucfirst($tone) }}</label>
+										</div>
+									@endforeach
+								</div>
+							</div>
+						@endforeach
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+						<button type="submit" class="btn btn-primary" id="saveTextPlacementsButton">Save Changes</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
 
 @endsection
