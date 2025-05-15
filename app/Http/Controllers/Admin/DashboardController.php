@@ -836,7 +836,7 @@ class DashboardController extends Controller
 			$prompt = "Analyze the following image, which is a book cover with a text template overlaid. The underlying image should show: '". $cover->caption ."'
 Evaluate based on MANDATORY criteria:
 1) Is the title and author text in the template completely legible and easy to read?
-2) Are ALL the key visual elements from the caption visible and NOT obscured totally by the text overlay. 
+2) Is the key visual element from the caption visible and NOT obscured by the text overlay. 
  
  Respond with the single word 'YES'. Otherwise Respond with only 'NO'. Don't add any explanation only respond with 'YES' or 'NO'.";
 
