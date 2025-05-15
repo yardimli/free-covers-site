@@ -120,22 +120,6 @@
 					</div>
 					
 					<div class="bj_book_single_tab_area me-xl-3 mt-5">
-						@if($cover->text_placements && !empty(array_filter($cover->text_placements)))
-							<div class="mt-3"> {{-- Added mt-3 for spacing if caption is present --}}
-								<h5 class="content_header mb-2">Suggested Text Areas</h5>
-								<ul class="list-unstyled content_text mb-2">
-									@foreach(array_filter($cover->text_placements) as $placement)
-										@if(is_array($placement) && isset($placement['type']) && isset($placement['text']))
-											<li><strong>{{ Str::title(str_replace('_', ' ', $placement['type'])) }}
-													:</strong> {{ $placement['text'] }}</li>
-										@elseif(is_string($placement))
-											<li>{{ $placement }}</li>
-										@endif
-									@endforeach
-								</ul>
-							</div>
-						@endif
-						
 						{{-- Cover Variations Section --}}
 						@if(!empty($coverVariations))
 							<div class="mt-4 cover-variations-grid">
