@@ -33,39 +33,7 @@
 								</div>
 							</form>
 						</li>
-						<li class="nav-item shpping-cart dropdown submenu">
-							<a class="cart-btn nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-								<i class="icon-shopping-basket"></i><span class="num">2</span> {{-- Dynamic cart count later --}}
-							</a>
-							<ul class="dropdown-menu">
-								{{-- Static cart items for now, make dynamic later --}}
-								<li class="cart-single-item clearfix">
-									<div class="cart-img"> <img src="{{ asset('template/assets/img/cart1.jpg') }}" alt="styler" /> </div>
-									<div class="cart-content text-left">
-										<p class="cart-title"> <a href="#">Pale pink and black buttoned dress</a> </p>
-										<p><del>$400.00</del> - $350.00</p>
-									</div>
-									<div class="cart-remove"> <a href="#" class="action"><span class="ti-close"></span></a> </div>
-								</li>
-								<li class="cart-single-item clearfix">
-									<div class="cart-img"> <img src="{{ asset('template/assets/img/cart1.jpg') }}" alt="styler" /> </div>
-									<div class="cart-content text-left">
-										<p class="cart-title"> <a href="#">Vera bradley lug- gage large duffel</a> </p>
-										<p>$350.00</p>
-									</div>
-									<div class="cart-remove"> <a href="#" class="action"><span class="ti-close"></span></a> </div>
-								</li>
-								<li class="cart_f">
-									<div class="cart-pricing">
-										<p class="total"> Subtotal :<span class="p-total text-end">$358.00</span> </p>
-									</div>
-									<div class="cart-button text-center">
-										<a href="{{-- route('cart') --}}#" class="btn btn-cart get_btn pink">View Cart</a>
-										<a href="{{-- route('checkout') --}}#" class="btn btn-cart get_btn dark">Checkout</a>
-									</div>
-								</li>
-							</ul>
-						</li>
+						
 						<li class="nav-item user ms-3">
 							<a class="nav-link" href="{{-- route('my-account') --}}#"><i class="icon-user"></i></a>
 						</li>

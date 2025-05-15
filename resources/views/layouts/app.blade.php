@@ -24,6 +24,8 @@
 	<link rel="manifest" href="template/assets/img/site.webmanifest">
 	
 	<title>@yield('title', 'Free Kindle Covers')</title>
+	
+	@stack('styles')
 </head>
 <body data-scroll-animation="true">
 <div class="body_wrapper">
@@ -50,7 +52,7 @@
 <script src="{{ asset('template/assets/vendors/swiper/swiper-bundle.min.js') }}"></script>
 <script src="{{ asset('template/assets/vendors/wow/wow.min.js') }}"></script>
 @stack('scripts') {{-- For page-specific scripts --}}
-<script src="{{ asset('template/assets/js/custom.js') }}"></script>
-<script src="{{ asset('template/assets/js/script.js') }}"></script>
+<script src="{{ asset('js/custom.js') }}"></script>
+<script src="{{ asset('js/script.js') }}"></script>
 </body>
 </html>

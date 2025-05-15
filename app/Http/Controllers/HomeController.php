@@ -31,26 +31,21 @@ class HomeController extends Controller
 
 		$coversForFirstTab = [];
 		$firstGenreName = null; // This will be TitleCase
-
 		if (!empty($filteredGenreCounts)) {
 			$firstGenreName = array_key_first($filteredGenreCounts);
 			if ($firstGenreName) {
 				$dbQueryGenreNameLower = Str::lower($firstGenreName); // e.g., "fiction"
 				// $firstGenreName itself is TitleCase, e.g., "Fiction"
-
 				$coversForFirstTab[$firstGenreName] = Cover::with('templates') // Eager load templates
 				->where(function ($query) use ($dbQueryGenreNameLower, $firstGenreName) {
 					$query->whereJsonContains('categories', $dbQueryGenreNameLower); // Check for "fiction"
 					if ($dbQueryGenreNameLower !== $firstGenreName) {
 						$query->orWhereJsonContains('categories', $firstGenreName); // Check for "Fiction"
 					}
-					// As an alternative, more direct way:
-					// $query->whereJsonContains('categories', $dbQueryGenreNameLower)
-					//       ->orWhereJsonContains('categories', $firstGenreName);
 				})
 					->where('cover_type_id', 1) // Added this condition
 					->inRandomOrder()
-					->take(18)
+					->take(6) // <--- CHANGED FROM 18 to 6
 					->get();
 
 				foreach ($coversForFirstTab[$firstGenreName] as &$cover) {
@@ -76,6 +71,7 @@ class HomeController extends Controller
 		$newArrivals = Cover::with('templates') // Eager load templates
 		->orderBy('created_at', 'desc')
 			->where('cover_type_id', 1)
+			->inRandomOrder()
 			->take(6)
 			->get();
 		foreach ($newArrivals as &$cover) {
@@ -120,11 +116,11 @@ class HomeController extends Controller
 		->where(function ($query) use ($dbQueryGenreNameLower, $genreDisplayName) {
 			// Group OR conditions
 			$query->whereJsonContains('categories', $dbQueryGenreNameLower) // Check for "fiction"
-			->orWhereJsonContains('categories', $genreDisplayName);  // Check for "Fiction"
+			->orWhereJsonContains('categories', $genreDisplayName);   // Check for "Fiction"
 		})
 			->where('cover_type_id', 1)
 			->inRandomOrder()
-			->take(18)
+			->take(6) // <--- CHANGED FROM 18 to 6
 			->get();
 
 		$formattedCovers = $covers->map(function ($cover) {
@@ -133,6 +129,7 @@ class HomeController extends Controller
 				$mockupPath = str_replace('covers/', 'cover-mockups/', $cover->image_path);
 				$mockupPath = str_replace('.jpg', '-front-mockup.png', $mockupPath);
 			}
+
 			$randomTemplateOverlayUrl = null;
 			if ($cover->templates->isNotEmpty()) {
 				$randomTemplate = $cover->templates->random();
@@ -140,6 +137,7 @@ class HomeController extends Controller
 					$randomTemplateOverlayUrl = asset('storage/' . $randomTemplate->thumbnail_path);
 				}
 			}
+
 			return [
 				'id' => $cover->id,
 				'name' => $cover->name,
@@ -150,6 +148,7 @@ class HomeController extends Controller
 				'caption' => $cover->caption,
 			];
 		});
+
 		return response()->json(['covers' => $formattedCovers]);
 	}
 }

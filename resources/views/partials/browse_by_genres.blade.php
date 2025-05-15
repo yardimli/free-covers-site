@@ -33,67 +33,68 @@
 			<div class="col-lg-8">
 				@if(!empty($genreCounts))
 					<div class="tab-content" id="pills-tabContent-two">
-						@foreach($genreCounts as $genre => $count) {{-- Note: $count is the value here --}}
-						@php
-							$genreSlug = Str::slug($genre);
-							$isFirstLoop = $loop->first;
-							$currentCovers = null;
-							if ($isFirstLoop && isset($coversForTabs[$genre])) {
-									$currentCovers = $coversForTabs[$genre];
-							}
-						@endphp
-						<div class="tab-pane fade {{ $isFirstLoop ? 'show active' : '' }}"
-						     id="pills-{{ $genreSlug }}"
-						     role="tabpanel"
-						     aria-labelledby="pills-{{ $genreSlug }}-tab"
-						     data-loaded="{{ $isFirstLoop && $currentCovers && $currentCovers->isNotEmpty() ? 'true' : 'false' }}">
-							@if($isFirstLoop)
-								@if($currentCovers && $currentCovers->isNotEmpty())
-									<div class="tab_slider_content slick_slider_tab">
-										@foreach($currentCovers->chunk(2) as $coverPair)
-											<div class="item">
-												@foreach($coverPair as $cover)
-													<div class="bj_new_pr_item {{ !$loop->last ? 'mb-3' : '' }}">
-														<a href="{{ route('covers.show', $cover->id) }}" class="img cover-image-container">
-															<img src="{{ asset('storage/' .$cover->mockup) }}" alt="{{ $cover->name }}" class="cover-mockup-image" />
-															@if($cover->random_template_overlay_url)
-																<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image" />
-															@endif
-														</a>
-														<div class="bj_new_pr_content_two">
-															<div class="d-flex justify-content-between">
-																<a href="{{ route('covers.show', $cover->id) }}">
-																	<h5>#{{$cover->id }}</h5>
-																</a>
+						@foreach($genreCounts as $genre => $count)
+							@php
+								$genreSlug = Str::slug($genre);
+								$isFirstLoop = $loop->first;
+								$currentCovers = null;
+								if ($isFirstLoop && isset($coversForTabs[$genre])) {
+										$currentCovers = $coversForTabs[$genre];
+								}
+							@endphp
+							<div class="tab-pane fade {{ $isFirstLoop ? 'show active' : '' }}"
+							     id="pills-{{ $genreSlug }}"
+							     role="tabpanel"
+							     aria-labelledby="pills-{{ $genreSlug }}-tab"
+							     data-loaded="{{ $isFirstLoop && $currentCovers && $currentCovers->isNotEmpty() ? 'true' : 'false' }}">
+								
+								@if($isFirstLoop)
+									@if($currentCovers && $currentCovers->isNotEmpty())
+										<div class="covers-grid-container"> {{-- Removed slick_slider_tab class --}}
+											<div class="row"> {{-- Bootstrap row for grid --}}
+												@foreach($currentCovers as $cover)
+													<div class="col-lg-4 col-md-6 mb-4"> {{-- 3 columns on large, 2 on medium --}}
+														<div class="bj_new_pr_item">
+															<a href="{{ route('covers.show', $cover->id) }}" class="img cover-image-container">
+																<img src="{{ asset('storage/' .$cover->mockup) }}" alt="{{ $cover->name }}" class="cover-mockup-image" />
+																@if($cover->random_template_overlay_url)
+																	<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image" />
+																@endif
+															</a>
+															<div class="bj_new_pr_content_two">
+																<div class="d-flex justify-content-between">
+																	<a href="{{ route('covers.show', $cover->id) }}">
+																		<h5>#{{$cover->id }}</h5>
+																	</a>
+																</div>
+																<div class="writer_name">
+																	{{ $cover->caption ? Str::limit($cover->caption, 40) : '' }}
+																</div>
+																<a href="#" class="bj_theme_btn">Customize</a> <!-- Placeholder link -->
 															</div>
-															<div class="writer_name">
-																{{ $cover->caption ? Str::limit($cover->caption, 40) : '' }}
-															</div>
-															<a href="#" class="bj_theme_btn">Customize</a> <!-- Placeholder link -->
 														</div>
 													</div>
 												@endforeach
 											</div>
-										@endforeach
-									</div>
-									<div class="text-center mt-4">
-										<a href="{{ route('shop.index', ['category' => $genre]) }}" class="bj_theme_btn strock_btn blue_strock_btn">
-											Show all covers in {{ $genre }}
-										</a>
-									</div>
+										</div>
+										<div class="text-center mt-4">
+											<a href="{{ route('shop.index', ['category' => $genre]) }}" class="bj_theme_btn strock_btn blue_strock_btn">
+												Show all covers in {{ $genre }}
+											</a>
+										</div>
+									@else
+										<p class="p-3">No covers found for {{ $genre }}.</p>
+									@endif
 								@else
-									<p class="p-3">No covers found for {{ $genre }}.</p>
-								@endif
-							@else
-								{{-- Placeholder for other tabs, content will be loaded via AJAX --}}
-								<div class="text-center p-5">
-									<div class="spinner-border text-primary" role="status">
-										<span class="visually-hidden">Loading...</span>
+									{{-- Placeholder for other tabs, content will be loaded via AJAX --}}
+									<div class="text-center p-5">
+										<div class="spinner-border text-primary" role="status">
+											<span class="visually-hidden">Loading...</span>
+										</div>
+										<p>Loading covers for {{ $genre }}...</p>
 									</div>
-									<p>Loading covers for {{ $genre }}...</p>
-								</div>
-							@endif
-						</div>
+								@endif
+							</div>
 						@endforeach
 					</div>
 				@else

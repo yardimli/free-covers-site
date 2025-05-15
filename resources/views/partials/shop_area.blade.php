@@ -62,9 +62,9 @@
 										{{-- <div class="pr_ribbon">--}}
 										{{-- <span class="product-badge">New</span>--}}
 										{{-- </div>--}}
-										<button type="button" class="bj_theme_btn add-to-cart-automated" data-name="{{ $cover->name }}" data-img="{{ $cover->mockup_url }}" data-price="0" {{-- Price not available on cover model --}} data-mrp="0">
+										<a href="{{ route('covers.show', $cover->id) }}" class="bj_theme_btn add-to-cart-automated">
 											<i class="icon_pencil-edit"></i>Customize
-										</button>
+										</a>
 									</div>
 									<div class="bj_new_pr_content">
 										<a href="{{ route('covers.show', $cover->id) }}">
