@@ -836,7 +836,7 @@ class DashboardController extends Controller
 			$prompt = "Analyze the following image, which is a book cover with a text template overlaid. The underlying image should show: '". $cover->caption ."'
 Evaluate based on  MANDATORY criteria:
 Is the title and author text in the template completely legible and easy to read?
-Are either ALL the key visual elements from the caption visible and NOT obscured totally by the text overlay. OR If the image is partially obscured but the text is readable and the faces are not obscured and the result is esthetically pleasing, respond with the single word 'YES'. Otherwise Respond with only 'NO'. Don't add any explenation only respond with 'YES' or 'NO'.";
+Are either ALL the key visual elements from the caption visible and NOT obscured totally by the text overlay. OR If the image is partially obscured but the text is readable and the faces or the person in the cover are not obscured and the result is esthetically pleasing, respond with the single word 'YES'. Otherwise Respond with only 'NO'. Don't add any explenation only respond with 'YES' or 'NO'.";
 
 
 			$aiResponse = $this->openAiService->generateMetadataFromImageBase64($prompt, $base64CompositeImage, $mimeType, 30);
