@@ -21,6 +21,11 @@
 		<a class="navbar-brand" href="{{ route('admin.dashboard') }}">Cover Designer Admin</a>
 		<ul class="navbar-nav ms-auto mb-2 mb-lg-0">
 			<li class="nav-item">
+				<button id="batchGenerateMetadataBtn" class="btn btn-sm btn-outline-warning me-2" type="button">
+					Batch Generate Metadata
+				</button>
+			</li>
+			<li class="nav-item">
 				<button id="batchAnalyzeTextPlacementsBtn" class="btn btn-sm btn-outline-info me-2" type="button">
 					Batch Analyze Text Placements
 				</button>
@@ -75,6 +80,7 @@
 		updateItem: "{{ route('admin.items.update') }}",
 		deleteItem: "{{ route('admin.items.delete') }}",
 		generateAiMetadata: "{{ route('admin.items.generate-ai-metadata') }}",
+		getCoversNeedingMetadata: "{{ route('admin.covers.needing-metadata') }}",
 		generateSimilarTemplate: "{{ route('admin.templates.generate-similar') }}",
 		generateAiTextPlacementsBase: "{{ url('admin/covers') }}",
 		getUnprocessedCovers: "{{ route('admin.covers.unprocessed-list') }}",
@@ -100,7 +106,7 @@
 <script src="{{ asset('js/admin/textPlacements.js') }}"></script>
 <script src="{{ asset('js/admin/batchCoverTextPlacement.js') }}"></script>
 <script src="{{ asset('js/admin/batchAutoAssignTemplates.js') }}"></script>
-
+<script src="{{ asset('js/admin/batchAiMetadata.js') }}"></script>
 
 <!-- Main Admin Orchestrator -->
 <script src="{{ asset('js/admin.js') }}"></script>

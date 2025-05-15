@@ -436,21 +436,84 @@ class DashboardController extends Controller
 		}
 	}
 
+	public function getCoversNeedingMetadata(Request $request)
+	{
+		try {
+			// Broadly fetch covers that *might* need updates.
+			$potentialCovers = Cover::query()
+				->where(function ($query) {
+					$query->whereNull('caption')
+						->orWhere('caption', '=', '')
+						->orWhereNull('keywords')
+						->orWhere('keywords', '=', '[]') // Check for empty JSON array string
+						->orWhereNull('categories')
+						->orWhere('categories', '=', '[]'); // Check for empty JSON array string
+				})
+				// Or names that are very short (less likely to be 3 words)
+				// This is a loose pre-filter; precise check is in PHP.
+				->orWhereRaw('LENGTH(name) < 15') // Example: names shorter than 15 chars
+				->orderBy('id')
+				->get(['id', 'name', 'caption', 'keywords', 'categories']);
+
+			$coversNeedingUpdate = $potentialCovers->filter(function ($cover) {
+				$nameWordCount = str_word_count(trim($cover->name ?? ''));
+				$needsNameUpdate = $nameWordCount < 3;
+				$needsCaptionUpdate = empty(trim($cover->caption ?? ''));
+				// Model casts 'keywords' and 'categories' to arrays.
+				$needsKeywordsUpdate = empty($cover->keywords); // Checks if the array is empty
+				$needsCategoriesUpdate = empty($cover->categories); // Checks if the array is empty
+
+				return $needsNameUpdate || $needsCaptionUpdate || $needsKeywordsUpdate || $needsCategoriesUpdate;
+			})->map(function ($cover) {
+				$fields_to_generate = [];
+				if (str_word_count(trim($cover->name ?? '')) < 3) $fields_to_generate[] = 'name';
+				if (empty(trim($cover->caption ?? ''))) $fields_to_generate[] = 'caption';
+				if (empty($cover->keywords)) $fields_to_generate[] = 'keywords';
+				if (empty($cover->categories)) $fields_to_generate[] = 'categories';
+
+				return [
+					'id' => $cover->id,
+					'current_name' => $cover->name, // For logging/display by JS
+					'fields_to_generate' => $fields_to_generate
+				];
+			})->values(); // Reset keys for JSON array
+
+			return response()->json(['success' => true, 'data' => ['covers' => $coversNeedingUpdate]]);
+		} catch (\Exception $e) {
+			Log::error("Error fetching covers needing metadata: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+			return response()->json(['success' => false, 'message' => 'Error fetching covers: ' . $e->getMessage()], 500);
+		}
+	}
+
 	public function generateAiMetadata(Request $request)
 	{
 		$validator = Validator::make($request->all(), [
 			'item_type' => ['required', Rule::in(['covers', 'templates', 'elements', 'overlays'])],
 			'id' => 'required|integer',
+			'fields_to_generate' => 'nullable|string', // Comma-separated: name,caption,keywords,categories
 		]);
 
-		if ($validator->fails()) return response()->json(['success' => false, 'message' => 'Invalid input.', 'errors' => $validator->errors()], 422);
+		if ($validator->fails()) {
+			return response()->json(['success' => false, 'message' => 'Invalid input.', 'errors' => $validator->errors()], 422);
+		}
 
 		$itemType = $request->input('item_type');
 		$id = $request->input('id');
+		$fieldsToGenerateInput = $request->input('fields_to_generate');
+		// If fields_to_generate is provided, it's batch mode focusing on specific fields.
+		// Otherwise (single item generation), all relevant fields are attempted.
+		$fieldsToGenerate = $fieldsToGenerateInput ? explode(',', $fieldsToGenerateInput) : [];
+		$isBatchTargetedMode = !empty($fieldsToGenerate);
+
 		$model = $this->getModelInstance($itemType);
-		if (!$model) return response()->json(['success' => false, 'message' => 'Invalid item type.'], 400);
+		if (!$model) {
+			return response()->json(['success' => false, 'message' => 'Invalid item type.'], 400);
+		}
+
 		$item = $model->find($id);
-		if (!$item) return response()->json(['success' => false, 'message' => ucfirst(Str::singular($itemType)) . ' not found.'], 404);
+		if (!$item) {
+			return response()->json(['success' => false, 'message' => ucfirst(Str::singular($itemType)) . ' not found.'], 404);
+		}
 
 		$imagePathForAi = null;
 		if ($itemType === 'templates') {
@@ -470,42 +533,73 @@ class DashboardController extends Controller
 
 			$aiGeneratedData = [];
 
-			$keywordsPrompt = "Generate a list of 10-15 relevant keywords for this image, suitable for search or tagging. Include single words and relevant two-word phrases. Focus on visual elements, style, and potential use case. Output only a comma-separated list.";
-			$keywordsResponse = $this->openAiService->generateMetadataFromImageBase64($keywordsPrompt, $base64Image, $mimeType);
-			if (isset($keywordsResponse['content'])) {
-				$parsedKeywords = $this->openAiService->parseAiListResponse($keywordsResponse['content']);
-				if (!empty($parsedKeywords)) $aiGeneratedData['keywords'] = $parsedKeywords;
-			} elseif (isset($keywordsResponse['error'])) {
-				Log::warning("AI Keywords Error for {$itemType} ID {$id}: " . $keywordsResponse['error']);
+			// Name Generation (only for covers)
+			if ($itemType === 'covers' && (!$isBatchTargetedMode || in_array('name', $fieldsToGenerate))) {
+				$namePrompt = "Generate a concise and descriptive 3-word name for this image based on its visual elements, style, and potential use case. The name should be suitable as a title. Output only the 3-word name. Example: 'Mystic Forest Path' or 'Cosmic Abstract Swirls'.";
+				$nameResponse = $this->openAiService->generateMetadataFromImageBase64($namePrompt, $base64Image, $mimeType);
+				if (isset($nameResponse['content'])) {
+					$generatedName = trim($nameResponse['content']);
+					if (str_word_count($generatedName) >= 2 && str_word_count($generatedName) <= 4) { // Allow some flexibility
+						$aiGeneratedData['name'] = Str::title($generatedName);
+					} else {
+						Log::warning("AI Name Generation for Cover ID {$id}: Did not return 2-4 words. Got: '{$generatedName}'");
+					}
+				} elseif (isset($nameResponse['error'])) {
+					Log::warning("AI Name Error for cover ID {$id}: " . $nameResponse['error']);
+				}
 			}
 
+			// Keywords Generation (for all applicable types)
+			if (!$isBatchTargetedMode || in_array('keywords', $fieldsToGenerate)) {
+				$keywordsPrompt = "Generate a list of 10-15 relevant keywords for this image, suitable for search or tagging. Include single words and relevant two-word phrases. Focus on visual elements, style, and potential use case. Output only a comma-separated list.";
+				$keywordsResponse = $this->openAiService->generateMetadataFromImageBase64($keywordsPrompt, $base64Image, $mimeType);
+				if (isset($keywordsResponse['content'])) {
+					$parsedKeywords = $this->openAiService->parseAiListResponse($keywordsResponse['content']);
+					if (!empty($parsedKeywords)) $aiGeneratedData['keywords'] = $parsedKeywords;
+				} elseif (isset($keywordsResponse['error'])) {
+					Log::warning("AI Keywords Error for {$itemType} ID {$id}: " . $keywordsResponse['error']);
+				}
+			}
+
+			// Caption and Categories (only for covers)
 			if ($itemType === 'covers') {
-				$captionPrompt = "Describe this book cover image concisely for use as an alt text or short caption. Focus on the main visual elements and mood. Do not include or describe any text visible on the image. Maximum 140 characters.";
-				$captionResponse = $this->openAiService->generateMetadataFromImageBase64($captionPrompt, $base64Image, $mimeType);
-				if (isset($captionResponse['content'])) {
-					$aiGeneratedData['caption'] = Str::limit(trim($captionResponse['content']), 250);
-				} elseif (isset($captionResponse['error'])) {
-					Log::warning("AI Caption Error for cover ID {$id}: " . $captionResponse['error']);
+				if (!$isBatchTargetedMode || in_array('caption', $fieldsToGenerate)) {
+					$captionPrompt = "Describe this book cover image concisely for use as an alt text or short caption. Focus on the main visual elements and mood. Do not include or describe any text visible on the image. Maximum 140 characters.";
+					$captionResponse = $this->openAiService->generateMetadataFromImageBase64($captionPrompt, $base64Image, $mimeType);
+					if (isset($captionResponse['content'])) {
+						$aiGeneratedData['caption'] = Str::limit(trim($captionResponse['content']), 250);
+					} elseif (isset($captionResponse['error'])) {
+						Log::warning("AI Caption Error for cover ID {$id}: " . $captionResponse['error']);
+					}
 				}
 
-				$categoriesPrompt = "Categorize this book cover image into 1-3 relevant genres from the following list: Mystery, Thriller & Suspense, Fantasy, Science Fiction, Horror, Romance, Erotica, Children's, Action & Adventure, Chick Lit, Historical Fiction, Literary Fiction, Teen & Young Adult, Royal Romance, Western, Surreal, Paranormal & Urban, Apocalyptic, Nature, Poetry, Travel, Religion & Spirituality, Business, Self-Improvement, Education, Health & Wellness, Cookbooks & Food, Environment, Politics & Society, Family & Parenting, Abstract, Medical, Fitness, Sports, Science, Music. Output only a comma-separated list of the chosen categories.";
-				$categoriesResponse = $this->openAiService->generateMetadataFromImageBase64($categoriesPrompt, $base64Image, $mimeType);
-				if (isset($categoriesResponse['content'])) {
-					$parsedCategories = $this->openAiService->parseAiListResponse($categoriesResponse['content']);
-					if (!empty($parsedCategories)) $aiGeneratedData['categories'] = $parsedCategories;
-				} elseif (isset($categoriesResponse['error'])) {
-					Log::warning("AI Categories Error for cover ID {$id}: " . $categoriesResponse['error']);
+				if (!$isBatchTargetedMode || in_array('categories', $fieldsToGenerate)) {
+					$categoriesPrompt = "Categorize this book cover image into 1-3 relevant genres from the following list: Mystery, Thriller & Suspense, Fantasy, Science Fiction, Horror, Romance, Erotica, Children's, Action & Adventure, Chick Lit, Historical Fiction, Literary Fiction, Teen & Young Adult, Royal Romance, Western, Surreal, Paranormal & Urban, Apocalyptic, Nature, Poetry, Travel, Religion & Spirituality, Business, Self-Improvement, Education, Health & Wellness, Cookbooks & Food, Environment, Politics & Society, Family & Parenting, Abstract, Medical, Fitness, Sports, Science, Music. Output only a comma-separated list of the chosen categories.";
+					$categoriesResponse = $this->openAiService->generateMetadataFromImageBase64($categoriesPrompt, $base64Image, $mimeType);
+					if (isset($categoriesResponse['content'])) {
+						$parsedCategories = $this->openAiService->parseAiListResponse($categoriesResponse['content']);
+						if (!empty($parsedCategories)) $aiGeneratedData['categories'] = $parsedCategories;
+					} elseif (isset($categoriesResponse['error'])) {
+						Log::warning("AI Categories Error for cover ID {$id}: " . $categoriesResponse['error']);
+					}
 				}
 			}
 
 			if (empty($aiGeneratedData)) {
-				return response()->json(['success' => false, 'message' => 'AI did not return any usable metadata or an error occurred. Check logs.'], 500);
+				$message = $isBatchTargetedMode ? 'AI did not return any usable metadata for the requested fields. Check logs.' : 'AI did not return any usable metadata or an error occurred. Check logs.';
+				return response()->json(['success' => false, 'message' => $message], 500);
 			}
 
 			$item->update($aiGeneratedData);
-			return response()->json(['success' => true, 'message' => ucfirst(Str::singular($itemType)) . ' AI metadata updated successfully.']);
+			$updatedFieldsList = implode(', ', array_keys($aiGeneratedData));
+			return response()->json([
+				'success' => true,
+				'message' => ucfirst(Str::singular($itemType)) . " AI metadata updated successfully for fields: {$updatedFieldsList}.",
+				'data' => ['updated_fields' => array_keys($aiGeneratedData)]
+			]);
+
 		} catch (\Exception $e) {
-			Log::error("AI Metadata generation error ({$itemType} ID {$id}): " . $e->getMessage());
+			Log::error("AI Metadata generation error ({$itemType} ID {$id}): " . $e->getMessage() . "\n" . $e->getTraceAsString());
 			return response()->json(['success' => false, 'message' => 'AI metadata generation failed: ' . $e->getMessage()], 500);
 		}
 	}

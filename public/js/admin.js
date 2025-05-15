@@ -1,9 +1,9 @@
 // public/js/admin.js (Main Orchestrator)
-$(document).ready(function() {
+$(document).ready(function () {
 	const requiredModules = [
 		'Utils', 'CoverTypes', 'Items', 'Upload', 'Edit', 'Delete',
 		'AiMetadata', 'AiSimilarTemplate', 'AssignTemplates', 'TextPlacements',
-		'BatchAutoAssignTemplates'
+		'BatchAutoAssignTemplates', 'BatchAiMetadata'
 	];
 	for (const moduleName of requiredModules) {
 		if (!window.AppAdmin || !window.AppAdmin[moduleName]) {
@@ -13,12 +13,12 @@ $(document).ready(function() {
 		}
 	}
 	
-	const { showAlert, escapeHtml } = AppAdmin.Utils;
-	const { loadItems } = AppAdmin.Items;
-	const { fetchCoverTypes } = AppAdmin.CoverTypes;
+	const {showAlert, escapeHtml} = AppAdmin.Utils;
+	const {loadItems} = AppAdmin.Items;
+	const {fetchCoverTypes} = AppAdmin.CoverTypes;
 	
 	$.ajaxSetup({
-		headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
+		headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')}
 	});
 	
 	AppAdmin.Upload.init();
@@ -29,6 +29,7 @@ $(document).ready(function() {
 	AppAdmin.AssignTemplates.init();
 	AppAdmin.TextPlacements.init();
 	AppAdmin.BatchAutoAssignTemplates.init();
+	AppAdmin.BatchAiMetadata.init();
 	
 	let popStateHandlingActive = false; // Flag to manage popstate-triggered loads
 	
@@ -56,7 +57,9 @@ $(document).ready(function() {
 		} else {
 			// Fallback for invalid tab in URL
 			effectiveItemType = 'covers';
-			page = 1; search = ''; filter = ''; // Reset params
+			page = 1;
+			search = '';
+			filter = ''; // Reset params
 			const $defaultTabButton = $(`#adminTab button[data-bs-target="#covers-panel"]`);
 			if ($defaultTabButton.length) {
 				if (!$defaultTabButton.hasClass('active')) {
@@ -83,7 +86,7 @@ $(document).ready(function() {
 	});
 	
 	// Popstate handler for browser back/forward
-	window.addEventListener('popstate', function(event) {
+	window.addEventListener('popstate', function (event) {
 		loadStateFromUrl();
 	});
 	
@@ -117,7 +120,7 @@ $(document).ready(function() {
 	});
 	
 	// Cover Type Filter Change
-	$(document).on('change', '.cover-type-filter', function() {
+	$(document).on('change', '.cover-type-filter', function () {
 		const itemType = $(this).closest('.tab-pane').attr('id').replace('-panel', '');
 		const coverTypeId = $(this).val();
 		const searchQuery = $(`#${itemType}-panel .search-input`).val() || '';
@@ -125,7 +128,7 @@ $(document).ready(function() {
 	});
 	
 	// Pagination Clicks
-	$('.tab-content').on('click', '.pagination .page-link', function(e) {
+	$('.tab-content').on('click', '.pagination .page-link', function (e) {
 		e.preventDefault();
 		const $link = $(this);
 		if ($link.parent().hasClass('disabled') || $link.parent().hasClass('active')) {
@@ -139,7 +142,7 @@ $(document).ready(function() {
 	});
 	
 	// Search Form Submission
-	$('.tab-content').on('submit', '.search-form', function(e) {
+	$('.tab-content').on('submit', '.search-form', function (e) {
 		e.preventDefault();
 		const $form = $(this);
 		const itemType = $form.data('type');

@@ -29,7 +29,10 @@
 		Route::get('/items/details', [DashboardController::class, 'getItemDetails'])->name('items.details');
 		Route::post('/items/update', [DashboardController::class, 'updateItem'])->name('items.update');
 		Route::post('/items/delete', [DashboardController::class, 'deleteItem'])->name('items.delete');
+
+		Route::get('/covers/needing-metadata', [DashboardController::class, 'getCoversNeedingMetadata'])->name('covers.needing-metadata');
 		Route::post('/items/generate-ai-metadata', [DashboardController::class, 'generateAiMetadata'])->name('items.generate-ai-metadata');
+
 		Route::post('/templates/generate-similar', [DashboardController::class, 'generateSimilarTemplate'])->name('templates.generate-similar');
 
 		Route::post('/covers/{cover}/generate-ai-text-placements', [DashboardController::class, 'generateAiTextPlacements'])->name('covers.generate-ai-text-placements');
