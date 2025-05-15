@@ -837,7 +837,6 @@ class DashboardController extends Controller
 Evaluate based on MANDATORY criteria:
 1) Is the title and author text in the template completely legible and easy to read?
 2) Are ALL the key visual elements from the caption visible and NOT obscured totally by the text overlay. 
-3) OR If the image is partially obscured except for faces and people but the text is readable and the result is esthetically pleasing.
  
  Respond with the single word 'YES'. Otherwise Respond with only 'NO'. Don't add any explanation only respond with 'YES' or 'NO'.";
 
