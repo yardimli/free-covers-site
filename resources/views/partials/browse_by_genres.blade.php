@@ -64,7 +64,7 @@
 															<div class="bj_new_pr_content_two">
 																<div class="d-flex justify-content-between">
 																	<a href="{{ route('covers.show', $cover->id) }}">
-																		<h5>#{{$cover->id }}</h5>
+																		<h6>#{{$cover->id }} {{$cover->name }}</h6>
 																	</a>
 																</div>
 																<div class="writer_name">

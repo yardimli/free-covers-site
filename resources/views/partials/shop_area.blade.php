@@ -68,7 +68,7 @@
 									</div>
 									<div class="bj_new_pr_content">
 										<a href="{{ route('covers.show', $cover->id) }}">
-											<h4 class="bj_new_pr_title" style="margin-bottom:0px;">#{{ $cover->id }}</h4>
+											<h5 class="bj_new_pr_title" style="margin-bottom:0px;">#{{ $cover->id }} {{$cover->name }}</h5>
 										</a>
 										<div class="bj_pr_meta d-flex">
 											<div class="writer_name">{{ $cover->caption ? Str::limit($cover->caption, 40) : 'No caption' }}</div>

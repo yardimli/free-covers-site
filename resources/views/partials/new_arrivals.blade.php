@@ -21,7 +21,7 @@
 									<a href="{{ route('shop.index', ['category' => $categoryName]) }}" class="category">{{ $categoryName }}</a>
 								@endif
 								<a href="{{ route('covers.show', $cover->id) }}">
-									<h4 class="bj_new_pr_title">#{{ $cover->id }}</h4>
+									<h6 class="bj_new_pr_title">#{{ $cover->id }}<br>{{$cover->name }}</h6>
 								</a>
 								<div class="writer_name">{{ $cover->caption ? Str::limit($cover->caption, 60) : '' }}</div>
 								<a href="#" class="bj_theme_btn">Customize</a>
