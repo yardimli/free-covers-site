@@ -832,7 +832,16 @@ class DashboardController extends Controller
 			$mimeType = 'image/png';
 
 			// Prompt for AI
-			$prompt = "The caption of the underlying image is: \"". $cover->caption ."\". Analyze the following image, which is a book cover with a text template overlaid. Key questions: 1. Is all the text in the template easy to read? 2. Does the template allow whats described in the caption of the underlying image to remain visible? Based on these, decide if this is a good combination. Respond with only the single word 'YES' if the text is readable AND the core visual elements remain visible, or the word 'NO' with a short explanation if the text is unreadable OR central visual elements are obscured. Do not provide any explanation or other words.";
+
+			$prompt = "Analyze the following image, which is a book cover with a text template overlaid. The underlying image should show: '". $cover->caption ."'
+Evaluate based on TWO MANDATORY criteria:
+
+Is ALL the text in the template completely legible and easy to read?
+				Are ALL the key visual elements from the caption visible and NOT obscured by the text overlay?
+
+				Respond with the single word 'YES' ONLY if BOTH criteria are fully satisfied.
+			Respond with 'NO' followed by a brief explanation if EITHER criterion fails, specifying which elements are problematic.";
+
 
 			$aiResponse = $this->openAiService->generateMetadataFromImageBase64($prompt, $base64CompositeImage, $mimeType, 30);
 
