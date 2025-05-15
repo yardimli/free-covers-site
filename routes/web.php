@@ -31,6 +31,10 @@
 		Route::post('/items/generate-ai-metadata', [DashboardController::class, 'generateAiMetadata'])->name('items.generate-ai-metadata');
 		Route::post('/templates/generate-similar', [DashboardController::class, 'generateSimilarTemplate'])->name('templates.generate-similar');
 
+		Route::post('/covers/{cover}/generate-ai-text-placements', [DashboardController::class, 'generateAiTextPlacements'])->name('covers.generate-ai-text-placements');
+		Route::get('/covers/unprocessed-for-text-placement', [DashboardController::class, 'getUnprocessedCoversForTextPlacement'])->name('covers.unprocessed-list');
+
+
 		// New routes for Cover-Template assignments
 		Route::get('/covers/{cover}/assignable-templates', [DashboardController::class, 'listAssignableTemplates'])->name('covers.list-assignable-templates');
 		Route::post('/covers/{cover}/assign-templates', [DashboardController::class, 'updateCoverTemplateAssignments'])->name('covers.update-assignments');

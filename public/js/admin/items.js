@@ -54,6 +54,7 @@ AppAdmin.Items = (function() {
 								rowHtml += `<td>${escapeHtml(item.caption || '')}</td>`;
 								rowHtml += `<td>${renderKeywords(item.keywords)}</td>`;
 								rowHtml += `<td>${renderKeywords(item.categories)}</td>`;
+								rowHtml += `<td>${renderKeywords(item.text_placements)}</td>`
 								let assignedTemplatesText = item.assigned_templates_names || 'None';
 								if (item.assigned_templates_count > 0) {
 									if (item.assigned_templates_names && item.assigned_templates_names.length < 50) {
@@ -73,6 +74,7 @@ AppAdmin.Items = (function() {
 							rowHtml += `<td>`;
 							if (itemType === 'covers') {
 								rowHtml += ` <button class="btn btn-primary btn-sm me-1 assign-templates" data-id="${item.id}" data-name="${escapeHtml(item.name)}" title="Assign Templates"> <i class="fas fa-layer-group"></i> </button>`;
+								rowHtml += ` <button class="btn btn-outline-info btn-sm me-1 analyze-text-placements" data-id="${item.id}" data-type="${itemType}" title="Analyze Text Placements with AI"> <i class="fas fa-text-height"></i> </button>`;
 							}
 							if (itemType === 'templates') {
 								rowHtml += ` <button class="btn btn-success btn-sm me-1 generate-similar-template" data-id="${item.id}" data-type="${itemType}" title="Generate Similar with AI"> <i class="fas fa-robot"></i> </button>`;

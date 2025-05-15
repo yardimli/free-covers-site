@@ -84,7 +84,8 @@
 						<th>Caption</th>
 						<th>Keywords</th>
 						<th>Categories</th>
-						<th>Assigned Templates</th> <!-- New Column -->
+						<th>Text Placements</th>
+						<th>Assigned Templates</th>
 						<th>Actions</th>
 					</tr>
 					</thead>
@@ -292,6 +293,12 @@
 							<label for="editItemCategories" class="form-label">Categories (comma-separated)</label>
 							<input type="text" class="form-control" id="editItemCategories" name="categories">
 						</div>
+						<div class="mb-3 edit-field edit-field-covers"> <!-- New Field -->
+							<label for="editItemTextPlacements" class="form-label">Text Placements (e.g., top-light,middle-dark)</label>
+							<input type="text" class="form-control" id="editItemTextPlacements" name="text_placements">
+							<div class="form-text">Comma-separated. Values like 'top-light', 'middle-dark', etc. AI can generate this.</div>
+						</div>
+						
 						<!-- Fields specific to Covers, Elements, Overlays, AND TEMPLATES (for keywords) -->
 						<div class="mb-3 edit-field edit-field-covers edit-field-elements edit-field-overlays edit-field-templates">
 							<label for="editItemKeywords" class="form-label">Keywords (comma-separated)</label>
@@ -360,8 +367,9 @@
 	</div>
 	
 	<!-- Assign Templates Modal -->
+	<!-- Assign Templates Modal -->
 	<div class="modal fade" id="assignTemplatesModal" tabindex="-1" aria-labelledby="assignTemplatesModalLabel" aria-hidden="true">
-		<div class="modal-dialog modal-lg">
+		<div class="modal-dialog modal-xl"> <!-- Increased modal size for better layout -->
 			<div class="modal-content">
 				<form id="assignTemplatesForm">
 					<div class="modal-header">
@@ -370,16 +378,29 @@
 					</div>
 					<div class="modal-body">
 						<input type="hidden" id="assignTemplatesCoverId" name="cover_id">
-						<p><strong>Cover:</strong> <span id="assignTemplatesCoverName"></span></p>
-						<p><strong>Cover Type:</strong> <span id="assignTemplatesCoverTypeName"></span></p>
-						<hr>
-						<h6>Available Templates (for this cover type):</h6>
-						<div id="assignableTemplatesList" style="max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #eee; border-radius: 4px;">
-							<!-- Checkboxes will be populated by JS -->
-							<p class="text-center">Loading templates...</p>
-						</div>
-						<div id="noAssignableTemplatesMessage" class="alert alert-info mt-2" style="display: none;">
-							<!-- Message populated by JS -->
+						<div class="row">
+							<div class="col-md-7"> <!-- Left Part: Details and Template List -->
+								<p><strong>Cover:</strong> <span id="assignTemplatesCoverName"></span></p>
+								<p><strong>Cover Type:</strong> <span id="assignTemplatesCoverTypeName"></span></p>
+								<hr>
+								<h6>Available Templates (for this cover type):</h6>
+								<div id="assignableTemplatesList" style="max-height: 350px; overflow-y: auto; padding: 10px; padding-left: 30px; border: 1px solid #eee; border-radius: 4px;">
+									<!-- Checkboxes will be populated by JS -->
+									<p class="text-center">Loading templates...</p>
+								</div>
+								<div id="noAssignableTemplatesMessage" class="alert alert-info mt-2" style="display: none;">
+									<!-- Message populated by JS -->
+								</div>
+							</div>
+							<div class="col-md-5"> <!-- Right Part: Cover Preview -->
+								<h6>Cover Preview:</h6>
+								{{-- Removed inline styles from the div and its children img/span tags --}}
+								<div id="assignTemplatesCoverPreviewContainer">
+									<img id="assignTemplatesCoverPreviewImage" src="" alt="Cover Preview">
+									<img id="assignTemplatesTemplateOverlay" src="" alt="Template Overlay">
+									<span id="assignTemplatesPreviewPlaceholder">No preview available</span>
+								</div>
+							</div>
 						</div>
 					</div>
 					<div class="modal-footer">

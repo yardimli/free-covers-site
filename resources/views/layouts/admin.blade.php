@@ -21,6 +21,11 @@
 		<a class="navbar-brand" href="{{ route('admin.dashboard') }}">Cover Designer Admin</a>
 		<ul class="navbar-nav ms-auto mb-2 mb-lg-0">
 			<li class="nav-item">
+				<button id="batchAnalyzeTextPlacementsBtn" class="btn btn-sm btn-outline-info me-2" type="button">
+					Batch Analyze Text Placements
+				</button>
+			</li>
+			<li class="nav-item">
 				<a href="{{ route('home') }}" class="btn btn-sm btn-outline-light me-2" target="_blank">View App</a>
 			</li>
 			@auth
@@ -37,6 +42,18 @@
 
 <div class="container admin-container">
 	<div id="alert-messages-container" class="alert-messages"></div>
+	
+	{{-- Batch Progress Area --}}
+	<div id="batchProgressArea" class="my-3" style="display: none;">
+		<h5>Batch Processing Status:</h5>
+		<div class="progress" style="height: 25px;">
+			<div id="batchProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
+				<span id="batchProgressText"></span>
+			</div>
+		</div>
+		<div id="batchProgressSummary" class="mt-2 small"></div>
+	</div>
+	
 	@yield('content')
 </div>
 
@@ -54,8 +71,10 @@
 		deleteItem: "{{ route('admin.items.delete') }}",
 		generateAiMetadata: "{{ route('admin.items.generate-ai-metadata') }}",
 		generateSimilarTemplate: "{{ route('admin.templates.generate-similar') }}",
-		listAssignableTemplatesBase: "{{ url('admin/covers') }}", // Base URL for constructing specific routes
-		updateCoverTemplateAssignmentsBase: "{{ url('admin/covers') }}" // Base URL
+		generateAiTextPlacementsBase: "{{ url('admin/covers') }}",
+		getUnprocessedCovers: "{{ route('admin.covers.unprocessed-list') }}",
+		listAssignableTemplatesBase: "{{ url('admin/covers') }}",
+		updateCoverTemplateAssignmentsBase: "{{ url('admin/covers') }}",
 	};
 	window.AppAdmin = window.AppAdmin || {}; // Initialize the global namespace
 </script>

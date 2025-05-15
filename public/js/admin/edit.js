@@ -44,6 +44,7 @@ AppAdmin.Edit = (function() {
 						$('#editItemCaption').val(item.caption || '');
 						$('#editItemKeywords').val(item.keywords || '');
 						$('#editItemCategories').val(item.categories || '');
+						$('#editItemTextPlacements').val(item.text_placements || '');
 						$('#editItemCoverType').val(item.cover_type_id || '');
 						if(item.image_url) {
 							$('#editCurrentImagePreview').html(`<p class="mb-1">Current Image:</p><img src="${escapeHtml(item.image_url)}" alt="Current Preview">`).show();

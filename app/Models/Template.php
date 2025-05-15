@@ -28,6 +28,7 @@ class Template extends Model
 		'json_path', // Note: This field seems unused if json_content is primary
 		'json_content',
 		'keywords',
+		'text_placements', // Added
 	];
 
 	/**
@@ -38,6 +39,7 @@ class Template extends Model
 	protected $casts = [
 		'json_content' => 'array', // Or 'object' if you prefer stdClass
 		'keywords' => 'array',
+		'text_placements' => 'array', // Added
 		'created_at' => 'datetime',
 		'updated_at' => 'datetime',
 	];

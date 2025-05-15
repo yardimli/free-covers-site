@@ -5,8 +5,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-// Add this
-
 class Cover extends Model
 {
 	use HasFactory;
@@ -31,6 +29,7 @@ class Cover extends Model
 		'caption',
 		'keywords',
 		'categories',
+		'text_placements', // Added
 	];
 
 	/**
@@ -39,8 +38,9 @@ class Cover extends Model
 	 * @var array<string, string>
 	 */
 	protected $casts = [
-		'keywords' => 'array', // For JSON columns
-		'categories' => 'array', // For JSON columns
+		'keywords' => 'array',
+		'categories' => 'array',
+		'text_placements' => 'array', // Added
 		'created_at' => 'datetime',
 		'updated_at' => 'datetime',
 	];

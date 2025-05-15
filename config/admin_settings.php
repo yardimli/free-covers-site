@@ -47,7 +47,7 @@
 		'ai_generated_templates_dir' => 'text-templates-ai',
 
 		// OpenAI Models
-		'openai_vision_model' => env('OPENAI_VISION_MODEL', 'gpt-4o-mini'), // For image analysis
-		'openai_text_model' => env('OPENAI_TEXT_MODEL', 'gpt-4o-mini'), // For text generation
+		'openai_vision_model' => env('OPENAI_VISION_MODEL', 'gpt-4.1-mini-2025-04-14'), // For image analysis
+		'openai_text_model' => env('OPENAI_TEXT_MODEL', 'gpt-4.1-mini-2025-04-14'), // For text generation
 		'openai_api_key' => env('OPENAI_API_KEY'),
 	];
