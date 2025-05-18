@@ -35,7 +35,7 @@
 	
 	@yield('content')
 	
-	@include('partials.footer')
+	@include('partials.footer', ['footerClass' => $footerClass ?? ''])
 
 </div>
 <!-- Back to top button -->

@@ -4,9 +4,10 @@ AppAdmin.Items = (function() {
 	const { showAlert, escapeHtml, renderKeywords } = AppAdmin.Utils;
 	const ITEMS_PER_PAGE = 30; // Should match config
 	
-	function updateUrl(itemType, page, searchQuery, coverTypeIdFilter) {
+	function updateUrl(itemType, page, searchQuery, coverTypeIdFilter, filterNoTemplatesState) {
 		const newParams = new URLSearchParams();
 		newParams.set('tab', itemType);
+		
 		if (page && page > 1) {
 			newParams.set('page', String(page));
 		}
@@ -16,18 +17,21 @@ AppAdmin.Items = (function() {
 		if ((itemType === 'covers' || itemType === 'templates') && coverTypeIdFilter) {
 			newParams.set('filter', coverTypeIdFilter);
 		}
+		if (itemType === 'covers' && filterNoTemplatesState) { // Only add if true
+			newParams.set('no_templates', 'true');
+		}
+		
 		const newQueryString = newParams.toString();
 		const currentQueryString = window.location.search.substring(1);
 		
 		// Only push a new state if the query string actually changes.
 		if (currentQueryString !== newQueryString) {
 			const newUrl = newQueryString ? `${window.location.pathname}?${newQueryString}` : window.location.pathname;
-			history.pushState({ path: newUrl, itemType, page, searchQuery, coverTypeIdFilter }, '', newUrl);
+			history.pushState({ path: newUrl, itemType, page, searchQuery, coverTypeIdFilter, filterNoTemplatesState }, '', newUrl);
 		}
 	}
 	
-	
-	function loadItems(itemType, page = 1, searchQuery = '', coverTypeIdFilter = '', scrollYToRestore = null) {
+	function loadItems(itemType, page = 1, searchQuery = '', coverTypeIdFilter = '', filterNoTemplates = false, scrollYToRestore = null) {
 		const $tableBody = $(`#${itemType}Table tbody`);
 		const $paginationContainer = $(`#${itemType}Pagination`);
 		
@@ -36,25 +40,37 @@ AppAdmin.Items = (function() {
 		if ($panel.length) {
 			$panel.find('.search-input').val(searchQuery);
 			const $filterDropdown = $panel.find('.cover-type-filter');
-			if ($filterDropdown.length) { // Check if the filter dropdown exists for this itemType
-				// Ensure options are loaded before setting value. Assumes populateAllCoverTypeDropdowns has run.
+			if ($filterDropdown.length) {
 				if ($filterDropdown.find(`option[value="${coverTypeIdFilter}"]`).length > 0) {
 					$filterDropdown.val(coverTypeIdFilter);
 				} else {
-					$filterDropdown.val(''); // Default to "All" or empty if the value is not found
+					$filterDropdown.val('');
 				}
+			}
+			if (itemType === 'covers') {
+				$('#filterNoTemplatesBtn').toggleClass('active', filterNoTemplates);
 			}
 		}
 		
 		$tableBody.html('<tr><td colspan="100%" class="text-center"><span class="spinner-border spinner-border-sm"></span> Loading...</td></tr>');
 		$paginationContainer.empty();
 		
-		updateUrl(itemType, page, searchQuery, coverTypeIdFilter); // Update URL
+		updateUrl(itemType, page, searchQuery, coverTypeIdFilter, filterNoTemplates); // Update URL
 		
-		let ajaxData = { type: itemType, page: page, limit: ITEMS_PER_PAGE, search: searchQuery };
+		let ajaxData = {
+			type: itemType,
+			page: page,
+			limit: ITEMS_PER_PAGE,
+			search: searchQuery
+		};
+		
 		if (coverTypeIdFilter && (itemType === 'covers' || itemType === 'templates')) {
 			ajaxData.cover_type_id = coverTypeIdFilter;
 		}
+		if (itemType === 'covers' && filterNoTemplates) {
+			ajaxData.filter_no_templates = true;
+		}
+		
 		
 		$.ajax({
 			url: window.adminRoutes.listItems,
@@ -71,12 +87,14 @@ AppAdmin.Items = (function() {
 						let message = `No ${itemType} found.`;
 						if (searchQuery) message = `No ${itemType} found matching "${escapeHtml(searchQuery)}".`;
 						if (coverTypeIdFilter && (itemType === 'covers' || itemType === 'templates')) message += ` for the selected cover type.`;
+						if (itemType === 'covers' && filterNoTemplates) message += ` that have no templates assigned.`;
 						$tableBody.html(`<tr><td colspan="100%" class="text-center">${message}</td></tr>`);
 					} else {
 						items.forEach(item => {
 							let rowHtml = `<tr>`;
 							const thumbUrl = item.thumbnail_url || 'images/placeholder.png'; // Placeholder if no thumb
 							const isSquareThumb = itemType === 'elements' || itemType === 'overlays';
+							
 							rowHtml += `<td><img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(item.name)}" class="thumbnail-preview ${isSquareThumb ? 'square' : ''}" loading="lazy"></td>`;
 							
 							if (itemType === 'covers') {
@@ -91,7 +109,6 @@ AppAdmin.Items = (function() {
 								rowHtml += `<td>${escapeHtml(item.name)}<br>`;
 								rowHtml += `${escapeHtml(item.cover_type_name || 'N/A')}</td>`;
 								rowHtml += `<td>${renderKeywords(item.keywords)}</td>`;
-								// Ensure this column exists in your HTML table for templates if you display it
 								rowHtml += `<td>${renderKeywords(item.text_placements)}</td>`;
 							} else if (itemType === 'elements' || itemType === 'overlays') {
 								rowHtml += `<td>${escapeHtml(item.name)}</td>`;
@@ -115,8 +132,7 @@ AppAdmin.Items = (function() {
 							$tableBody.append(rowHtml);
 						});
 					}
-					renderPagination(itemType, pagination, $paginationContainer); // Pass $paginationContainer
-					
+					renderPagination(itemType, pagination, $paginationContainer);
 					if (scrollYToRestore !== null) {
 						requestAnimationFrame(() => {
 							window.scrollTo(0, scrollYToRestore);
@@ -140,9 +156,8 @@ AppAdmin.Items = (function() {
 		});
 	}
 	
-	function renderPagination(itemType, pagination, $paginationContainer) { // Accept $paginationContainer
+	function renderPagination(itemType, pagination, $paginationContainer) {
 		const { totalItems, itemsPerPage, currentPage, totalPages } = pagination;
-		// const $paginationContainer = $(`#${itemType}Pagination`); // Already passed
 		$paginationContainer.empty();
 		
 		if (totalPages <= 1) {
@@ -181,6 +196,6 @@ AppAdmin.Items = (function() {
 	
 	return {
 		loadItems,
-		ITEMS_PER_PAGE // Export if needed by other modules, though it's mainly internal here
+		ITEMS_PER_PAGE
 	};
 })();

@@ -6,20 +6,33 @@
 			</a>
 			<button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="menu_toggle">
-                    <span class="hamburger"> <span></span> <span></span> <span></span> </span>
-                    <span class="hamburger-cross"> <span></span> <span></span> </span>
+                    <span class="hamburger">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                    <span class="hamburger-cross">
+                        <span></span>
+                        <span></span>
+                    </span>
                 </span>
 			</button>
 			<div class="collapse navbar-collapse justify-content-between" id="navbarSupportedContent">
 				<ul class="navbar-nav menu w_menu ms-auto me-auto">
-					<li class="nav-item active">
-						<a class="nav-link" href="{{ route('home') }}" role="button" aria-haspopup="true" aria-expanded="false"> HOME </a>
+					<li class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
+						<a class="nav-link" href="{{ route('home') }}" role="button" aria-haspopup="true" aria-expanded="false">
+							HOME
+						</a>
 					</li>
-					<li class="nav-item">
-						<a class="nav-link " href="{{ route('shop.index') }}" role="button" aria-haspopup="true" aria-expanded="false"> Browse Covers </a>
+					<li class="nav-item {{ request()->routeIs('shop.*') ? 'active' : '' }}">
+						<a class="nav-link" href="{{ route('shop.index') }}" role="button" aria-haspopup="true" aria-expanded="false">
+							Browse Covers
+						</a>
 					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="{{ route('blog.index') }}" role="button" aria-haspopup="true" aria-expanded="false"> Blog </a>
+					<li class="nav-item {{ request()->routeIs('blog.*') ? 'active' : '' }}">
+						<a class="nav-link" href="{{ route('blog.index') }}" role="button" aria-haspopup="true" aria-expanded="false">
+							Blog
+						</a>
 					</li>
 				</ul>
 				<div class="alter_nav">
@@ -29,14 +42,24 @@
 							<form action="#" method="get" class="menu-search-form">
 								<div class="input-group">
 									<input type="search" class="form-control" placeholder="Search here.." />
-									<button type="submit"> <i class="ti-arrow-right"></i> </button>
+									<button type="submit">
+										<i class="ti-arrow-right"></i>
+									</button>
 								</div>
 							</form>
 						</li>
-						
 						<li class="nav-item user ms-3">
-							<a class="nav-link" href="{{-- route('my-account') --}}#"><i class="icon-user"></i></a>
+							@auth
+								<a class="nav-link" href="{{ route('profile.edit') }}"><i class="icon-user"></i></a>
+							@else
+								<a class="nav-link" href="{{ route('login') }}"><i class="icon-user"></i></a>
+							@endauth
 						</li>
+						@guest
+							<li class="nav-item user ms-3">
+							<a class="nav-link" href="{{ route('register') }}"><i class="icon_id-2_alt"></i></a>
+							</li>
+						@endguest
 					</ul>
 				</div>
 			</div>

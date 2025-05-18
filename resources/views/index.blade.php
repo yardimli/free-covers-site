@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@php
+	$footerClass = 'padding_top';
+@endphp
+
 @section('title', 'Free Kindle Covers - Your Next Premium Book For Free')
 
 @section('content')

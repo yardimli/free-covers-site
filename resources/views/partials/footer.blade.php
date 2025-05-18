@@ -1,4 +1,4 @@
-<footer class="bj_footer_area padding_top" data-bg-color="#001F58">
+<footer class="bj_footer_area {{ $footerClass }}" data-bg-color="#001F58">
 	<img class="footer_bg_img" src="{{ asset('template/assets/img/home/footer_img.jpg') }}" alt="" />
 	<div class="footer_top">
 		<div class="container">
@@ -29,23 +29,27 @@
 				</div>
 				<div class="col-lg-3 col-sm-6">
 					<div class="f_widget link_widget ps-lg-5 wow fadeInUp" data-wow-delay="0.3s">
-						<h2 class="f_widget_title">Pages</h2>
+						<h2 class="f_widget_title">Account</h2>
 						<ul class="list-unstyled list">
-							<li><a href="#">Login</a></li>
-							<li><a href="#">Register</a></li>
-							<li><a href="#">Typography</a></li>
-							<li><a href="#">404 Page</a></li>
-							<li><a href="#">Ebook Library</a></li>
+							<li><a href="{{ route('login') }}">Login</a></li>
+							<li><a href="{{ route('register') }}">Register</a></li>
+							<li><a href="{{ route('password.request') }}">Forgot Password</a></li>
+							<li><a href="#">Profile</a></li>
+							<li><a href="#">Dashboard</a></li>
 						</ul>
 					</div>
 				</div>
 				<div class="col-lg-4 col-sm-6">
 					<div class="f_widget link_widget ps-lg-5 wow fadeInUp" data-wow-delay="0.4s">
 						<h2 class="f_widget_title">Newsletter</h2>
-						<p> Aenean amet netus aliquam elit eu, sagittis id natoque id. </p>
+						<p>
+							Stay updated with our latest designs and freebies
+						</p>
 						<form action="#" class="d-flex justify-content-end footer-search">
 							<input type="email" class="form-control email-form" placeholder="Your email address" />
-							<button class="bj_theme_btn btn-Subscribe" type="submit"> <i class="arrow_right"></i> </button>
+							<button class="bj_theme_btn btn-Subscribe" type="submit">
+								<i class="arrow_right"></i>
+							</button>
 						</form>
 					</div>
 				</div>
@@ -61,12 +65,21 @@
 					</a>
 				</div>
 				<div class="col-lg-4 col-md-6">
-					<div class="footer_social d-flex justify-content-lg-center"> Follow Us:
+					<div class="footer_social d-flex justify-content-lg-center">
+						Follow Us:
 						<ul class="list-unstyled f_social_round">
-							<li> <a href="#"><i class="fa-brands fa-facebook-f"></i></a> </li>
-							<li> <a href="#"><i class="fa-brands fa-instagram"></i></a> </li>
-							<li> <a href="#"><i class="fa-brands fa-twitter"></i></a> </li>
-							<li> <a href="#"><i class="fa-brands fa-youtube"></i></a> </li>
+							<li>
+								<a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+							</li>
+							<li>
+								<a href="#"><i class="fa-brands fa-instagram"></i></a>
+							</li>
+							<li>
+								<a href="#"><i class="fa-brands fa-twitter"></i></a>
+							</li>
+							<li>
+								<a href="#"><i class="fa-brands fa-youtube"></i></a>
+							</li>
 						</ul>
 					</div>
 				</div>

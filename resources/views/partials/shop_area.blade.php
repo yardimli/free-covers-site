@@ -52,20 +52,17 @@
 						@foreach($covers as $cover)
 							<div class="col-lg-3 col-md-4 col-sm-6 projects_item">
 								<div class="best_product_item best_product_item_two shop_product">
+									<a href="{{ route('covers.show', $cover->id) }}" class="cover-image-container">
 									<div class="img">
-										<a href="{{ route('covers.show', $cover->id) }}" class="cover-image-container">
 											<img src="{{ $cover->mockup_url }}" alt="{{ $cover->name }}" class="cover-mockup-image img-fluid">
 											@if($cover->random_template_overlay_url)
 												<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image" />
 											@endif
-										</a>
 										{{-- <div class="pr_ribbon">--}}
 										{{-- <span class="product-badge">New</span>--}}
 										{{-- </div>--}}
-										<a href="{{ route('covers.show', $cover->id) }}" class="bj_theme_btn add-to-cart-automated">
-											<i class="icon_pencil-edit"></i>Customize
-										</a>
 									</div>
+									</a>
 									<div class="bj_new_pr_content">
 										<a href="{{ route('covers.show', $cover->id) }}">
 											<h5 class="bj_new_pr_title" style="margin-bottom:0px;">#{{ $cover->id }} {{$cover->name }}</h5>

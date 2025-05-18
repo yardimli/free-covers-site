@@ -19,12 +19,8 @@
 							</a>
 							<div class="bj_new_pr_content">
 								<a href="{{ route('covers.show', $relatedCover->id) }}">
-									<h4 class="bj_new_pr_title">#{{ $relatedCover->id }}</h4>
+									<h4 class="bj_new_pr_title">#{{ $cover->id }} {{$cover->name }}</h4>
 								</a>
-								<div class="bj_pr_meta d-flex">
-									<div class="writer_name" style="min-height: 40px;">{{ $relatedCover->caption ? Str::limit($relatedCover->caption, 35) : 'View Details' }}</div>
-								</div>
-								<a href="#" class="bj_theme_btn strock_btn add-to-cart-automated" data-name="{{ $relatedCover->name }}" data-price="0" data-img="{{ $relatedCover->mockup_url }}" data-mrp="0">Customize</a>
 							</div>
 						</div>
 					</div>

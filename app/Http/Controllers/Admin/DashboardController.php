@@ -27,7 +27,6 @@ class DashboardController extends Controller
 	{
 		$this->imageUploadService = $imageUploadService;
 		$this->openAiService = $openAiService;
-		// $this->middleware('auth'); // Add auth middleware if needed
 	}
 
 	public function index()
@@ -65,6 +64,7 @@ class DashboardController extends Controller
 			'limit' => 'integer|min:1',
 			'search' => 'nullable|string|max:255',
 			'cover_type_id' => 'nullable|integer|exists:cover_types,id',
+			'filter_no_templates' => 'nullable|in:true,false,0,1',
 		]);
 
 		if ($validator->fails()) {
@@ -76,6 +76,7 @@ class DashboardController extends Controller
 		$limit = $request->input('limit', config('admin_settings.items_per_page', 30));
 		$search = $request->input('search');
 		$coverTypeIdFilter = $request->input('cover_type_id');
+		$filterNoTemplates = $request->input('filter_no_templates', false);
 
 		$model = $this->getModelInstance($itemType);
 		if (!$model) {
@@ -105,6 +106,10 @@ class DashboardController extends Controller
 
 		if (($itemType === 'covers' || $itemType === 'templates') && $coverTypeIdFilter) {
 			$query->where('cover_type_id', $coverTypeIdFilter);
+		}
+
+		if ($itemType === 'covers' && $filterNoTemplates) {
+			$query->whereDoesntHave('templates');
 		}
 
 		$paginatedItems = $query->orderBy('id', 'desc')->paginate($limit, ['*'], 'page', $page);
@@ -965,6 +970,25 @@ Evaluate based on MANDATORY criteria:
 		} catch (\Exception $e) {
 			Log::error("Error fetching covers without templates: " . $e->getMessage());
 			return response()->json(['success' => false, 'message' => 'Error fetching covers: ' . $e->getMessage()], 500);
+		}
+	}
+
+	public function removeCoverTemplateAssignment(Request $request, Cover $cover, Template $template)
+	{
+		try {
+			// Detach the template from the cover
+			// The detach method returns the number of detached records
+			$detachedCount = $cover->templates()->detach($template->id);
+
+			if ($detachedCount > 0) {
+				return back()->with('success', 'Template style removed from cover successfully.');
+			} else {
+				// This case might occur if the template was already detached or never associated
+				return back()->with('info', 'Template style was not associated with this cover or already removed.');
+			}
+		} catch (\Exception $e) {
+			Log::error("Error removing template assignment for Cover ID {$cover->id}, Template ID {$template->id}: " . $e->getMessage());
+			return back()->with('error', 'An error occurred while removing the template style.');
 		}
 	}
 }

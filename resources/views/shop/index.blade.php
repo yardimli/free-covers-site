@@ -2,6 +2,10 @@
 
 @section('title', 'Browse Covers - Free Kindle Covers')
 
+@php
+	$footerClass = '';
+@endphp
+
 @push('styles')
 @endpush
 
@@ -9,6 +13,5 @@
 	
 	@include('partials.shop_breadcrumb')
 	@include('partials.shop_area')
-	@include('partials.subscribe')
 
 @endsection

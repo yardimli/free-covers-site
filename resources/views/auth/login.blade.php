@@ -1,47 +1,82 @@
-<x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+@extends('layouts.app')
 
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
+@section('title', 'Login - Free Kindle Covers')
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+@section('content')
+    <div class="login-area">
+        <div class="bg-shapes">
+            <img class="wow fadeIn" src="{{ asset('template/assets/img/login/heart-shape-01.png') }}" alt="Image">
+            <img class="wow fadeInLeft" src="{{ asset('template/assets/img/login/heart-shape-02.png') }}" alt="Image">
+            <img class="wow fadeInLeft" src="{{ asset('template/assets/img/login/heart-shape-03.png') }}" alt="Image">
+            <img class="wow" src="{{ asset('template/assets/img/login/heart-shape-04.png') }}" alt="Image">
         </div>
-
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        <div class="login-wrapper">
+            <div class="login-left">
+                <a href="{{ route('home') }}" class="logo"><img src="{{ asset('template/assets/img/home/logo-dark.png') }}" alt="Image" style="max-width:300px; height: 136px;"></a>
+                <h2 class="title">Login to Your Account</h2>
+                <div class="sibtitle">Welcome Back! Select Method to login:</div>
+                
+                <div class="social-links">
+                    <a href="#"><img src="{{ asset('template/assets/img/login/google-icon.svg') }}" alt="Image"></a>
+                </div>
+                <div class="divider"><span>or</span></div>
+                
+                <form method="POST" action="{{ route('login') }}">
+                    @csrf
+                    <div class="input-field">
+                        <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" placeholder="Email">
+                        @error('email')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                        @enderror
+                    </div>
+                    <div class="input-field pass-field-with-icon">
+                        <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="current-password" placeholder="Password">
+                        <i data-toggleTarget="#password" class="icon fas fa-eye toggle-password"></i>
+                        @error('password')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                        @enderror
+                    </div>
+                    <div class="d-flex justify-content-between input-field">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="remember">
+                                Remember me
+                            </label>
+                        </div>
+                        @if (Route::has('password.request'))
+                            <a href="{{ route('password.request') }}" class="forget-password">Forgot Password?</a>
+                        @endif
+                    </div>
+                    <button type="submit" class="bj_theme_btn w-100 border-0">Log In</button>
+                </form>
+                <div class="new-user">
+                    New user? <a href="{{ route('register') }}">Create an account</a>
+                </div>
+            </div>
+            <div class="login-right">
+                <img src="{{ asset('template/assets/img/login/login-img.png') }}" alt="Image">
+            </div>
         </div>
+    </div>
+@endsection
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" name="remember">
-                <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">{{ __('Remember me') }}</span>
-            </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('.toggle-password').click(function() {
+                var target = $(this).attr('data-toggleTarget');
+                if ($(target).attr('type') == 'password') {
+                    $(target).attr('type', 'text');
+                    $(this).removeClass('fa-eye').addClass('fa-eye-slash');
+                } else {
+                    $(target).attr('type', 'password');
+                    $(this).removeClass('fa-eye-slash').addClass('fa-eye');
+                }
+            });
+        });
+    </script>
+@endpush

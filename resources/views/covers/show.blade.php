@@ -3,6 +3,10 @@
 
 @section('title', $cover->name ? Str::limit($cover->name, 50) . ' - Cover Details' : 'Cover Details - Free Kindle Covers')
 
+@php
+	$footerClass = '';
+@endphp
+
 @push('styles')
 	{{-- Add page-specific styles if needed --}}
 	<style>
@@ -11,47 +15,36 @@
           object-fit: contain;
           width: auto; /* Ensure aspect ratio is maintained */
       }
-
       .free_kindle_covers_book_img {
-          width: 300px;
+          width: 400px;
           text-align: center; /* Center the image if it's smaller than container */
           padding: 15px;
           border-radius: 8px;
       }
-
       .free_kindle_covers_book_img .cover-image-container {
           display: inline-block; /* Allows centering */
       }
-
       .free_kindle_covers_book_details .price {
           font-size: 1.8rem;
           font-weight: bold;
           color: var(--bs-primary); /* Or your theme's primary color */
       }
-
       .product_details_section_key {
           font-weight: 600;
           min-width: 120px;
           display: inline-block;
       }
-
       .badge.bg-light {
           border: 1px solid #eee;
       }
-
       /* Styles for cover variations in description tab */
       .cover-variations-grid .cover-image-container {
           padding: 5px;
       }
-
-      .cover-variations-grid .cover-image-container .cover-mockup-image {
-          /*max-height: 250px; !* Smaller max-height for variations *!*/
-          /* width: 100%; /* Let img-fluid handle width */
-          /* object-fit: contain; /* Already on general .cover-mockup-image */
+      .admin-action-button {
+          font-size: 0.8rem; /* Smaller font for admin buttons */
+          padding: 0.25rem 0.5rem; /* Smaller padding */
       }
-
-      /* The .template-overlay-image CSS from public/css/style.css should apply here too */
-	
 	</style>
 @endpush
 
@@ -79,11 +72,9 @@
 					<div class="bj_book_single me-xl-3">
 						<div class="free_kindle_covers_book_img">
 							<div class="cover-image-container">
-								<img class="img-fluid cover-mockup-image" src="{{ $cover->mockup_url }}"
-								     alt="{{ $cover->name ?: 'Cover Image' }}">
+								<img class="img-fluid cover-mockup-image" src="{{ $cover->mockup_url }}" alt="{{ $cover->name ?: 'Cover Image' }}">
 								@if($cover->random_template_overlay_url)
-									<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay"
-									     class="template-overlay-image"/>
+									<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image"/>
 								@endif
 							</div>
 						</div>
@@ -93,8 +84,7 @@
 								@if($cover->categories && !empty(array_filter($cover->categories)))
 									<li>Category:
 										@foreach(array_filter($cover->categories) as $category)
-											<a
-												href="{{ route('shop.index', ['category' => Str::title($category)]) }}">{{ Str::title($category) }}</a>{{ !$loop->last ? ',' : '' }}
+											<a href="{{ route('shop.index', ['category' => Str::title($category)]) }}">{{ Str::title($category) }}</a>{{ !$loop->last ? ',' : '' }}
 										@endforeach
 									</li>
 								@endif
@@ -111,11 +101,22 @@
 								@endif
 							</ul>
 							<div class="d-flex mt-4">
-								<a href="#" class="bj_theme_btn me-2 add-to-cart-automated"
-								   data-name="{{ $cover->name }}" data-price="0" data-img="{{ $cover->mockup_url }}" data-mrp="0"><i
-										class="icon_pencil-edit"></i> Customize</a>
+								<a href="#" class="bj_theme_btn me-2 p-3" data-name="{{ $cover->name }}" data-price="0" data-img="{{ $cover->mockup_url }}" data-mrp="0"><i class="icon_pencil-edit"></i> Customize This Cover</a>
 								{{-- <a href="#" class="bj_theme_btn strock_btn"><i class="icon_download"></i> Download (Placeholder)</a> --}}
 							</div>
+							{{-- Admin: Remove button for the main displayed template style --}}
+							@auth
+								@if(Auth::user()->isAdmin() && $randomTemplateForView)
+									<div class="mt-2">
+										<form method="POST" action="{{ route('admin.covers.templates.remove-assignment', ['cover' => $cover->id, 'template' => $randomTemplateForView->id]) }}">
+											@csrf
+											<button type="submit" class="btn btn-sm btn-outline-danger admin-action-button">
+												<i class="fas fa-trash-alt"></i> Remove This Style ({{ Str::limit($randomTemplateForView->name, 20) }})
+											</button>
+										</form>
+									</div>
+								@endif
+							@endauth
 						</div>
 					</div>
 					
@@ -128,15 +129,27 @@
 									@foreach($coverVariations as $variation)
 										<div class="col-lg-3 col-md-6 col-sm-6 mb-4">
 											<div class="cover-image-container text-center">
-												<img class="img-fluid cover-mockup-image" src="{{ $variation['mockup_url'] }}"
-												     alt="{{ $cover->name ?: 'Cover' }} - Style with {{ $variation['template_name'] }}">
+												<img class="img-fluid cover-mockup-image" src="{{ $variation['mockup_url'] }}" alt="{{ $cover->name ?: 'Cover' }} - Style with {{ $variation['template_name'] }}">
 												@if($variation['template_overlay_url'])
-													<img src="{{ $variation['template_overlay_url'] }}"
-													     alt="{{ $variation['template_name'] }} Overlay" class="template-overlay-image"/>
+													<img src="{{ $variation['template_overlay_url'] }}" alt="{{ $variation['template_name'] }} Overlay" class="template-overlay-image"/>
 												@endif
 											</div>
 											{{-- Optional: display template name below image --}}
 											{{-- <p class="text-center small mt-1 fst-italic">{{ $variation['template_name'] }}</p> --}}
+											
+											{{-- Admin: Remove button for this specific variation/template style --}}
+											@auth
+												@if(Auth::user()->isAdmin())
+													<div class="text-center mt-2">
+														<form method="POST" action="{{ route('admin.covers.templates.remove-assignment', ['cover' => $cover->id, 'template' => $variation['template_id']]) }}">
+															@csrf
+															<button type="submit" class="btn btn-sm btn-outline-danger admin-action-button">
+																<i class="fas fa-trash-alt"></i> Remove Style
+															</button>
+														</form>
+													</div>
+												@endif
+											@endauth
 										</div>
 									@endforeach
 								</div>
@@ -150,12 +163,9 @@
 				</div>
 				
 				<div class="col-xl-3">
-					<div class="product_sidbar p-4"
-					     style="background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-						<div class="price_head">Price: <span class="price"
-						                                     style="font-size: 1.5rem; color: var(--bs-primary);">Free</span></div>
+					<div class="product_sidbar p-4" style="background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+						<div class="price_head">Price: <span class="price" style="font-size: 1.5rem; color: var(--bs-primary);">Free</span></div>
 						<hr>
-						
 						{{-- Keywords Displayed Here --}}
 						@if($cover->keywords && !empty(array_filter($cover->keywords)))
 							<h6 class="mt-3 mb-2">Keywords</h6>
@@ -166,7 +176,6 @@
 							</div>
 							{{-- Removed HR as one is above, and "Available" section follows --}}
 						@endif
-						
 						<ul class="list-unstyled">
 							<li class="mb-2 d-flex align-items-center">
 								<img src="{{ asset('template/assets/img/arrow.png') }}" alt="" style="width:16px; margin-right: 8px;">
@@ -183,17 +192,13 @@
 						</ul>
 						<h3 class="mt-3">Available</h3>
 						<div class="d-flex flex-column gap-3 mt-3">
-							<a href="#" class="bj_theme_btn add-to-cart-automated"
-							   data-name="{{ $cover->name }}" data-price="0" data-img="{{ $cover->mockup_url }}" data-mrp="0">
+							<a href="#" class="bj_theme_btn" data-name="{{ $cover->name }}" data-price="0" data-img="{{ $cover->mockup_url }}" data-mrp="0">
 								<i class="icon_pencil-edit"></i>Customize This Cover</a>
 						</div>
 					</div>
 					
-					<div class="product_details_sidebar mt-4 p-4"
-					     style="background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-						<a class="details_header d-flex justify-content-between align-items-center" data-bs-toggle="collapse"
-						   href="#product_details_collapse" role="button" aria-expanded="true"
-						   aria-controls="product_details_collapse">
+					<div class="product_details_sidebar mt-4 p-4" style="background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+						<a class="details_header d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#product_details_collapse" role="button" aria-expanded="true" aria-controls="product_details_collapse">
 							<h6 class="mb-0">More Details</h6>
 							<i class="fa-solid fa-chevron-down"></i>
 						</a>
@@ -218,8 +223,7 @@
 										<span class="product_details_section_key">Categories:</span>
 										<div class="product_details_section_value">
 											@foreach(array_filter($cover->categories) as $category)
-												<a href="{{ route('shop.index', ['category' => Str::title($category)]) }}"
-												   class="fw-normal">{{ Str::title($category) }}</a>{{ !$loop->last ? ', ' : '' }}
+												<a href="{{ route('shop.index', ['category' => Str::title($category)]) }}" class="fw-normal">{{ Str::title($category) }}</a>
 											@endforeach
 										</div>
 									</div>
@@ -234,30 +238,12 @@
 	</section>
 	
 	@include('partials.related_covers', ['relatedCovers' => $relatedCovers])
-	@include('partials.subscribe') {{-- This is a generic subscribe section from your existing partials --}}
+
 @endsection
 
 @push('scripts')
 	<script>
 		document.addEventListener('DOMContentLoaded', function () {
-			const actionToastEl = document.getElementById('actionToast');
-			if (actionToastEl) {
-				const actionToast = bootstrap.Toast.getOrCreateInstance(actionToastEl);
-				document.querySelectorAll('.add-to-cart-automated').forEach(button => {
-					button.addEventListener('click', function (e) {
-						e.preventDefault(); // Prevent default link behavior if it's an <a> tag
-						const toastBody = actionToastEl.querySelector('.toast-body');
-						if (toastBody) {
-							// For a real app, you'd link to the customization page.
-							// For now, just show a toast.
-							toastBody.textContent = 'Customize feature for "' + this.dataset.name + '" coming soon!';
-						}
-						actionToast.show();
-						// Example: window.location.href = '/customize/' + {{ $cover->id }};
-					});
-				});
-			}
-			
 			// Ensure parallax and other template JS runs
 			if (typeof $ !== 'undefined') {
 				if ($(".banner_animation_03").length > 0 && typeof $.fn.parallax === 'function') {
@@ -282,6 +268,38 @@
 				productDetailsCollapse.addEventListener('hide.bs.collapse', function () {
 					if (chevronIcon) chevronIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
 				});
+			}
+			
+			// Display session messages (success, error, info) as toasts
+			@if(session('success'))
+			showToast('Success', '{{ session('success') }}', 'bg-success');
+			@endif
+			@if(session('error'))
+			showToast('Error', '{{ session('error') }}', 'bg-danger');
+			@endif
+			@if(session('info'))
+			showToast('Info', '{{ session('info') }}', 'bg-info');
+			@endif
+			
+			function showToast(title, message, bgClass) {
+				var toastEl = document.getElementById('actionToast');
+				if (toastEl) {
+					var toastHeader = toastEl.querySelector('.toast-header');
+					var toastBody = toastEl.querySelector('.toast-body');
+					
+					toastHeader.querySelector('strong').textContent = title;
+					// Remove existing bg classes from header
+					toastHeader.className = 'toast-header'; // Reset
+					if(bgClass) {
+						//toastHeader.classList.add(bgClass); // Optional: color header
+						//toastHeader.classList.add('text-white'); // Optional: white text on colored header
+					}
+					
+					toastBody.textContent = message;
+					
+					var toast = new bootstrap.Toast(toastEl);
+					toast.show();
+				}
 			}
 		});
 	</script>

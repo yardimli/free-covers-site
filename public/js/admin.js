@@ -5,6 +5,7 @@ $(document).ready(function () {
 		'AiMetadata', 'AiSimilarTemplate', 'AssignTemplates', 'TextPlacements',
 		'BatchAutoAssignTemplates', 'BatchAiMetadata'
 	];
+	
 	for (const moduleName of requiredModules) {
 		if (!window.AppAdmin || !window.AppAdmin[moduleName]) {
 			console.error(`Critical Error: AppAdmin.${moduleName} module is missing. Ensure all JS files are loaded correctly and in order.`);
@@ -13,12 +14,12 @@ $(document).ready(function () {
 		}
 	}
 	
-	const {showAlert, escapeHtml} = AppAdmin.Utils;
-	const {loadItems} = AppAdmin.Items;
-	const {fetchCoverTypes} = AppAdmin.CoverTypes;
+	const { showAlert, escapeHtml } = AppAdmin.Utils;
+	const { loadItems } = AppAdmin.Items;
+	const { fetchCoverTypes } = AppAdmin.CoverTypes;
 	
 	$.ajaxSetup({
-		headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')}
+		headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
 	});
 	
 	AppAdmin.Upload.init();
@@ -35,12 +36,17 @@ $(document).ready(function () {
 	
 	function loadStateFromUrl() {
 		popStateHandlingActive = true; // Signal that loading is URL-driven
-		
 		const params = new URLSearchParams(window.location.search);
 		let itemType = params.get('tab') || 'covers';
 		let page = parseInt(params.get('page'), 10) || 1;
 		let search = params.get('search') || '';
 		let filter = params.get('filter') || '';
+		let noTemplatesFilterActive = (itemType === 'covers') && (params.get('no_templates') === 'true');
+		
+		if (itemType === 'covers') {
+			$('#filterNoTemplatesBtn').toggleClass('active', noTemplatesFilterActive);
+		}
+		
 		
 		const $targetTabButton = $(`#adminTab button[data-bs-target="#${itemType}-panel"]`);
 		let effectiveItemType = itemType;
@@ -51,7 +57,7 @@ $(document).ready(function () {
 				tab.show(); // Triggers 'shown.bs.tab'. Handler will use popStateHandlingActive.
 			} else {
 				// Tab is already active. 'shown.bs.tab' won't fire. Load items directly.
-				loadItems(effectiveItemType, page, search, filter);
+				loadItems(effectiveItemType, page, search, filter, noTemplatesFilterActive);
 				popStateHandlingActive = false; // Reset flag as 'shown.bs.tab' won't.
 			}
 		} else {
@@ -59,14 +65,20 @@ $(document).ready(function () {
 			effectiveItemType = 'covers';
 			page = 1;
 			search = '';
-			filter = ''; // Reset params
+			filter = '';
+			noTemplatesFilterActive = (params.get('no_templates') === 'true'); // Re-check for default tab
+			if (effectiveItemType === 'covers') {
+				$('#filterNoTemplatesBtn').toggleClass('active', noTemplatesFilterActive);
+			}
+			
+			
 			const $defaultTabButton = $(`#adminTab button[data-bs-target="#covers-panel"]`);
 			if ($defaultTabButton.length) {
 				if (!$defaultTabButton.hasClass('active')) {
 					const tab = new bootstrap.Tab($defaultTabButton[0]);
 					tab.show(); // Triggers 'shown.bs.tab'
 				} else {
-					loadItems(effectiveItemType, page, search, filter);
+					loadItems(effectiveItemType, page, search, filter, noTemplatesFilterActive);
 					popStateHandlingActive = false; // Reset flag
 				}
 			} else {
@@ -96,26 +108,28 @@ $(document).ready(function () {
 		const itemType = targetPanelId.replace('#', '').replace('-panel', '');
 		
 		if (popStateHandlingActive) {
-			// This 'shown.bs.tab' was triggered by loadStateFromUrl changing to an inactive tab.
-			// Parameters should come from the URL.
 			const params = new URLSearchParams(window.location.search);
 			const urlItemType = params.get('tab') || 'covers';
-			// Ensure itemType from event matches URL's tab param, or use event's itemType if URL is out of sync
 			if (itemType !== urlItemType) {
 				console.warn(`Tab event itemType (${itemType}) differs from URL tab (${urlItemType}). Using event tab's itemType.`);
 			}
-			
 			const page = parseInt(params.get('page'), 10) || 1;
 			const search = params.get('search') || '';
 			const filter = params.get('filter') || '';
-			loadItems(itemType, page, search, filter); // itemType from event is reliable here
-			popStateHandlingActive = false; // Reset flag
+			const noTemplatesFilterActive = (itemType === 'covers') && (params.get('no_templates') === 'true');
+			
+			loadItems(itemType, page, search, filter, noTemplatesFilterActive);
+			popStateHandlingActive = false;
 		} else {
-			// Normal user click on a tab, not from popstate
+			// Normal user click on a tab
 			const page = 1; // Reset to page 1
-			const search = $(`#${itemType}-panel .search-input`).val() || ''; // Use current form values
-			const filter = $(`#${itemType}-panel .cover-type-filter`).val() || ''; // Use current form values
-			loadItems(itemType, page, search, filter);
+			const search = $(`#${itemType}-panel .search-input`).val() || '';
+			const filter = $(`#${itemType}-panel .cover-type-filter`).val() || '';
+			let noTemplatesFilterActive = false;
+			if (itemType === 'covers') {
+				noTemplatesFilterActive = $('#filterNoTemplatesBtn').hasClass('active');
+			}
+			loadItems(itemType, page, search, filter, noTemplatesFilterActive);
 		}
 	});
 	
@@ -124,8 +138,23 @@ $(document).ready(function () {
 		const itemType = $(this).closest('.tab-pane').attr('id').replace('-panel', '');
 		const coverTypeId = $(this).val();
 		const searchQuery = $(`#${itemType}-panel .search-input`).val() || '';
-		loadItems(itemType, 1, searchQuery, coverTypeId); // Reset to page 1
+		let noTemplatesFilterActive = false;
+		if (itemType === 'covers') {
+			noTemplatesFilterActive = $('#filterNoTemplatesBtn').hasClass('active');
+		}
+		loadItems(itemType, 1, searchQuery, coverTypeId, noTemplatesFilterActive); // Reset to page 1
 	});
+	
+	// "No Templates" Filter Button Click (specific to Covers tab)
+	$('#filterNoTemplatesBtn').on('click', function() {
+		$(this).toggleClass('active');
+		const itemType = 'covers'; // This button is only on the covers panel
+		const noTemplatesFilterActive = $(this).hasClass('active');
+		const searchQuery = $(`#${itemType}-panel .search-input`).val() || '';
+		const coverTypeIdFilter = $(`#${itemType}-panel .cover-type-filter`).val() || '';
+		loadItems(itemType, 1, searchQuery, coverTypeIdFilter, noTemplatesFilterActive); // Reset to page 1
+	});
+	
 	
 	// Pagination Clicks
 	$('.tab-content').on('click', '.pagination .page-link', function (e) {
@@ -138,7 +167,11 @@ $(document).ready(function () {
 		const page = parseInt($link.data('page'), 10);
 		const searchQuery = $(`#${itemType}-panel .search-input`).val() || '';
 		const coverTypeIdFilter = $(`#${itemType}-panel .cover-type-filter`).val() || '';
-		loadItems(itemType, page, searchQuery, coverTypeIdFilter);
+		let noTemplatesFilterActive = false;
+		if (itemType === 'covers') {
+			noTemplatesFilterActive = $('#filterNoTemplatesBtn').hasClass('active');
+		}
+		loadItems(itemType, page, searchQuery, coverTypeIdFilter, noTemplatesFilterActive);
 	});
 	
 	// Search Form Submission
@@ -148,6 +181,10 @@ $(document).ready(function () {
 		const itemType = $form.data('type');
 		const searchQuery = $form.find('.search-input').val().trim();
 		const coverTypeId = $form.find('.cover-type-filter').val() || '';
-		loadItems(itemType, 1, searchQuery, coverTypeId); // Reset to page 1
+		let noTemplatesFilterActive = false;
+		if (itemType === 'covers') {
+			noTemplatesFilterActive = $('#filterNoTemplatesBtn').hasClass('active');
+		}
+		loadItems(itemType, 1, searchQuery, coverTypeId, noTemplatesFilterActive); // Reset to page 1
 	});
 });

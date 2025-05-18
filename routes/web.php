@@ -18,7 +18,7 @@
 	|
 	*/
 
-	Route::prefix('admin')->name('admin.')->group(function () {
+	Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
 		// Route::middleware(['auth'])->group(function () { // Uncomment to protect admin routes
 		Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -47,6 +47,8 @@
 
 		Route::get('/covers/without-templates', [DashboardController::class, 'getCoversWithoutTemplates'])->name('covers.without-templates');
 		Route::post('/covers/{cover}/templates/{template}/ai-evaluate-fit', [DashboardController::class, 'aiEvaluateTemplateFit'])->name('covers.templates.ai-evaluate-fit');
+
+		Route::post('/covers/{cover}/templates/{template}/remove', [DashboardController::class, 'removeCoverTemplateAssignment'])->name('covers.templates.remove-assignment');
 
 		// }); // End auth middleware group
 	});

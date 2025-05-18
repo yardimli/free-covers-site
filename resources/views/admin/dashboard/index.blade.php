@@ -61,19 +61,25 @@
 			<!-- Existing Items -->
 			<h4>Existing Covers</h4>
 			<form class="mb-3 search-form row g-3 align-items-center" data-type="covers">
-				<div class="col-md-9">
+				<div class="col-md-6 col-lg-7">
 					<div class="input-group">
 						<input type="search" class="form-control search-input" placeholder="Search Covers (Name, Caption, Keywords, Categories)..." aria-label="Search Covers">
 						<button class="btn btn-outline-secondary" type="submit">Search</button>
 					</div>
 				</div>
-				<div class="col-md-3">
+				<div class="col-md-3 col-lg-3">
 					<select class="form-select cover-type-filter admin-cover-type-dropdown" data-type="covers" aria-label="Filter by Cover Type">
 						<option value="">All Cover Types</option>
 						<!-- Populated by JS -->
 					</select>
 				</div>
+				<div class="col-md-3 col-lg-2">
+					<button class="btn btn-outline-info w-100" type="button" id="filterNoTemplatesBtn" title="Filter covers with no templates assigned">
+						<i class="fas fa-filter"></i> No Templates
+					</button>
+				</div>
 			</form>
+			
 			<div class="table-responsive">
 				<table class="table table-striped item-table" id="coversTable">
 					<thead>
@@ -268,10 +274,12 @@
 					<div class="modal-body">
 						<input type="hidden" name="id" id="editItemId">
 						<input type="hidden" name="item_type" id="editItemType">
+						
 						<div class="mb-3">
 							<label for="editItemName" class="form-label">Name</label>
 							<input type="text" class="form-control" id="editItemName" name="name" required>
 						</div>
+						
 						<!-- Cover Type Dropdown (for Covers and Templates) -->
 						<div class="mb-3 edit-field edit-field-covers edit-field-templates">
 							<label for="editItemCoverType" class="form-label">Cover Type</label>
@@ -280,6 +288,7 @@
 								<!-- Populated by JS -->
 							</select>
 						</div>
+						
 						<!-- Fields specific to Covers -->
 						<div class="mb-3 edit-field edit-field-covers">
 							<label for="editItemCaption" class="form-label">Caption</label>
@@ -295,11 +304,13 @@
 							<div class="form-text">Comma-separated. Values like 'top-light', 'middle-dark', etc. AI can generate this.</div>
 						</div>
 						
+						
 						<!-- Fields specific to Covers, Elements, Overlays, AND TEMPLATES (for keywords) -->
 						<div class="mb-3 edit-field edit-field-covers edit-field-elements edit-field-overlays edit-field-templates">
 							<label for="editItemKeywords" class="form-label">Keywords (comma-separated)</label>
 							<input type="text" class="form-control" id="editItemKeywords" name="keywords">
 						</div>
+						
 						<!-- Image Upload (Covers, Elements, Overlays) -->
 						<div class="mb-3 edit-field edit-field-covers edit-field-elements edit-field-overlays">
 							<label for="editItemImageFile" class="form-label">Replace Image (Optional)</label>
@@ -307,6 +318,7 @@
 							<div class="form-text">Leave empty to keep the current image. Uploading a new image will replace the original and regenerate the thumbnail.</div>
 							<div id="editCurrentImagePreview" class="mt-2" style="max-height: 180px; overflow: hidden;"><!-- Content via JS --></div>
 						</div>
+						
 						<!-- Thumbnail Upload (Templates) -->
 						<div class="mb-3 edit-field edit-field-templates">
 							<label for="editItemThumbnailFile" class="form-label">Replace Thumbnail (Optional)</label>
@@ -314,6 +326,7 @@
 							<div class="form-text">Leave empty to keep the current thumbnail.</div>
 							<div id="editCurrentThumbnailPreview" class="mt-2" style="max-height: 180px; overflow: hidden;"><!-- Content via JS --></div>
 						</div>
+						
 						<!-- JSON Upload (Templates) -->
 						<div class="mb-3 edit-field edit-field-templates">
 							<label for="editItemJsonFile" class="form-label">Replace JSON File (Optional)</label>
@@ -379,7 +392,6 @@
 								<p class="mb-1"><strong>Cover Type:</strong> <span id="assignTemplatesCoverTypeName"></span></p>
 								<hr class="my-1">
 								<h6 class="mb-1">Available Templates (for this cover type):</h6>
-								
 								{{-- AI Choice Progress Area --}}
 								<div id="aiChoiceProgressArea" class="my-2" style="display: none;">
 									<div class="d-flex justify-content-between align-items-center mb-1">
@@ -390,7 +402,6 @@
 										<div id="aiChoiceProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
 									</div>
 								</div>
-								
 								<div id="assignableTemplatesList" style="max-height: 450px; overflow-y: auto; padding: 5px; padding-left: 15px; border: 1px solid #eee; border-radius: 4px;">
 									<!-- Checkboxes will be populated by JS -->
 									<p class="text-center mb-0">Loading templates...</p>
@@ -469,5 +480,4 @@
 			</div>
 		</div>
 	</div>
-	
 @endsection
