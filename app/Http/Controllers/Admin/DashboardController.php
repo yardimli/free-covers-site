@@ -991,4 +991,47 @@ Evaluate based on MANDATORY criteria:
 			return back()->with('error', 'An error occurred while removing the template style.');
 		}
 	}
+
+	public function coverTemplateManagementIndex(Request $request)
+	{
+		$covers = Cover::with(['templates' => function ($query) {
+			$query->orderBy('name'); // Order templates for consistency
+		}, 'coverType'])
+			->orderBy('id', 'desc') // Show newest covers first, or change as needed
+			->paginate(20); // Paginate with 20 covers per page
+
+		foreach ($covers as $cover) {
+			if ($cover->image_path) {
+				// Attempt to generate mockup URL based on common patterns
+				// This assumes image_path is relative to the public disk root (e.g., 'covers/image.jpg')
+				// And mockups are in 'cover-mockups/' with a '-front-mockup.png' suffix.
+				$mockupPath = $cover->image_path;
+				$mockupPath = preg_replace('/\.jpg$|\.jpeg$|\.png$|\.gif$/i', '-front-mockup.png', $mockupPath);
+				$mockupPath = str_replace('covers/', 'cover-mockups/', $mockupPath);
+				$cover->mockup_url = $this->imageUploadService->getUrl($mockupPath);
+
+				// Fallback if the generated mockup path doesn't exist, try original thumbnail
+				if (!Storage::disk('public')->exists($mockupPath) && $cover->thumbnail_path) {
+					$cover->mockup_url = $this->imageUploadService->getUrl($cover->thumbnail_path);
+				} elseif (!Storage::disk('public')->exists($mockupPath)) {
+					$cover->mockup_url = asset('template/assets/img/placeholder-mockup.png'); // Ultimate fallback
+				}
+
+			} else {
+				$cover->mockup_url = asset('template/assets/img/placeholder-mockup.png'); // Fallback mockup
+			}
+
+			foreach ($cover->templates as $template) {
+				if ($template->thumbnail_path) {
+					$template->thumbnail_url = $this->imageUploadService->getUrl($template->thumbnail_path);
+				} else {
+					// Provide a placeholder if template thumbnail is missing
+					$template->thumbnail_url = asset('images/placeholder-template-thumbnail.png'); // Create this image if needed
+				}
+			}
+		}
+
+		return view('admin.cover-template-management.index', compact('covers'));
+	}
+
 }

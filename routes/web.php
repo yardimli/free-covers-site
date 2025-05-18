@@ -48,9 +48,9 @@
 		Route::get('/covers/without-templates', [DashboardController::class, 'getCoversWithoutTemplates'])->name('covers.without-templates');
 		Route::post('/covers/{cover}/templates/{template}/ai-evaluate-fit', [DashboardController::class, 'aiEvaluateTemplateFit'])->name('covers.templates.ai-evaluate-fit');
 
+		Route::get('/cover-template-management', [DashboardController::class, 'coverTemplateManagementIndex'])->name('covers.template-management.index');
 		Route::post('/covers/{cover}/templates/{template}/remove', [DashboardController::class, 'removeCoverTemplateAssignment'])->name('covers.templates.remove-assignment');
 
-		// }); // End auth middleware group
 	});
 
 

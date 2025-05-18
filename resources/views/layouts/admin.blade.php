@@ -36,6 +36,9 @@
 				</button>
 			</li>
 			<li class="nav-item">
+				<a href="{{ route('covers.template-management.index') }}" class="btn btn-sm btn-outline-light me-2" target="_blank">Prune Cover/Template Pairs</a>
+			</li>
+			<li class="nav-item">
 				<a href="{{ route('home') }}" class="btn btn-sm btn-outline-light me-2" target="_blank">View App</a>
 			</li>
 			@auth
