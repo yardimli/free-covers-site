@@ -31,7 +31,7 @@
       .cover-template-item .cover-image-container {
           position: relative; /* For absolute positioning of child images */
           width: 100%; /* Fill the column width */
-          height: 225px; /* Fixed height for cover images, adjust as needed */
+          height: 350px; /* Fixed height for cover images, adjust as needed */
           background-color: #e0e0e0; /* Placeholder background */
           margin-bottom: 8px;
           display: flex; /* To center placeholder text if no image */
@@ -52,8 +52,8 @@
 
       .cover-template-item .cover-image-container .template-overlay {
           position: absolute;
-          top: 3%;
-          left: 3%;
+          top: 0%;
+          left: 0%;
           width: 94%;
           height: auto; /* Maintain aspect ratio */
           max-height: 94%; /* Max height relative to container's height (0.94 * 225px) */
@@ -149,7 +149,7 @@
 			@endforeach
 			
 			<div class="pagination-container d-flex justify-content-center">
-				{{ $covers->links() }}
+				{{ $covers->links('vendor.pagination.bootstrap-5') }} {{-- Or your custom pagination view --}}
 			</div>
 		@endif
 	</div>
@@ -201,10 +201,6 @@
 					const templateId = this.dataset.templateId;
 					const coverName = this.dataset.coverName;
 					const templateName = this.dataset.templateName;
-					
-					if (!confirm(`Are you sure you want to remove template "${templateName}" from cover "${coverName}"?`)) {
-						return;
-					}
 					
 					const originalButtonHtml = this.innerHTML;
 					this.disabled = true;
