@@ -160,7 +160,7 @@
 		document.addEventListener('DOMContentLoaded', function () {
 			const alertMessagesContainer = document.getElementById('alert-messages-container'); // From admin layout
 			
-			function showAlert(message, type = 'success', duration = 5000) {
+			function showAlert(message, type = 'success', duration = 1000) {
 				const alertId = 'toast-' + Date.now();
 				const alertHtml = `
             <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert" style="min-width: 300px;">
