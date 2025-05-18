@@ -981,14 +981,14 @@ Evaluate based on MANDATORY criteria:
 			$detachedCount = $cover->templates()->detach($template->id);
 
 			if ($detachedCount > 0) {
-				return back()->with('success', 'Template style removed from cover successfully.');
+				return response()->json(['success' => true, 'message' => 'Template style removed from cover successfully.']);
 			} else {
-				// This case might occur if the template was already detached or never associated
-				return back()->with('info', 'Template style was not associated with this cover or already removed.');
+				// If already detached or never associated, the desired state (unassigned) is met.
+				return response()->json(['success' => true, 'message' => 'Template style was not associated with this cover or already removed.']);
 			}
 		} catch (\Exception $e) {
 			Log::error("Error removing template assignment for Cover ID {$cover->id}, Template ID {$template->id}: " . $e->getMessage());
-			return back()->with('error', 'An error occurred while removing the template style.');
+			return response()->json(['success' => false, 'message' => 'An error occurred while removing the template style.'], 500);
 		}
 	}
 
@@ -1003,8 +1003,6 @@ Evaluate based on MANDATORY criteria:
 		foreach ($covers as $cover) {
 			if ($cover->image_path) {
 				// Attempt to generate mockup URL based on common patterns
-				// This assumes image_path is relative to the public disk root (e.g., 'covers/image.jpg')
-				// And mockups are in 'cover-mockups/' with a '-front-mockup.png' suffix.
 				$mockupPath = $cover->image_path;
 				$mockupPath = preg_replace('/\.jpg$|\.jpeg$|\.png$|\.gif$/i', '-front-mockup.png', $mockupPath);
 				$mockupPath = str_replace('covers/', 'cover-mockups/', $mockupPath);
@@ -1016,7 +1014,6 @@ Evaluate based on MANDATORY criteria:
 				} elseif (!Storage::disk('public')->exists($mockupPath)) {
 					$cover->mockup_url = asset('template/assets/img/placeholder-mockup.png'); // Ultimate fallback
 				}
-
 			} else {
 				$cover->mockup_url = asset('template/assets/img/placeholder-mockup.png'); // Fallback mockup
 			}
@@ -1030,7 +1027,6 @@ Evaluate based on MANDATORY criteria:
 				}
 			}
 		}
-
 		return view('admin.cover-template-management.index', compact('covers'));
 	}
 
