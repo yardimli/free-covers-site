@@ -177,7 +177,7 @@
 						targetContainer = document.createElement('div');
 						targetContainer.id = 'temp-alert-messages-container';
 						Object.assign(targetContainer.style, {
-							position: 'fixed', top: '80px', right: '20px', zIndex: '1055'
+							position: 'fixed', bottom: '80px', right: '20px', zIndex: '1055'
 						});
 						document.body.appendChild(targetContainer);
 					}
