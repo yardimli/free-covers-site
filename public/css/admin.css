@@ -88,7 +88,7 @@ body {
 /* Alerts */
 .alert-messages {
     position: fixed;
-    top: 70px; /* Below navbar */
+    bottom: 70px; /* Below navbar */
     right: 20px;
     z-index: 1050;
     min-width: 300px;
