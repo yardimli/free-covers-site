@@ -40,8 +40,8 @@
 			<li class="nav-item"><a class="nav-link" href="#" data-panel-target="#uploadPanel" title="Upload"><i class="fas fa-upload fa-lg"></i></a></li>
 			<li class="nav-item"><a class="nav-link" href="#" data-panel-target="#layersPanel" title="Layers"><i class="fas fa-layer-group fa-lg"></i></a></li>
 			<hr class="mx-2" style="border-top: 1px solid #495057;">
-			<li class="nav-item"><a class="nav-link" href="#" id="loadDesignIconBtn" title="Load Design (.json)"><i class="fas fa-folder-open fa-lg"></i></a></li>
-			<li class="nav-item"><a class="nav-link" href="#" id="saveDesign" title="Save Design (.json)"><i class="fas fa-save fa-lg"></i></a></li>
+			<li class="nav-item" id="loadDesignPanelLink" style="display: none;"><a class="nav-link" href="#" id="loadDesignIconBtn" title="Load Design (.json)"><i class="fas fa-folder-open fa-lg"></i></a></li>
+			<li class="nav-item" id="saveDesignPanelLink" style="display: none;"><a class="nav-link" href="#" id="saveDesign" title="Save Design (.json)"><i class="fas fa-save fa-lg"></i></a></li>
 			<li class="nav-item"><a class="nav-link" href="#" id="undoBtn" title="Undo"><i class="fas fa-undo fa-lg"></i></a></li>
 			<li class="nav-item"><a class="nav-link" href="#" id="redoBtn" title="Redo"><i class="fas fa-redo fa-lg"></i></a></li>
 			<li class="nav-item"><a class="nav-link" href="#" id="downloadBtn" title="Download Image (PNG)"><i class="fas fa-download fa-lg"></i></a></li>
