@@ -22,7 +22,7 @@
 	<!-- Top Toolbar (Simplified) -->
 	<nav class="navbar navbar-expand-sm navbar-dark bg-dark top-toolbar" style="padding: 0px 0px;">
 		<div class="container-fluid">
-			<span class="navbar-brand mb-0 h1">Free Cover Designer</span>
+			<span class="navbar-brand mb-0 h1"><img src="{{ asset('template/assets/img/home/logo-dark.png') }}" style="height: 34px;"> Free Kindle Covers Designer</span>
 		</div>
 	</nav>
 	
