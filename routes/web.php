@@ -2,6 +2,7 @@
 
 	use App\Http\Controllers\Admin\DashboardController;
 	use App\Http\Controllers\CoverController;
+	use App\Http\Controllers\DesignerController;
 	use App\Http\Controllers\HomeController;
 	use App\Http\Controllers\ProfileController;
 	use App\Http\Controllers\ShopController;
@@ -64,18 +65,23 @@
 		return "Blog Page";
 	})->name('blog.index');
 
-	Route::get('/covers/{cover}', [CoverController::class, 'show'])->name('covers.show');
+	Route::get('/covers/{cover}/{template?}', [CoverController::class, 'show'])->name('covers.show');
 
+	Route::get('/api/templates/{template}/json', [DesignerController::class, 'getTemplateJsonData'])->name('api.templates.json_data');
 
-
-	Route::get('/dashboard', function () {
-		return view('dashboard');
-	})->middleware(['auth', 'verified'])->name('dashboard');
 
 	Route::middleware('auth')->group(function () {
+		Route::get('/dashboard', function () {
+			return view('dashboard');
+		})->name('dashboard');
+
 		Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
 		Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 		Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+		Route::get('/designer/setup-canvas', [DesignerController::class, 'setupCanvas'])->name('designer.setup');
+		Route::get('/designer', [DesignerController::class, 'index'])->name('designer.index');
 	});
+
 
 	require __DIR__.'/auth.php';

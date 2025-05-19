@@ -15,32 +15,39 @@
           object-fit: contain;
           width: auto; /* Ensure aspect ratio is maintained */
       }
+
       .free_kindle_covers_book_img {
           width: 400px;
           text-align: center; /* Center the image if it's smaller than container */
           padding: 15px;
           border-radius: 8px;
       }
+
       .free_kindle_covers_book_img .cover-image-container {
           display: inline-block; /* Allows centering */
       }
+
       .free_kindle_covers_book_details .price {
           font-size: 1.8rem;
           font-weight: bold;
           color: var(--bs-primary); /* Or your theme's primary color */
       }
+
       .product_details_section_key {
           font-weight: 600;
           min-width: 120px;
           display: inline-block;
       }
+
       .badge.bg-light {
           border: 1px solid #eee;
       }
+
       /* Styles for cover variations in description tab */
       .cover-variations-grid .cover-image-container {
           padding: 5px;
       }
+
       .admin-action-button {
           font-size: 0.8rem; /* Smaller font for admin buttons */
           padding: 0.25rem 0.5rem; /* Smaller padding */
@@ -49,6 +56,8 @@
 @endpush
 
 @section('content')
+	@include('partials.cover_breadcrumb', ['cover' => $cover])
+	
 	{{-- Toast Notification Container (can be part of layout if used globally) --}}
 	<div class="toast-container position-fixed p-3 top-0 end-0" style="z-index: 1090;">
 		<div id="actionToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
@@ -63,8 +72,6 @@
 		</div>
 	</div>
 	
-	@include('partials.cover_breadcrumb', ['cover' => $cover])
-	
 	<section class="product_details_area sec_padding" data-bg-color="#f5f5f5">
 		<div class="container">
 			<div class="row gy-xl-0 gy-3">
@@ -72,9 +79,12 @@
 					<div class="bj_book_single me-xl-3">
 						<div class="free_kindle_covers_book_img">
 							<div class="cover-image-container">
-								<img class="img-fluid cover-mockup-image" src="{{ $cover->mockup_url }}" alt="{{ $cover->name ?: 'Cover Image' }}">
-								@if($cover->random_template_overlay_url)
-									<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image"/>
+								<img class="img-fluid cover-mockup-image" src="{{ $cover->mockup_url }}"
+								     alt="{{ $cover->name ?: 'Cover Image' }}">
+								{{-- Use active_template_overlay_url --}}
+								@if($cover->active_template_overlay_url)
+									<img src="{{ $cover->active_template_overlay_url }}" alt="Template Overlay"
+									     class="template-overlay-image"/>
 								@endif
 							</div>
 						</div>
@@ -84,7 +94,8 @@
 								@if($cover->categories && !empty(array_filter($cover->categories)))
 									<li>Category:
 										@foreach(array_filter($cover->categories) as $category)
-											<a href="{{ route('shop.index', ['category' => Str::title($category)]) }}">{{ Str::title($category) }}</a>{{ !$loop->last ? ',' : '' }}
+											<a
+												href="{{ route('shop.index', ['category' => Str::title($category)]) }}">{{ Str::title($category) }}</a>{{ !$loop->last ? ',' : '' }}
 										@endforeach
 									</li>
 								@endif
@@ -100,18 +111,41 @@
 									<li><span>Type:</span>{{ $cover->coverType->type_name }}</li>
 								@endif
 							</ul>
+							
 							<div class="d-flex mt-4">
-								<a href="#" class="bj_theme_btn me-2 p-3" data-name="{{ $cover->name }}" data-price="0" data-img="{{ $cover->mockup_url }}" data-mrp="0"><i class="icon_pencil-edit"></i> Customize This Cover</a>
-								{{-- <a href="#" class="bj_theme_btn strock_btn"><i class="icon_download"></i> Download (Placeholder)</a> --}}
+								@php
+									$customizeUrl = '#'; // Default
+									$coverImagePathForDesigner = $cover->image_path;
+									$queryParams = ['cover_id' => $cover->id];
+									if ($activeTemplateForView) { // Use activeTemplateForView
+											$queryParams['template_id'] = $activeTemplateForView->id;
+									}
+									if ($coverImagePathForDesigner) {
+											$customizeUrl = route('designer.setup') . '?' . http_build_query($queryParams);
+									}
+									$customizeButtonTitle = !$coverImagePathForDesigner ? 'Customization unavailable: Cover source image missing.' : ($activeTemplateForView ? 'Customize This Cover with ' . Str::limit($activeTemplateForView->name, 20) : 'Customize This Cover');
+								@endphp
+								<a href="{{ $coverImagePathForDesigner ? $customizeUrl : '#' }}"
+								   class="bj_theme_btn me-2 p-3 {{ !$coverImagePathForDesigner ? 'disabled' : '' }}"
+								   title="{{ $customizeButtonTitle }}">
+									<i
+										class="icon_pencil-edit"></i> {{ $activeTemplateForView ? 'Customize Style: ' . Str::limit($activeTemplateForView->name, 20) : 'Customize This Cover' }}
+								</a>
 							</div>
-							{{-- Admin: Remove button for the main displayed template style --}}
+							
 							@auth
-								@if(Auth::user()->isAdmin() && $randomTemplateForView)
-									<div class="mt-2">
-										<form method="POST" action="{{ route('admin.covers.templates.remove-assignment', ['cover' => $cover->id, 'template' => $randomTemplateForView->id]) }}">
+								@if(Auth::user()->isAdmin() && $activeTemplateForView)
+									<div class="mt-2"
+									     id="main-active-style-remove-form-container-{{ $activeTemplateForView->id }}"> {{-- Added ID --}}
+										<form method="POST"
+										      action="{{ route('admin.covers.templates.remove-assignment', ['cover' => $cover->id, 'template' => $activeTemplateForView->id]) }}"
+										      class="remove-template-assignment-form" {{-- Added class --}}
+										      data-cover-id="{{ $cover->id }}"
+										      data-template-id="{{ $activeTemplateForView->id }}">
 											@csrf
 											<button type="submit" class="btn btn-sm btn-outline-danger admin-action-button">
-												<i class="fas fa-trash-alt"></i> Remove This Style ({{ Str::limit($randomTemplateForView->name, 20) }})
+												<i class="fas fa-trash-alt"></i> Remove This Style
+												({{ Str::limit($activeTemplateForView->name, 20) }})
 											</button>
 										</form>
 									</div>
@@ -127,29 +161,48 @@
 								<h5 class="content_header mb-3">Available Styles</h5>
 								<div class="row">
 									@foreach($coverVariations as $variation)
-										<div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+										@php
+											$isCurrentActiveStyle = ($activeTemplateForView && $activeTemplateForView->id == $variation['template_id']);
+										@endphp
+										<div class="col-lg-3 col-md-4 col-sm-6 mb-4" id="variation-card-{{ $variation['template_id'] }}">
 											<div class="cover-image-container text-center">
-												<img class="img-fluid cover-mockup-image" src="{{ $variation['mockup_url'] }}" alt="{{ $cover->name ?: 'Cover' }} - Style with {{ $variation['template_name'] }}">
+												<img class="img-fluid cover-mockup-image" src="{{ $variation['mockup_url'] }}"
+												     alt="{{ $cover->name ?: 'Cover' }} - Style with {{ $variation['template_name'] }}">
 												@if($variation['template_overlay_url'])
-													<img src="{{ $variation['template_overlay_url'] }}" alt="{{ $variation['template_name'] }} Overlay" class="template-overlay-image"/>
+													<img src="{{ $variation['template_overlay_url'] }}"
+													     alt="{{ $variation['template_name'] }} Overlay" class="template-overlay-image"/>
 												@endif
 											</div>
-											{{-- Optional: display template name below image --}}
-											{{-- <p class="text-center small mt-1 fst-italic">{{ $variation['template_name'] }}</p> --}}
-											
-											{{-- Admin: Remove button for this specific variation/template style --}}
-											@auth
-												@if(Auth::user()->isAdmin())
-													<div class="text-center mt-2">
-														<form method="POST" action="{{ route('admin.covers.templates.remove-assignment', ['cover' => $cover->id, 'template' => $variation['template_id']]) }}">
+											<div class="text-center mt-2">
+												@if($isCurrentActiveStyle)
+													<button class="btn btn-sm btn-success mb-1 d-block w-100 disabled"
+													        title="Currently viewing with this style: {{ $variation['template_name'] }}">
+														<i class="fas fa-check-circle"></i> Current Style
+													</button>
+												@else
+													<a
+														href="{{ route('covers.show', ['cover' => $cover->id, 'template' => $variation['template_id']]) }}"
+														class="btn btn-sm btn-outline-primary mb-1 d-block w-100"
+														title="View with style: {{ $variation['template_name'] }}">
+														<i class="fas fa-eye"></i> View with this Style
+													</a>
+												@endif
+												
+												@auth
+													@if(Auth::user()->isAdmin())
+														<form method="POST"
+														      action="{{ route('admin.covers.templates.remove-assignment', ['cover' => $cover->id, 'template' => $variation['template_id']]) }}"
+														      class="d-block mt-1 remove-template-assignment-form" {{-- Added class --}}
+														      data-cover-id="{{ $cover->id }}"
+														      data-template-id="{{ $variation['template_id'] }}">
 															@csrf
-															<button type="submit" class="btn btn-sm btn-outline-danger admin-action-button">
+															<button type="submit" class="btn btn-sm btn-outline-danger admin-action-button w-100">
 																<i class="fas fa-trash-alt"></i> Remove Style
 															</button>
 														</form>
-													</div>
-												@endif
-											@endauth
+													@endif
+												@endauth
+											</div>
 										</div>
 									@endforeach
 								</div>
@@ -163,8 +216,10 @@
 				</div>
 				
 				<div class="col-xl-3">
-					<div class="product_sidbar p-4" style="background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-						<div class="price_head">Price: <span class="price" style="font-size: 1.5rem; color: var(--bs-primary);">Free</span></div>
+					<div class="product_sidbar p-4"
+					     style="background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+						<div class="price_head">Price: <span class="price"
+						                                     style="font-size: 1.5rem; color: var(--bs-primary);">Free</span></div>
 						<hr>
 						{{-- Keywords Displayed Here --}}
 						@if($cover->keywords && !empty(array_filter($cover->keywords)))
@@ -174,7 +229,6 @@
 									<span class="badge bg-light text-dark me-1 mb-1 p-2">{{ Str::title($keyword) }}</span>
 								@endforeach
 							</div>
-							{{-- Removed HR as one is above, and "Available" section follows --}}
 						@endif
 						<ul class="list-unstyled">
 							<li class="mb-2 d-flex align-items-center">
@@ -192,13 +246,22 @@
 						</ul>
 						<h3 class="mt-3">Available</h3>
 						<div class="d-flex flex-column gap-3 mt-3">
-							<a href="#" class="bj_theme_btn" data-name="{{ $cover->name }}" data-price="0" data-img="{{ $cover->mockup_url }}" data-mrp="0">
-								<i class="icon_pencil-edit"></i>Customize This Cover</a>
+							{{-- Sidebar Customize Button - also uses $activeTemplateForView logic --}}
+							<a href="{{ $coverImagePathForDesigner ? $customizeUrl : '#' }}"
+							   class="bj_theme_btn {{ !$coverImagePathForDesigner ? 'disabled' : '' }}"
+							   title="{{ $customizeButtonTitle }}"
+							   data-name="{{ $cover->name }}" data-price="0" data-img="{{ $cover->mockup_url }}" data-mrp="0">
+								<i
+									class="icon_pencil-edit"></i> {{ $activeTemplateForView ? 'Customize Style: ' . Str::limit($activeTemplateForView->name, 15) : 'Customize This Cover' }}
+							</a>
 						</div>
 					</div>
 					
-					<div class="product_details_sidebar mt-4 p-4" style="background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-						<a class="details_header d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#product_details_collapse" role="button" aria-expanded="true" aria-controls="product_details_collapse">
+					<div class="product_details_sidebar mt-4 p-4"
+					     style="background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+						<a class="details_header d-flex justify-content-between align-items-center" data-bs-toggle="collapse"
+						   href="#product_details_collapse" role="button" aria-expanded="true"
+						   aria-controls="product_details_collapse">
 							<h6 class="mb-0">More Details</h6>
 							<i class="fa-solid fa-chevron-down"></i>
 						</a>
@@ -223,12 +286,12 @@
 										<span class="product_details_section_key">Categories:</span>
 										<div class="product_details_section_value">
 											@foreach(array_filter($cover->categories) as $category)
-												<a href="{{ route('shop.index', ['category' => Str::title($category)]) }}" class="fw-normal">{{ Str::title($category) }}</a>
+												<a href="{{ route('shop.index', ['category' => Str::title($category)]) }}"
+												   class="fw-normal">{{ Str::title($category) }}</a>
 											@endforeach
 										</div>
 									</div>
 								@endif
-								{{-- Keywords Section Removed from "More Details" --}}
 							</div>
 						</div>
 					</div>
@@ -238,7 +301,6 @@
 	</section>
 	
 	@include('partials.related_covers', ['relatedCovers' => $relatedCovers])
-
 @endsection
 
 @push('scripts')
@@ -290,17 +352,83 @@
 					toastHeader.querySelector('strong').textContent = title;
 					// Remove existing bg classes from header
 					toastHeader.className = 'toast-header'; // Reset
-					if(bgClass) {
-						//toastHeader.classList.add(bgClass); // Optional: color header
-						//toastHeader.classList.add('text-white'); // Optional: white text on colored header
-					}
-					
+					// if(bgClass) { // Optional: color header
+					//toastHeader.classList.add(bgClass);
+					//toastHeader.classList.add('text-white'); // Optional: white text on colored header
+					// }
 					toastBody.textContent = message;
 					
 					var toast = new bootstrap.Toast(toastEl);
 					toast.show();
 				}
 			}
+			
+			document.querySelectorAll('.remove-template-assignment-form').forEach(form => {
+				form.addEventListener('submit', function (event) {
+					event.preventDefault(); // Prevent default form submission
+					
+					const actionUrl = this.getAttribute('action');
+					const templateId = this.dataset.templateId;
+					const csrfToken = this.querySelector('input[name="_token"]').value;
+					
+					// if (!confirm('Are you sure you want to remove this style from the cover?')) {
+					// 	return;
+					// }
+					
+					fetch(actionUrl, {
+						method: 'POST',
+						headers: {
+							'X-CSRF-TOKEN': csrfToken,
+							'Accept': 'application/json',
+							// 'Content-Type': 'application/json' // Not strictly needed if body is empty
+						},
+						// body: JSON.stringify({}) // No body needed as IDs are in URL
+					})
+						.then(response => response.json())
+						.then(data => {
+							if (data.success) {
+								showToast('Success', data.message, 'bg-success');
+								
+								const activeTemplateIdOnPage = {{ $activeTemplateForView ? $activeTemplateForView->id : 'null' }};
+								
+								// If the removed template was the main active one, redirect to the cover page without template params
+								// This will allow the backend to pick a new random one or show none.
+								if (activeTemplateIdOnPage && parseInt(templateId) === activeTemplateIdOnPage) {
+									// Remove the main form container itself
+									const mainFormContainer = document.getElementById(`main-active-style-remove-form-container-${templateId}`);
+									if (mainFormContainer) mainFormContainer.remove();
+									
+									// Redirect to the base cover URL to refresh the main view
+									window.location.href = "{{ route('covers.show', ['cover' => $cover->id]) }}";
+									return; // Stop further JS execution as page will reload/redirect
+								}
+								
+								// Remove the specific variation card from the DOM
+								const variationCard = document.getElementById(`variation-card-${templateId}`);
+								if (variationCard) {
+									variationCard.remove();
+								}
+								
+								// Check if the variations grid is now empty
+								const variationsGridRow = document.querySelector('.cover-variations-grid .row');
+								if (variationsGridRow && variationsGridRow.children.length === 0) {
+									const variationsContainer = document.querySelector('.cover-variations-grid');
+									if (variationsContainer) {
+										// Replace content with a message
+										variationsContainer.innerHTML = '<h5 class="content_header mb-3">Available Styles</h5><p>No styles currently assigned to this cover.</p>';
+									}
+								}
+								
+							} else {
+								showToast('Error', data.message || 'Could not remove style.', 'bg-danger');
+							}
+						})
+						.catch(error => {
+							console.error('Error:', error);
+							showToast('Error', 'An unexpected error occurred while removing the style.', 'bg-danger');
+						});
+				});
+			});
 		});
 	</script>
 @endpush
