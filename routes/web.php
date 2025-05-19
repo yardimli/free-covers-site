@@ -65,15 +65,13 @@
 		return "Blog Page";
 	})->name('blog.index');
 
-	Route::get('/covers/{cover}/{template?}', [CoverController::class, 'show'])->name('covers.show');
+	Route::get('/covers/{cover}/{templatetemplate?}', [CoverController::class, 'show'])->name('covers.show');
 
 	Route::get('/api/templates/{template}/json', [DesignerController::class, 'getTemplateJsonData'])->name('api.templates.json_data');
 
 
 	Route::middleware('auth')->group(function () {
-		Route::get('/dashboard', function () {
-			return view('dashboard');
-		})->name('dashboard');
+		Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
 		Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
 		Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
