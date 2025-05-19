@@ -17,6 +17,7 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
-/public/template
 composer.lock
 *.psd
+/public/template/assets/img
+/public/template/assets/fonts
