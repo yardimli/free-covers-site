@@ -4,70 +4,99 @@
 
 	use Illuminate\Http\Request;
 	use Illuminate\Support\Facades\Auth;
-	use App\Models\Cover; // Assuming you'll fetch user's covers
-// use App\Models\UserImage; // If you create a model for user-uploaded images
+	use Illuminate\Support\Str; // For Str::limit if needed, though usually in Blade
+	use Carbon\Carbon; // For creating dates
 
 	class DashboardController extends Controller
 	{
 		public function index(Request $request)
 		{
-			$user = Auth::user();
+			$user = Auth::user(); // We'll still get the authenticated user
 
-			// --- Fetch User's eBook Covers ---
-			// This is a placeholder. You'll need a way to associate covers with users.
-			// Option 1: Add a user_id to the 'covers' table.
-			// Option 2: If covers are created through a "project" or "session" linked to the user.
-			// For now, let's assume a 'user_id' column on the 'covers' table.
-			$ebookCovers = Cover::where('user_id', $user->id)
-				->whereHas('coverType', function ($query) {
-					$query->where('type_name', 'ebook'); // Or based on cover_type_id
-				})
-				->with('templates') // Eager load for overlays
-				->orderBy('updated_at', 'desc')
-				->take(6) // Example: show recent 6
-				->get();
-
-			foreach ($ebookCovers as $cover) {
-				if ($cover->image_path) {
-					$cover->mockup_url = asset('storage/' . str_replace(['covers/', '.jpg'], ['cover-mockups/', '-front-mockup.png'], $cover->image_path));
-				} else {
-					$cover->mockup_url = asset('template/assets/img/placeholder-mockup.png');
-				}
-				$cover->active_template_overlay_url = null;
-				if ($cover->templates->isNotEmpty()) {
-					// You might want to store the "last used" or "primary" template for a user's cover
-					$activeTemplate = $cover->templates->first(); // Or random, or a specific one
-					if ($activeTemplate && $activeTemplate->thumbnail_path) {
-						$cover->active_template_overlay_url = asset('storage/' . $activeTemplate->thumbnail_path);
-					}
+			// --- Dummy eBook Covers ---
+			$ebookCovers = collect([]);
+			if (true) { // Control whether to show dummy data or empty state
+				for ($i = 1; $i <= 4; $i++) {
+					$ebookCovers->push((object)[
+						'id' => 100 + $i,
+						'name' => "My Awesome eBook Title {$i}: A Gripping Tale of Adventure and Mystery",
+						'mockup_url' => asset('template/assets/img/placeholder-mockup.png'), // Generic placeholder
+						// 'mockup_url' => 'https://via.placeholder.com/300x450.png/007bff/ffffff?text=eBook+' . $i,
+						'active_template_overlay_url' => ($i % 2 == 0) ? asset('template/assets/img/overlays/sample-overlay-1.png') : null, // Example overlay
+						'updated_at' => Carbon::now()->subDays($i * 5),
+						'templates' => collect([ // Mimic templates collection for overlay logic
+							(object)['thumbnail_path' => 'template_thumbnails/overlay_A.png'],
+							(object)['thumbnail_path' => 'template_thumbnails/overlay_B.png']
+						]),
+						// Add any other properties your Blade view might expect from a Cover model
+					]);
 				}
 			}
 
-			// --- Fetch User's Print Covers (similar logic) ---
-			$printCovers = Cover::where('user_id', $user->id)
-				->whereHas('coverType', function ($query) {
-					$query->where('type_name', 'print'); // Or based on cover_type_id
-				})
-				->with('templates')
-				->orderBy('updated_at', 'desc')
-				->take(6)
-				->get();
-			// Add mockup_url and active_template_overlay_url for printCovers too...
+			// --- Dummy Print Covers ---
+			$printCovers = collect([]);
+			if (true) { // Control whether to show dummy data or empty state
+				for ($i = 1; $i <= 2; $i++) {
+					$printCovers->push((object)[
+						'id' => 200 + $i,
+						'name' => "The Definitive Print Edition {$i}",
+						'mockup_url' => asset('template/assets/img/placeholder-mockup.png'),
+						// 'mockup_url' => 'https://via.placeholder.com/300x450.png/28a745/ffffff?text=Print+' . $i,
+						'active_template_overlay_url' => null, // Print covers might not always have overlays in the same way
+						'updated_at' => Carbon::now()->subDays($i * 3),
+						'templates' => collect([]), // Empty if not applicable
+					]);
+				}
+			}
 
+			// --- Dummy Favorite Covers ---
+			$favoriteCovers = collect([]);
+			if (true) { // Control whether to show dummy data or empty state
+				for ($i = 1; $i <= 3; $i++) {
+					$favoriteCovers->push((object)[
+						'id' => 300 + $i,
+						'name' => "A Favorite Story Vol. {$i}",
+						'mockup_url' => asset('template/assets/img/placeholder-mockup.png'),
+						// 'mockup_url' => 'https://via.placeholder.com/300x450.png/dc3545/ffffff?text=Favorite+' . $i,
+						'active_template_overlay_url' => ($i % 2 != 0) ? asset('template/assets/img/overlays/sample-overlay-2.png') : null,
+						'templates' => collect([
+							(object)['thumbnail_path' => 'template_thumbnails/overlay_C.png']
+						]),
+						'pivot' => (object)[ // Mimic pivot data
+							'created_at' => Carbon::now()->subWeeks($i),
+						],
+					]);
+				}
+			}
 
-			// --- Fetch User's Favorites ---
-			// This requires a pivot table like 'user_favorite_covers' (user_id, cover_id)
-			// Or a JSON column 'favorited_by_users' on the covers table (less ideal for querying)
-			// For now, let's assume a pivot table and a 'favorites' relationship on the User model.
-			$favoriteCovers = $user->favoriteCovers()->with('templates')->take(6)->get();
-			// Add mockup_url and active_template_overlay_url for favoriteCovers too...
+			// --- Dummy User Images ---
+			$userImages = collect([]);
+			if (true) { // Control whether to show dummy data or empty state
+				for ($i = 1; $i <= 5; $i++) {
+					$userImages->push((object)[
+						'id' => 400 + $i,
+						'name' => "my_uploaded_image_{$i}.jpg",
+						// Use a real placeholder or a generic one
+						'path' => 'user_uploads/sample_image.jpg', // Relative to storage/app/public
+						// For a direct asset link if you place dummy images in public/images/dummy_uploads:
+						// 'asset_path' => asset("images/dummy_uploads/user_image_{$i}.jpg"),
+						'created_at' => Carbon::now()->subHours($i * 10),
+					]);
+				}
+				// If using asset_path, you'd need to create these dummy images in public/images/dummy_uploads
+				// For 'path', you'd need to ensure the Blade view correctly constructs the URL with asset('storage/' . $image->path)
+			}
+			// To use the 'path' correctly with asset('storage/...') ensure you have a symlink
+			// and place dummy images in `storage/app/public/user_uploads/`
+			// For simplicity, I'll adjust the blade to use a generic placeholder if path is not a full URL
+			// Or, you can provide full placeholder URLs here:
+			if ($userImages->isNotEmpty()) {
+				$userImages = $userImages->map(function ($item, $key) {
+					$item->display_url = 'https://via.placeholder.com/150x120.png/17a2b8/ffffff?text=Image+' . ($key + 1);
+					return $item;
+				});
+			}
 
-
-			// --- Fetch User's Images ---
-			// This would require a new table 'user_images' (id, user_id, path, name, created_at, updated_at)
-			// and a UserImage model.
-			// $userImages = UserImage::where('user_id', $user->id)->orderBy('created_at', 'desc')->take(8)->get();
-			$userImages = collect([]); // Placeholder
 
 			return view('dashboard', [
 				'user' => $user,
@@ -75,7 +104,7 @@
 				'printCovers' => $printCovers,
 				'favoriteCovers' => $favoriteCovers,
 				'userImages' => $userImages,
-				'footerClass' => 'bj_footer_area_two', // Example for different footer style
+				'footerClass' => 'bj_footer_area_two',
 			]);
 		}
 	}
