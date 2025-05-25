@@ -65,7 +65,7 @@
 		return "Blog Page";
 	})->name('blog.index');
 
-	Route::get('/covers/{cover}/{templatetemplate?}', [CoverController::class, 'show'])->name('covers.show');
+	Route::get('/covers/{cover}/{template?}', [CoverController::class, 'show'])->name('covers.show');
 
 	Route::get('/api/templates/{template}/json', [DesignerController::class, 'getTemplateJsonData'])->name('api.templates.json_data');
 
