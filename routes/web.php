@@ -31,6 +31,8 @@
 		Route::post('/items/update', [DashboardController::class, 'updateItem'])->name('items.update');
 		Route::post('/items/delete', [DashboardController::class, 'deleteItem'])->name('items.delete');
 
+		Route::post('/covers/upload-zip', [DashboardController::class, 'uploadCoverZip'])->name('covers.upload-zip');
+
 		Route::get('/covers/needing-metadata', [DashboardController::class, 'getCoversNeedingMetadata'])->name('covers.needing-metadata');
 		Route::post('/items/generate-ai-metadata', [DashboardController::class, 'generateAiMetadata'])->name('items.generate-ai-metadata');
 

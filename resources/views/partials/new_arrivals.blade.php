@@ -10,7 +10,7 @@
 					<div class="col-xl-4 col-md-6">
 						<div class="bj_new_pr_item_two d-flex wow fadeInUp" data-wow-delay="0.{{ $loop->iteration + 1 }}s">
 							<a href="{{ route('covers.show', $cover->id) }}" class="img cover-image-container">
-								<img src="{{ asset('storage/' . $cover->mockup) }}" alt="{{ $cover->name }}" class="cover-mockup-image" />
+								<img src="{{ asset('storage/' . $cover->mockup_2d_path) }}" alt="{{ $cover->name }}" class="cover-mockup-image" />
 								@if($cover->random_template_overlay_url)
 									<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image" />
 								@endif

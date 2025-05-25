@@ -79,7 +79,7 @@
 					<div class="bj_book_single me-xl-3">
 						<div class="free_kindle_covers_book_img">
 							<div class="cover-image-container">
-								<img class="img-fluid cover-mockup-image" src="{{ $cover->mockup_url }}"
+								<img class="img-fluid cover-mockup-image" src="{{ asset('storage/' . $cover->mockup_2d_path ) }}"
 								     alt="{{ $cover->name ?: 'Cover Image' }}">
 								{{-- Use active_template_overlay_url --}}
 								@if($cover->active_template_overlay_url)
@@ -115,7 +115,7 @@
 							<div class="d-flex mt-4">
 								@php
 									$customizeUrl = '#'; // Default
-									$coverImagePathForDesigner = $cover->image_path;
+									$coverImagePathForDesigner = $cover->cover_path;
 									$queryParams = ['cover_id' => $cover->id];
 									if ($activeTemplateForView) { // Use activeTemplateForView
 											$queryParams['template_id'] = $activeTemplateForView->id;
@@ -166,7 +166,7 @@
 										@endphp
 										<div class="col-lg-3 col-md-4 col-sm-6 mb-4" id="variation-card-{{ $variation['template_id'] }}">
 											<div class="cover-image-container text-center">
-												<img class="img-fluid cover-mockup-image" src="{{ $variation['mockup_url'] }}"
+												<img class="img-fluid cover-mockup-image" src="{{ asset('storage/' . $cover->mockup_2d_path) }}"
 												     alt="{{ $cover->name ?: 'Cover' }} - Style with {{ $variation['template_name'] }}">
 												@if($variation['template_overlay_url'])
 													<img src="{{ $variation['template_overlay_url'] }}"
@@ -250,7 +250,7 @@
 							<a href="{{ $coverImagePathForDesigner ? $customizeUrl : '#' }}"
 							   class="bj_theme_btn {{ !$coverImagePathForDesigner ? 'disabled' : '' }}"
 							   title="{{ $customizeButtonTitle }}"
-							   data-name="{{ $cover->name }}" data-price="0" data-img="{{ $cover->mockup_url }}" data-mrp="0">
+							   data-name="{{ $cover->name }}" data-price="0" data-img="{{ asset('storage/' . $cover->mockup_2d_path ) }}" data-mrp="0">
 								<i
 									class="icon_pencil-edit"></i> {{ $activeTemplateForView ? 'Customize Style: ' . Str::limit($activeTemplateForView->name, 15) : 'Customize This Cover' }}
 							</a>

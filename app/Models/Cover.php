@@ -24,12 +24,16 @@ class Cover extends Model
 	protected $fillable = [
 		'cover_type_id',
 		'name',
-		'thumbnail_path',
-		'image_path',
+		'cover_path',                 // Renamed from image_path
+		'cover_thumbnail_path',       // Renamed from thumbnail_path
+		'mockup_2d_path',             // New
+		'mockup_3d_path',             // New
+		'full_cover_path',            // New
+		'full_cover_thumbnail_path',  // New
 		'caption',
 		'keywords',
 		'categories',
-		'text_placements', // Added
+		'text_placements',
 	];
 
 	/**
@@ -40,7 +44,7 @@ class Cover extends Model
 	protected $casts = [
 		'keywords' => 'array',
 		'categories' => 'array',
-		'text_placements' => 'array', // Added
+		'text_placements' => 'array',
 		'created_at' => 'datetime',
 		'updated_at' => 'datetime',
 	];
@@ -59,5 +63,18 @@ class Cover extends Model
 	public function templates(): BelongsToMany
 	{
 		return $this->belongsToMany(Template::class, 'cover_template', 'cover_id', 'template_id');
+	}
+
+	// Helper to get all image paths for deletion
+	public function getAllImagePaths(): array
+	{
+		return array_filter([
+			$this->cover_path,
+			$this->cover_thumbnail_path,
+			$this->mockup_2d_path,
+			$this->mockup_3d_path,
+			$this->full_cover_path,
+			$this->full_cover_thumbnail_path,
+		]);
 	}
 }

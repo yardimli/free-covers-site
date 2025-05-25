@@ -150,7 +150,7 @@
                             <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                                 <div class="dashboard-item-card">
                                     <a href="{{ route('covers.show', $cover->id) }}" class="cover-image-container">
-                                        <img src="{{ $cover->mockup_url }}" alt="{{ $cover->name }}" class="cover-mockup-image">
+                                        <img src="{{ asset('storage/' . $cover->mockup_2d_path ) }}" alt="{{ $cover->name }}" class="cover-mockup-image">
                                         @if($cover->active_template_overlay_url)
                                             <img src="{{ $cover->active_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image">
                                         @endif
@@ -196,7 +196,7 @@
                             <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                                 <div class="dashboard-item-card">
                                     <a href="{{ route('covers.show', $cover->id) }}" class="cover-image-container">
-                                        <img src="{{ $cover->mockup_url ?? asset('template/assets/img/placeholder-mockup.png') }}" alt="{{ $cover->name }}" class="cover-mockup-image">
+                                        <img src="" alt="{{ $cover->name }}" class="cover-mockup-image">
                                         {{-- Add overlay if applicable for print covers --}}
                                     </a>
                                     <div class="dashboard-item-content">
@@ -236,7 +236,7 @@
                             <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                                 <div class="dashboard-item-card">
                                     <a href="{{ route('covers.show', $cover->id) }}" class="cover-image-container">
-                                        <img src="{{ $cover->mockup_url ?? asset('template/assets/img/placeholder-mockup.png') }}" alt="{{ $cover->name }}" class="cover-mockup-image">
+                                        <img src="" alt="{{ $cover->name }}" class="cover-mockup-image">
                                         @if($cover->active_template_overlay_url) {{-- Assuming similar logic for favorites --}}
                                         <img src="{{ $cover->active_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image">
                                         @endif

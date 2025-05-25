@@ -54,7 +54,7 @@
 								<div class="best_product_item best_product_item_two shop_product">
 									<a href="{{ route('covers.show', $cover->id) }}" class="cover-image-container">
 									<div class="img">
-											<img src="{{ $cover->mockup_url }}" alt="{{ $cover->name }}" class="cover-mockup-image img-fluid">
+											<img src="{{ asset('storage/' . $cover->mockup_2d_path ) }}" alt="{{ $cover->name }}" class="cover-mockup-image img-fluid">
 											@if($cover->random_template_overlay_url)
 												<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image" />
 											@endif

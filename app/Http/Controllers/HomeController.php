@@ -49,18 +49,12 @@ class HomeController extends Controller
 					->get();
 
 				foreach ($coversForFirstTab[$firstGenreName] as &$cover) {
-					if ($cover->image_path) {
-						$cover['mockup'] = str_replace('covers/', 'cover-mockups/', $cover->image_path);
-						$cover['mockup'] = str_replace('.jpg', '-front-mockup.png', $cover['mockup']);
-					} else {
-						$cover['mockup'] = 'path/to/default/mockup.png';
-					}
 					// Add random template overlay URL
 					$cover['random_template_overlay_url'] = null;
 					if ($cover->templates->isNotEmpty()) {
 						$randomTemplate = $cover->templates->random();
-						if ($randomTemplate->thumbnail_path) {
-							$cover['random_template_overlay_url'] = asset('storage/' . $randomTemplate->thumbnail_path);
+						if ($randomTemplate->cover_image_path) {
+							$cover['random_template_overlay_url'] = asset('storage/' . $randomTemplate->cover_image_path);
 						}
 					}
 				}
@@ -75,18 +69,12 @@ class HomeController extends Controller
 			->take(6)
 			->get();
 		foreach ($newArrivals as &$cover) {
-			if ($cover->image_path) {
-				$cover['mockup'] = str_replace('covers/', 'cover-mockups/', $cover->image_path);
-				$cover['mockup'] = str_replace('.jpg', '-front-mockup.png', $cover['mockup']);
-			} else {
-				$cover['mockup'] = 'path/to/default/mockup.png'; // Fallback mockup
-			}
 			// Add random template overlay URL
 			$cover['random_template_overlay_url'] = null;
 			if ($cover->templates->isNotEmpty()) {
 				$randomTemplate = $cover->templates->random();
-				if ($randomTemplate->thumbnail_path) {
-					$cover['random_template_overlay_url'] = asset('storage/' . $randomTemplate->thumbnail_path);
+				if ($randomTemplate->cover_image_path) {
+					$cover['random_template_overlay_url'] = asset('storage/' . $randomTemplate->cover_image_path);
 				}
 			}
 		}
@@ -124,24 +112,17 @@ class HomeController extends Controller
 			->get();
 
 		$formattedCovers = $covers->map(function ($cover) {
-			$mockupPath = 'path/to/default/mockup.png'; // Fallback
-			if ($cover->image_path) {
-				$mockupPath = str_replace('covers/', 'cover-mockups/', $cover->image_path);
-				$mockupPath = str_replace('.jpg', '-front-mockup.png', $mockupPath);
-			}
-
 			$randomTemplateOverlayUrl = null;
 			if ($cover->templates->isNotEmpty()) {
 				$randomTemplate = $cover->templates->random();
-				if ($randomTemplate->thumbnail_path) {
-					$randomTemplateOverlayUrl = asset('storage/' . $randomTemplate->thumbnail_path);
+				if ($randomTemplate->cover_image_path) {
+					$randomTemplateOverlayUrl = asset('storage/' . $randomTemplate->cover_image_path);
 				}
 			}
 
 			return [
 				'id' => $cover->id,
 				'name' => $cover->name,
-				'mockup' => $mockupPath,
 				'random_template_overlay_url' => $randomTemplateOverlayUrl,
 				'show_url' => route('covers.show', $cover->id),
 				'limited_name' => Str::limit($cover->caption, 40),

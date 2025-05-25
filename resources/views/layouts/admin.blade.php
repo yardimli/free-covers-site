@@ -96,6 +96,7 @@
 		updateTextPlacementsBase: "{{ url('admin/items') }}",
 		aiEvaluateTemplateFitBase: "{{ url('admin/covers') }}",
 		getCoversWithoutTemplates: "{{ route('admin.covers.without-templates') }}",
+		uploadCoverZip: "{{ route('admin.covers.upload-zip') }}",
 	};
 	window.AppAdmin = window.AppAdmin || {}; // Initialize the global namespace
 </script>
@@ -114,6 +115,7 @@
 <script src="{{ asset('js/admin/batchCoverTextPlacement.js') }}"></script>
 <script src="{{ asset('js/admin/batchAutoAssignTemplates.js') }}"></script>
 <script src="{{ asset('js/admin/batchAiMetadata.js') }}"></script>
+<script src="{{ asset('js/admin/uploadZip.js') }}"></script>
 
 <!-- Main Admin Orchestrator -->
 <script src="{{ asset('js/admin.js') }}"></script>

@@ -3,9 +3,17 @@ window.AppAdmin = window.AppAdmin || {};
 AppAdmin.Edit = (function() {
 	const { showAlert, escapeHtml, capitalizeFirstLetter } = AppAdmin.Utils;
 	const { loadItems } = AppAdmin.Items;
-	const { populateAllCoverTypeDropdowns } = AppAdmin.CoverTypes; // Ensure this is available
-	
+	const { populateAllCoverTypeDropdowns } = AppAdmin.CoverTypes;
 	let $editModal, editModal, $editForm;
+	
+	function displayPreview(containerId, imageUrl, label) {
+		const $container = $(`#${containerId}`);
+		if (imageUrl) {
+			$container.html(`<p class="mb-1 small text-muted">${label}:</p><img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(label)} Preview">`).show();
+		} else {
+			$container.empty().hide();
+		}
+	}
 	
 	function handleEditItemClick() {
 		const $button = $(this);
@@ -14,14 +22,14 @@ AppAdmin.Edit = (function() {
 		
 		$editModal.find('.modal-title').text(`Loading ${capitalizeFirstLetter(itemType).slice(0,-1)}...`);
 		$editForm[0].reset();
-		$('#editCurrentImagePreview').empty().hide();
-		$('#editCurrentThumbnailPreview').empty().hide();
-		$('#editCurrentJsonInfo').hide();
-		$('.edit-field').hide(); // Hide all conditional fields first
 		
-		// Ensure cover type dropdown is populated before trying to set its value
-		// This might be better done once on page load and then just referenced
-		populateAllCoverTypeDropdowns();
+		// Clear all previews
+		$('.preview-container').empty().hide();
+		$('#editTemplateJsonInfo').hide().text('');
+		$('#editTemplateFullCoverJsonInfo').hide().text('');
+		
+		$('.edit-field').hide(); // Hide all conditional fields first
+		populateAllCoverTypeDropdowns(); // Ensure cover type dropdown is populated
 		
 		$.ajax({
 			url: window.adminRoutes.getItemDetails,
@@ -36,34 +44,37 @@ AppAdmin.Edit = (function() {
 					$('#editItemType').val(itemType);
 					$('#editItemName').val(item.name);
 					
-					// Show relevant sections based on itemType
 					$(`.edit-field-${itemType}`).show();
-					
-					// Populate common fields that might exist as comma-separated strings in forms
 					$('#editItemKeywords').val(item.keywords_string_for_form || '');
-					
 					
 					if (itemType === 'covers') {
 						$('#editItemCaption').val(item.caption || '');
 						$('#editItemCategories').val(item.categories_string_for_form || '');
 						$('#editItemTextPlacements').val(item.text_placements_string_for_form || '');
 						$('#editItemCoverType').val(item.cover_type_id || '');
-						if(item.image_url) {
-							$('#editCurrentImagePreview').html(`<p class="mb-1">Current Image:</p><img src="${escapeHtml(item.image_url)}" alt="Current Preview">`).show();
-						}
-					} else if (itemType === 'elements' || itemType === 'overlays') {
-						// Keywords already handled above
-						if(item.image_url) {
-							$('#editCurrentImagePreview').html(`<p class="mb-1">Current Image:</p><img src="${escapeHtml(item.image_url)}" alt="Current Preview">`).show();
-						}
+						
+						displayPreview('editCoverMainImagePreview', item.cover_thumbnail_url || item.cover_url, 'Current Main Image');
+						displayPreview('editCoverMockup2DPreview', item.mockup_2d_url, 'Current 2D Mockup');
+						displayPreview('editCoverMockup3DPreview', item.mockup_3d_url, 'Current 3D Mockup');
+						displayPreview('editCoverFullCoverPreview', item.full_cover_thumbnail_url || item.full_cover_url, 'Current Full Cover');
+						
 					} else if (itemType === 'templates') {
-						// Keywords already handled above
 						$('#editItemCoverType').val(item.cover_type_id || '');
-						$('#editItemTextPlacements').val(item.text_placements_string_for_form || ''); // For templates main edit form
-						if(item.thumbnail_url) {
-							$('#editCurrentThumbnailPreview').html(`<p class="mb-1">Current Thumbnail:</p><img src="${escapeHtml(item.thumbnail_url)}" alt="Current Thumbnail">`).show();
+						$('#editTemplateTextPlacements').val(item.text_placements_string_for_form || '');
+						
+						displayPreview('editTemplateCoverImagePreview', item.cover_image_url, 'Current Cover Image');
+						displayPreview('editTemplateFullCoverImagePreview', item.full_cover_image_thumbnail_url || item.full_cover_image_url, 'Current Full Cover Image');
+						
+						if (item.json_content) { // Check if json_content exists
+							$('#editTemplateJsonInfo').text('Current JSON data is loaded. Upload a new file to replace it.').show();
 						}
-						$('#editCurrentJsonInfo').text('Current JSON data is loaded. Upload a new file to replace it.').show();
+						if (item.full_cover_json_content) {
+							$('#editTemplateFullCoverJsonInfo').text('Current Full Cover JSON data is loaded. Upload a new file to replace it.').show();
+						}
+						
+					} else if (itemType === 'elements' || itemType === 'overlays') {
+						// Assuming old field names for these, adjust if they also get refactored
+						displayPreview('editCurrentImagePreview', item.thumbnail_url || item.image_url, 'Current Image');
 					}
 					editModal.show();
 				} else {
@@ -72,7 +83,6 @@ AppAdmin.Edit = (function() {
 			},
 			error: function(xhr, status, error) {
 				showAlert(`AJAX Error fetching details: ${escapeHtml(xhr.responseText || error)}`, 'danger');
-				console.error("AJAX Error:", status, error, xhr.responseText);
 			}
 		});
 	}
@@ -83,7 +93,6 @@ AppAdmin.Edit = (function() {
 		const itemType = $('#editItemType').val();
 		const $submitButton = $('#saveEditButton');
 		const originalButtonText = $submitButton.html();
-		
 		const currentScrollY = window.scrollY;
 		
 		$submitButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
@@ -103,7 +112,8 @@ AppAdmin.Edit = (function() {
 					const page = parseInt(params.get('page'), 10) || 1;
 					const search = params.get('search') || '';
 					const coverTypeIdFilter = params.get('filter') || '';
-					loadItems(itemType, page, search, coverTypeIdFilter, currentScrollY );
+					const noTemplatesFilter = itemType === 'covers' && $('#filterNoTemplatesBtn').hasClass('active');
+					loadItems(itemType, page, search, coverTypeIdFilter, noTemplatesFilter, currentScrollY);
 				} else {
 					let errorMsg = `Error updating ${itemType}: ${escapeHtml(response.message)}`;
 					if (response.errors) {
@@ -120,7 +130,6 @@ AppAdmin.Edit = (function() {
 			},
 			error: function(xhr, status, error) {
 				showAlert(`AJAX Error updating ${itemType}: ${escapeHtml(xhr.responseText || error)}`, 'danger');
-				console.error("AJAX Error:", status, error, xhr.responseText);
 			},
 			complete: function() {
 				$submitButton.prop('disabled', false).html(originalButtonText);
@@ -131,26 +140,23 @@ AppAdmin.Edit = (function() {
 	function init() {
 		$editModal = $('#editItemModal');
 		$editForm = $('#editItemForm');
-		
 		if ($editModal.length) {
 			editModal = new bootstrap.Modal($editModal[0]);
 		}
 		
 		$('.tab-content').on('click', '.edit-item', handleEditItemClick);
-		
 		if ($editForm.length) {
 			$editForm.on('submit', handleEditFormSubmit);
 		}
 		
 		if ($editModal.length) {
 			$editModal.on('hidden.bs.modal', function () {
-				// Clear file inputs
-				$('#editItemImageFile').val('');
-				$('#editItemThumbnailFile').val('');
-				$('#editItemJsonFile').val('');
+				// Clear all file inputs in the form
+				$editForm.find('input[type="file"]').val('');
 				// Clear previews
-				$('#editCurrentImagePreview').empty().hide();
-				$('#editCurrentThumbnailPreview').empty().hide();
+				$('.preview-container').empty().hide();
+				$('#editTemplateJsonInfo').hide().text('');
+				$('#editTemplateFullCoverJsonInfo').hide().text('');
 				// Reset select
 				$('#editItemCoverType').val('');
 				// Hide all conditional fields again

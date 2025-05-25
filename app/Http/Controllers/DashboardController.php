@@ -20,8 +20,6 @@
 					$ebookCovers->push((object)[
 						'id' => 100 + $i,
 						'name' => "My Awesome eBook Title {$i}: A Gripping Tale of Adventure and Mystery",
-						'mockup_url' => asset('template/assets/img/placeholder-mockup.png'), // Generic placeholder
-						// 'mockup_url' => 'https://via.placeholder.com/300x450.png/007bff/ffffff?text=eBook+' . $i,
 						'active_template_overlay_url' => ($i % 2 == 0) ? asset('template/assets/img/overlays/sample-overlay-1.png') : null, // Example overlay
 						'updated_at' => Carbon::now()->subDays($i * 5),
 						'templates' => collect([ // Mimic templates collection for overlay logic
@@ -40,8 +38,6 @@
 					$printCovers->push((object)[
 						'id' => 200 + $i,
 						'name' => "The Definitive Print Edition {$i}",
-						'mockup_url' => asset('template/assets/img/placeholder-mockup.png'),
-						// 'mockup_url' => 'https://via.placeholder.com/300x450.png/28a745/ffffff?text=Print+' . $i,
 						'active_template_overlay_url' => null, // Print covers might not always have overlays in the same way
 						'updated_at' => Carbon::now()->subDays($i * 3),
 						'templates' => collect([]), // Empty if not applicable
@@ -56,8 +52,6 @@
 					$favoriteCovers->push((object)[
 						'id' => 300 + $i,
 						'name' => "A Favorite Story Vol. {$i}",
-						'mockup_url' => asset('template/assets/img/placeholder-mockup.png'),
-						// 'mockup_url' => 'https://via.placeholder.com/300x450.png/dc3545/ffffff?text=Favorite+' . $i,
 						'active_template_overlay_url' => ($i % 2 != 0) ? asset('template/assets/img/overlays/sample-overlay-2.png') : null,
 						'templates' => collect([
 							(object)['thumbnail_path' => 'template_thumbnails/overlay_C.png']

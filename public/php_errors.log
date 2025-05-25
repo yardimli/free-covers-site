@@ -3,3 +3,6 @@
 [14-May-2025 17:27:25 UTC] PHP Fatal error:  Maximum execution time of 60 seconds exceeded in F:\GitHub\free-cover-site\vendor\guzzlehttp\guzzle\src\Handler\CurlFactory.php on line 381
 [15-May-2025 06:57:52 UTC] PHP Fatal error:  Maximum execution time of 60 seconds exceeded in F:\GitHub\free-cover-site\vendor\guzzlehttp\guzzle\src\Handler\CurlFactory.php on line 381
 [15-May-2025 07:12:23 UTC] PHP Fatal error:  Maximum execution time of 60 seconds exceeded in F:\GitHub\free-cover-site\vendor\guzzlehttp\guzzle\src\Handler\CurlFactory.php on line 381
+[25-May-2025 09:43:07 UTC] PHP Fatal error:  Cannot redeclare App\Services\ImageUploadService::getUrl() in F:\GitHub\free-cover-site\app\Services\ImageUploadService.php on line 160
+[25-May-2025 10:17:14 UTC] PHP Warning:  POST Content-Length of 464458935 bytes exceeds the limit of 209715200 bytes in Unknown on line 0
+[25-May-2025 13:29:14 UTC] PHP Fatal error:  Maximum execution time of 60 seconds exceeded in F:\GitHub\free-cover-site\vendor\intervention\image\src\Drivers\Gd\Modifiers\ResizeModifier.php on line 58

@@ -121,8 +121,8 @@
 								<div class="col-lg-3 col-md-4 col-sm-6 mb-4"> {{-- Added Bootstrap column classes --}}
 									<div class="cover-template-item" id="cover-{{ $cover->id }}-template-{{ $template->id }}">
 										<div class="cover-image-container">
-											@if($cover->mockup_url && $cover->mockup_url !== asset('template/assets/img/placeholder-mockup.png'))
-												<img src="{{ $cover->mockup_url }}" alt="{{ $cover->name }} Mockup" class="cover-base-image">
+											@if($cover->mockup_2d_path)
+												<img src="{{ asset('storage/' . $cover->mockup_2d_path ) }}" alt="{{ $cover->name }} Mockup" class="cover-base-image">
 											@else
 												{{-- This span will be centered by the flex properties of cover-image-container --}}
 												<span class="no-cover-image-text">No Cover Image</span>

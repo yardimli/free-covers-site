@@ -3,7 +3,7 @@
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany; // Add this
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Template extends Model
 {
@@ -24,11 +24,13 @@ class Template extends Model
 	protected $fillable = [
 		'cover_type_id',
 		'name',
-		'thumbnail_path',
-		'json_path', // Note: This field seems unused if json_content is primary
-		'json_content',
+		'cover_image_path',                 // Renamed from thumbnail_path
+		'json_content',                     // Existing
 		'keywords',
-		'text_placements', // Added
+		'text_placements',
+		'full_cover_image_path',            // New
+		'full_cover_image_thumbnail_path',  // New
+		'full_cover_json_content',          // New
 	];
 
 	/**
@@ -37,9 +39,10 @@ class Template extends Model
 	 * @var array<string, string>
 	 */
 	protected $casts = [
-		'json_content' => 'array', // Or 'object' if you prefer stdClass
+		'json_content' => 'array',
+		'full_cover_json_content' => 'array', // New
 		'keywords' => 'array',
-		'text_placements' => 'array', // Added
+		'text_placements' => 'array',
 		'created_at' => 'datetime',
 		'updated_at' => 'datetime',
 	];
@@ -58,5 +61,15 @@ class Template extends Model
 	public function covers(): BelongsToMany
 	{
 		return $this->belongsToMany(Cover::class, 'cover_template', 'template_id', 'cover_id');
+	}
+
+	// Helper to get all image paths for deletion
+	public function getAllImagePaths(): array
+	{
+		return array_filter([
+			$this->cover_image_path,
+			$this->full_cover_image_path,
+			$this->full_cover_image_thumbnail_path,
+		]);
 	}
 }

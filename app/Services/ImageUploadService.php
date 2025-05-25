@@ -1,146 +1,209 @@
-<?php
+<?php namespace App\Services;
 
-	namespace App\Services;
+// No need to alias Illuminate\Http\UploadedFile if we use the Symfony one in the type hint
+use Symfony\Component\HttpFoundation\File\UploadedFile as BaseUploadedFile; // Use this for type hinting
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Intervention\Image\Laravel\Facades\Image as InterventionImageFacade;
+use Illuminate\Support\Facades\Log; // Make sure Log is imported
 
-	use Illuminate\Http\UploadedFile;
-	use Illuminate\Support\Facades\Storage;
-	use Illuminate\Support\Str;
-	use Intervention\Image\Facades\Image; // Or use ImageManager directly: use Intervention\Image\ImageManager;
+class ImageUploadService
+{
+	protected string $disk = 'public';
 
-	class ImageUploadService
+	/**
+	 * Uploads an image and optionally its thumbnail based on configuration.
+	 * @param BaseUploadedFile $file The uploaded file object (can be Illuminate or Symfony variant).
+	 * @param string $uploadConfigKey Key to fetch path and dimension configs (e.g., 'covers_main', 'templates_cover_image').
+	 * @param string|null $existingOriginalPath Path to an existing original image to delete.
+	 * @param string|null $existingThumbnailPath Path to an existing thumbnail to delete.
+	 * @return array ['original_path' => ?string, 'thumbnail_path' => ?string] (storage-relative paths)
+	 * @throws \Exception
+	 */
+	public function uploadImageWithThumbnail(
+		BaseUploadedFile $file, // Type hint to the Symfony base class
+		string $uploadConfigKey,
+		?string $existingOriginalPath = null,
+		?string $existingThumbnailPath = null
+	): array {
+		$config = config('admin_settings.paths.' . $uploadConfigKey);
+		if (!$config || !isset($config['originals'])) {
+			throw new \Exception("Upload configuration not found or incomplete for type: {$uploadConfigKey}");
+		}
+
+		$uploadPrefix = config('admin_settings.upload_path_prefix', 'uploads');
+
+		// Get original filename without extension and sanitize it
+		$originalClientFilenameWithoutExt = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+		$sanitizedOriginalBaseFilename = $this->sanitizeFilename($originalClientFilenameWithoutExt);
+
+		// Determine file extension
+		$extension = $file->getClientOriginalExtension();
+		if (empty($extension) && method_exists($file, 'extension')) { // For Illuminate\Http\UploadedFile
+			$extension = $file->extension();
+		}
+		if (empty($extension)) { // Fallback for Symfony\Component\HttpFoundation\File\UploadedFile
+			$extension = $file->guessExtension();
+		}
+		if (empty($extension)) { // Last resort from original name
+			$extension = pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION);
+		}
+		if (empty($extension)) {
+			Log::warning("ImageUploadService: Could not determine extension for file: " . $file->getPathname() . " with original name: " . $file->getClientOriginalName() . ". Defaulting to 'jpg'.");
+			$extension = 'jpg';
+		}
+		$extension = strtolower($extension);
+
+
+		// Delete existing files first (if paths provided)
+		// This is important if an update might result in a different filename due to original name change or new duplicates
+		if ($existingOriginalPath && Storage::disk($this->disk)->exists($existingOriginalPath)) {
+			Storage::disk($this->disk)->delete($existingOriginalPath);
+		}
+		if ($existingThumbnailPath && Storage::disk($this->disk)->exists($existingThumbnailPath) && $existingThumbnailPath !== $existingOriginalPath) {
+			Storage::disk($this->disk)->delete($existingThumbnailPath);
+		}
+
+		// Determine unique filename for the original image
+		$originalDir = rtrim($uploadPrefix . '/' . $config['originals'], '/');
+		Storage::disk($this->disk)->makeDirectory($originalDir); // Ensure directory exists
+
+		$currentNamingBase = $sanitizedOriginalBaseFilename; // e.g., "my-image"
+		$counter = 0;
+		$finalOriginalFilenameWithExt = $currentNamingBase . '.' . $extension; // e.g., "my-image.jpg"
+
+		while (Storage::disk($this->disk)->exists($originalDir . '/' . $finalOriginalFilenameWithExt)) {
+			$counter++;
+			$currentNamingBase = $sanitizedOriginalBaseFilename . '-' . $counter; // e.g., "my-image-1"
+			$finalOriginalFilenameWithExt = $currentNamingBase . '.' . $extension; // e.g., "my-image-1.jpg"
+		}
+		// $currentNamingBase is now the unique base (e.g., "my-image" or "my-image-1")
+		// $finalOriginalFilenameWithExt is the unique full filename for the original image
+
+		$originalPath = Storage::disk($this->disk)->putFileAs($originalDir, $file, $finalOriginalFilenameWithExt);
+
+		if (!$originalPath) {
+			throw new \Exception("Failed to store original image: {$finalOriginalFilenameWithExt} for type {$uploadConfigKey}");
+		}
+
+		$thumbnailPath = null;
+		$generateThumbnail = isset($config['thumbnails']) && !empty($config['thumbnails']) &&
+			isset($config['thumb_w']) && $config['thumb_w'] > 0 &&
+			isset($config['thumb_h']) && $config['thumb_h'] > 0;
+
+		if ($generateThumbnail) {
+			$thumbnailDir = rtrim($uploadPrefix . '/' . $config['thumbnails'], '/');
+			Storage::disk($this->disk)->makeDirectory($thumbnailDir); // Ensure directory exists
+
+			// Use the $currentNamingBase (which might have -1, -2 etc.) for the thumbnail
+			$finalThumbnailFilenameWithExt = $currentNamingBase . '-thumbnail.' . $extension; // e.g., "my-image-1-thumbnail.jpg"
+			$tempThumbnailPath = Storage::disk($this->disk)->path($thumbnailDir . '/' . $finalThumbnailFilenameWithExt);
+
+			// Intervention Image's read method can take a path, SplFileInfo, or UploadedFile.
+			$img = InterventionImageFacade::read($file->getRealPath());
+			$img->scaleDown(width: $config['thumb_w'], height: $config['thumb_h']);
+			$quality = $config['thumb_quality'] ?? config('admin_settings.thumbnail_quality', 85);
+			$img->save($tempThumbnailPath, quality: $quality);
+
+			if (!file_exists($tempThumbnailPath)) {
+				if ($originalPath) Storage::disk($this->disk)->delete($originalPath); // Clean up original if thumb fails
+				throw new \Exception("Failed to create thumbnail: {$finalThumbnailFilenameWithExt} for type {$uploadConfigKey}");
+			}
+			$thumbnailPath = $thumbnailDir . '/' . $finalThumbnailFilenameWithExt;
+		}
+
+		return [
+			'original_path' => $originalPath,
+			'thumbnail_path' => $thumbnailPath,
+		];
+	}
+
+	/**
+	 * Deletes multiple image files.
+	 * @param array $paths An array of storage-relative paths to delete.
+	 */
+	public function deleteImageFiles(array $paths): void
 	{
-		protected string $disk = 'public'; // Assumes 'public' disk is configured for storage/app/public
-
-		// If using Intervention Image 3.x
-		// protected ImageManager $imageManager;
-		// public function __construct(ImageManager $imageManager)
-		// {
-		//     $this->imageManager = $imageManager->driver(); // Or specific driver
-		// }
-
-
-		/**
-		 * Uploads an image and its thumbnail.
-		 * @param UploadedFile $file The uploaded file object.
-		 * @param string $itemType 'covers', 'elements', 'overlays', or 'templates' (for thumbnail).
-		 * @param string|null $existingOriginalPath Path to an existing original image to delete.
-		 * @param string|null $existingThumbnailPath Path to an existing thumbnail to delete.
-		 * @return array ['original_path' => string, 'thumbnail_path' => string] (storage-relative paths)
-		 * @throws \Exception
-		 */
-		public function uploadImageWithThumbnail(
-			UploadedFile $file,
-			string $itemType,
-			?string $existingOriginalPath = null,
-			?string $existingThumbnailPath = null
-		): array {
-			$config = config('admin_settings.paths.' . $itemType);
-			$uploadPrefix = config('admin_settings.upload_path_prefix');
-
-			$originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-			$sanitizedFilename = $this->sanitizeFilename($originalFilename);
-			$extension = $file->getClientOriginalExtension();
-
-			// Delete old files if paths are provided
-			if ($existingOriginalPath && Storage::disk($this->disk)->exists($existingOriginalPath)) {
-				Storage::disk($this->disk)->delete($existingOriginalPath);
+		foreach ($paths as $path) {
+			if ($path && Storage::disk($this->disk)->exists($path)) {
+				Storage::disk($this->disk)->delete($path);
 			}
-			if ($existingThumbnailPath && Storage::disk($this->disk)->exists($existingThumbnailPath) && $existingThumbnailPath !== $existingOriginalPath) {
-				Storage::disk($this->disk)->delete($existingThumbnailPath);
-			}
-
-			$uniqueNameBase = Str::slug($itemType) . '_' . time() . '_' . Str::random(5) . '_' . $sanitizedFilename;
-
-			$originalPath = null;
-			$thumbnailPath = null;
-
-			if ($itemType === 'templates') { // Templates only have a "thumbnail" which is their main image
-				$thumbnailDir = $uploadPrefix . '/' . $config['thumbnails'];
-				$thumbnailName = $uniqueNameBase . '.' . $extension;
-				$thumbnailPath = $file->storeAs($thumbnailDir, $thumbnailName, $this->disk);
-				if (!$thumbnailPath) {
-					throw new \Exception("Failed to store template thumbnail: {$thumbnailName}");
-				}
-				// For templates, original_path and thumbnail_path might point to the same file in the DB
-				// or original_path might be null if you only store thumbnail_path.
-				// Let's assume thumbnail_path is the primary one.
-			} else {
-				// Store Original
-				$originalDir = $uploadPrefix . '/' . $config['originals'];
-				$originalImageName = $uniqueNameBase . '.' . $extension;
-				$originalPath = $file->storeAs($originalDir, $originalImageName, $this->disk);
-				if (!$originalPath) {
-					throw new \Exception("Failed to store original image: {$originalImageName}");
-				}
-
-				// Create Thumbnail
-				$thumbnailDir = $uploadPrefix . '/' . $config['thumbnails'];
-				if (!Storage::disk($this->disk)->exists($thumbnailDir)) {
-					Storage::disk($this->disk)->makeDirectory($thumbnailDir);
-				}
-				$thumbnailName = 'thumb_' . $uniqueNameBase . '.' . $extension;
-				$tempThumbnailPath = Storage::disk($this->disk)->path($thumbnailDir . '/' . $thumbnailName);
-
-				// Intervention Image v2
-				$img = Image::make(Storage::disk($this->disk)->path($originalPath));
-				$img->resize($config['thumb_w'], $config['thumb_h'], function ($constraint) {
-					$constraint->aspectRatio();
-					$constraint->upsize(); // Prevent upsizing
-				});
-				if (strtolower($extension) === 'png') {
-					$img->save($tempThumbnailPath);
-				} else {
-					$img->save($tempThumbnailPath, config('admin_settings.thumbnail_quality', 85));
-				}
-
-				// Intervention Image v3
-				// $image = $this->imageManager->read(Storage::disk($this->disk)->path($originalPath));
-				// $image->scaleDown(width: $config['thumb_w'], height: $config['thumb_h']); // Or fit()
-				// if (strtolower($extension) === 'png') {
-				//     $image->save($tempThumbnailPath);
-				// } else {
-				//     $image->save($tempThumbnailPath, quality: config('admin_settings.thumbnail_quality', 85));
-				// }
-
-
-				if (!file_exists($tempThumbnailPath)) {
-					// Cleanup original if thumbnail fails
-					if ($originalPath) Storage::disk($this->disk)->delete($originalPath);
-					throw new \Exception("Failed to create thumbnail: {$thumbnailName}");
-				}
-				$thumbnailPath = $thumbnailDir . '/' . $thumbnailName;
-			}
-
-			return [
-				'original_path' => $originalPath, // This will be null for templates if you only store thumbnail
-				'thumbnail_path' => $thumbnailPath,
-			];
-		}
-
-		public function deleteImageFiles(?string $originalPath, ?string $thumbnailPath): void
-		{
-			if ($originalPath && Storage::disk($this->disk)->exists($originalPath)) {
-				Storage::disk($this->disk)->delete($originalPath);
-			}
-			if ($thumbnailPath && Storage::disk($this->disk)->exists($thumbnailPath) && $thumbnailPath !== $originalPath) {
-				Storage::disk($this->disk)->delete($thumbnailPath);
-			}
-		}
-
-		public function sanitizeFilename(string $filename): string
-		{
-			$filename = preg_replace("/[^a-zA-Z0-9\._-]/", "", $filename);
-			$filename = preg_replace("/\.{2,}/", ".", $filename);
-			$filename = trim($filename, ".-_");
-			$filename = substr($filename, 0, 200);
-			return empty($filename) ? "file" : $filename;
-		}
-
-		/**
-		 * Get public URL for a storage path.
-		 */
-		public function getUrl(?string $path): ?string
-		{
-			return $path ? Storage::disk($this->disk)->url($path) : null;
 		}
 	}
+
+	public function sanitizeFilename(string $filename): string
+	{
+		// Remove potentially problematic characters but keep dots, underscores, hyphens
+		$filename = preg_replace("/[^a-zA-Z0-9\._-]/", "", $filename);
+		// Prevent multiple dots next to each other
+		$filename = preg_replace("/\.{2,}/", ".", $filename);
+		// Trim leading/trailing dots, hyphens, underscores
+		$filename = trim($filename, ".-_");
+		// Limit length
+		$filename = substr($filename, 0, 200); // Max length for the base name part
+		return empty($filename) ? "file" : Str::lower($filename); // Ensure lowercase for consistency
+	}
+
+	/**
+	 * Get public URL for a storage path.
+	 */
+	public function getUrl(?string $path): ?string
+	{
+		return $path ? Storage::disk($this->disk)->url($path) : null;
+	}
+
+	/**
+	 * Stores an uploaded file (e.g., JSON) to a specified path.
+	 * This method retains its original unique naming strategy.
+	 * @param BaseUploadedFile $file
+	 * @param string $uploadConfigKey Key to fetch path configs (e.g., 'templates_main_json')
+	 * @param string|null $existingPath
+	 * @return string The storage-relative path.
+	 * @throws \Exception
+	 */
+	public function storeUploadedFile(BaseUploadedFile $file, string $uploadConfigKey, ?string $existingPath = null): string
+	{
+		$config = config('admin_settings.paths.' . $uploadConfigKey);
+		if (!$config || !isset($config['path'])) {
+			throw new \Exception("Upload configuration not found or 'path' missing for type: {$uploadConfigKey}");
+		}
+
+		$uploadPrefix = config('admin_settings.upload_path_prefix', 'uploads');
+		$originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+		$sanitizedFilename = $this->sanitizeFilename($originalFilename); // Uses the same sanitization
+
+		$extension = $file->getClientOriginalExtension();
+		if (empty($extension) && method_exists($file, 'extension')) {
+			$extension = $file->extension();
+		}
+		if (empty($extension)) {
+			$extension = $file->guessExtension();
+		}
+		if (empty($extension)) {
+			$extension = pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION);
+		}
+		if (empty($extension)) {
+			Log::warning("storeUploadedFile: Could not determine extension for file: " . $file->getPathname() . " with original name: " . $file->getClientOriginalName() . ". Defaulting to 'dat'.");
+			$extension = 'dat';
+		}
+		$extension = strtolower($extension);
+
+		if ($existingPath && Storage::disk($this->disk)->exists($existingPath)) {
+			Storage::disk($this->disk)->delete($existingPath);
+		}
+
+		// Retain unique naming for non-image files for now, as request was specific to images/thumbnails
+		$uniqueNameBase = Str::slug(str_replace('_', '-', $uploadConfigKey)) . '_' . time() . '_' . Str::random(5) . '_' . $sanitizedFilename;
+		$targetDir = rtrim($uploadPrefix . '/' . $config['path'], '/');
+		Storage::disk($this->disk)->makeDirectory($targetDir); // Ensure directory exists
+
+		$targetName = $uniqueNameBase . '.' . $extension;
+
+		$storedPath = Storage::disk($this->disk)->putFileAs($targetDir, $file, $targetName);
+
+		if (!$storedPath) {
+			throw new \Exception("Failed to store file: {$targetName} for type {$uploadConfigKey}");
+		}
+		return $storedPath;
+	}
+}

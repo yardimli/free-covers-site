@@ -12,7 +12,7 @@
 					<div class="col-xl-3 col-lg-4 col-sm-6">
 						<div class="bj_new_pr_item mb-0 wow fadeInUp" data-wow-delay="0.{{ $loop->iteration + 1 }}s">
 							<a href="{{ route('covers.show', $relatedCover->id) }}" class="img cover-image-container">
-								<img src="{{ $relatedCover->mockup_url }}" alt="{{ $relatedCover->name }}" class="cover-mockup-image img-fluid" style="height: 380px; object-fit: contain;">
+								<img src="{{ asset('storage/' . $relatedCover->mockup_2d_path) }}" alt="{{ $relatedCover->name }}" class="cover-mockup-image img-fluid" style="height: 380px; object-fit: contain;">
 								@if($relatedCover->random_template_overlay_url)
 									<img src="{{ $relatedCover->random_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image" />
 								@endif

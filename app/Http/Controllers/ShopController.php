@@ -81,16 +81,11 @@ class ShopController extends Controller
 
 		// Prepare covers with mockup and random template overlay
 		foreach ($covers as $cover) {
-			if ($cover->image_path) {
-				$cover->mockup_url = asset('storage/' . str_replace(['covers/', '.jpg'], ['cover-mockups/', '-front-mockup.png'], $cover->image_path));
-			} else {
-				$cover->mockup_url = asset('template/assets/img/placeholder-mockup.png'); // Fallback mockup
-			}
 			$cover->random_template_overlay_url = null;
 			if ($cover->templates->isNotEmpty()) {
 				$randomTemplate = $cover->templates->random();
-				if ($randomTemplate->thumbnail_path) {
-					$cover->random_template_overlay_url = asset('storage/' . $randomTemplate->thumbnail_path);
+				if ($randomTemplate->cover_image_path) {
+					$cover->random_template_overlay_url = asset('storage/' . $randomTemplate->cover_image_path);
 				}
 			}
 		}

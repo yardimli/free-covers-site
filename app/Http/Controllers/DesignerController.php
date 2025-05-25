@@ -21,14 +21,14 @@
 
 			// Fetch Covers
 			$covers_data = Cover::orderBy('name')
-				->get(['id', 'cover_type_id', 'name', 'thumbnail_path', 'image_path', 'caption', 'keywords', 'categories', 'text_placements']) // Added text_placements
+				->get(['id', 'cover_type_id', 'name', 'cover_thumbnail_path', 'cover_path', 'caption', 'keywords', 'categories', 'text_placements']) // Added text_placements
 				->map(function ($cover) {
 					return [
 						'id' => $cover->id,
 						'coverTypeId' => $cover->cover_type_id,
 						'name' => $cover->name,
-						'thumbnailPath' => $cover->thumbnail_path ? Storage::url($cover->thumbnail_path) : null,
-						'imagePath' => $cover->image_path ? Storage::url($cover->image_path) : null,
+						'thumbnailPath' => $cover->cover_thumbnail_path ? Storage::url($cover->cover_thumbnail_path) : null,
+						'imagePath' => $cover->cover_path ? Storage::url($cover->cover_path) : null,
 						'caption' => $cover->caption,
 						'keywords' => $cover->keywords, // Already an array due to model casting
 						'categories' => $cover->categories, // Already an array
@@ -51,13 +51,13 @@
 
 			// Fetch Templates
 			$templates_data = Template::orderBy('name')
-				->get(['id', 'cover_type_id', 'name', 'thumbnail_path', 'json_content', 'text_placements']) // Added text_placements
+				->get(['id', 'cover_type_id', 'name', 'cover_image_path', 'json_content', 'text_placements']) // Added text_placements
 				->map(function ($template) {
 					return [
 						'id' => $template->id,
 						'coverTypeId' => $template->cover_type_id,
 						'name' => $template->name,
-						'thumbnailPath' => $template->thumbnail_path ? Storage::url($template->thumbnail_path) : null,
+						'thumbnailPath' => $template->cover_image_path ? Storage::url($template->cover_image_path) : null,
 						'jsonData' => $template->json_content, // Already an array/object due to model casting
 						'textPlacements' => $template->text_placements, // Already an array
 					];
@@ -117,7 +117,7 @@
 			$cover = Cover::findOrFail($validated['cover_id']);
 
 			// Use the image_path from the cover model directly for security and consistency
-			$coverImagePath = $cover->image_path;
+			$coverImagePath = $cover->cover_path;
 
 			if (!$coverImagePath) {
 				return redirect()->route('covers.show', $cover->id)->with('error', 'This cover does not have a source image suitable for customization.');
@@ -130,8 +130,8 @@
 			if (!empty($validated['template_id'])) {
 				$template = Template::find($validated['template_id']);
 				if ($template) {
-					if ($template->thumbnail_path && Storage::disk('public')->exists($template->thumbnail_path)) {
-						$templateOverlayUrlForPreview = Storage::url($template->thumbnail_path);
+					if ($template->cover_image_path && Storage::disk('public')->exists($template->cover_image_path)) {
+						$templateOverlayUrlForPreview = Storage::url($template->cover_image_path);
 					}
 					// Use the new route to fetch JSON content
 					$templateJsonUrlForDesigner = route('api.templates.json_data', ['template' => $template->id]);

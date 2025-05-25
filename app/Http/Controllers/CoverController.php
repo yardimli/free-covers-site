@@ -20,12 +20,6 @@ class CoverController extends Controller
 		// Eager load templates and coverType for the single cover view
 		$cover->load('templates', 'coverType');
 
-		if ($cover->image_path) {
-			$cover->mockup_url = asset('storage/' . str_replace(['covers/', '.jpg'], ['cover-mockups/', '-front-mockup.png'], $cover->image_path));
-		} else {
-			$cover->mockup_url = asset('template/assets/img/placeholder-mockup.png'); // Fallback mockup
-		}
-
 		$cover->active_template_overlay_url = null; // Renamed from random_template_overlay_url
 		$activeTemplateForView = null; // Renamed from randomTemplateForView
 
@@ -49,8 +43,8 @@ class CoverController extends Controller
 		// 1. No template ID in URL AND cover has no templates.
 		// 2. Invalid template ID in URL (and not associated) AND cover has no templates.
 
-		if ($activeTemplateForView && $activeTemplateForView->thumbnail_path) {
-			$cover->active_template_overlay_url = asset('storage/' . $activeTemplateForView->thumbnail_path);
+		if ($activeTemplateForView && $activeTemplateForView->cover_image_path) {
+			$cover->active_template_overlay_url = asset('storage/' . $activeTemplateForView->cover_image_path);
 		}
 
 		// Prepare cover variations with each associated template
@@ -58,11 +52,10 @@ class CoverController extends Controller
 		if ($cover->templates->isNotEmpty()) {
 			foreach ($cover->templates as $template) {
 				$variationOverlayUrl = null;
-				if ($template->thumbnail_path) {
-					$variationOverlayUrl = asset('storage/' . $template->thumbnail_path);
+				if ($template->cover_image_path) {
+					$variationOverlayUrl = asset('storage/' . $template->cover_image_path);
 				}
 				$coverVariations[] = [
-					'mockup_url' => $cover->mockup_url, // All variations use the same base cover mockup
 					'template_overlay_url' => $variationOverlayUrl,
 					'template_name' => $template->name, // For alt text or title
 					'template_id' => $template->id, // Pass template ID for actions
@@ -97,16 +90,11 @@ class CoverController extends Controller
 		}
 
 		foreach ($relatedCovers as $related) {
-			if ($related->image_path) {
-				$related->mockup_url = asset('storage/' . str_replace(['covers/', '.jpg'], ['cover-mockups/', '-front-mockup.png'], $related->image_path));
-			} else {
-				$related->mockup_url = asset('template/assets/img/placeholder-mockup.png');
-			}
 			$related->random_template_overlay_url = null; // Keep this for related covers as they always show random
 			if ($related->templates->isNotEmpty()) {
 				$randomTemplate = $related->templates->random();
-				if ($randomTemplate->thumbnail_path) {
-					$related->random_template_overlay_url = asset('storage/' . $randomTemplate->thumbnail_path);
+				if ($randomTemplate->cover_image_path) {
+					$related->random_template_overlay_url = asset('storage/' . $randomTemplate->cover_image_path);
 				}
 			}
 		}

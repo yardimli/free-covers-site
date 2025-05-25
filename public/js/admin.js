@@ -3,7 +3,7 @@ $(document).ready(function () {
 	const requiredModules = [
 		'Utils', 'CoverTypes', 'Items', 'Upload', 'Edit', 'Delete',
 		'AiMetadata', 'AiSimilarTemplate', 'AssignTemplates', 'TextPlacements',
-		'BatchAutoAssignTemplates', 'BatchAiMetadata'
+		'BatchAutoAssignTemplates', 'BatchAiMetadata', 'UploadZip'
 	];
 	
 	for (const moduleName of requiredModules) {
@@ -31,6 +31,8 @@ $(document).ready(function () {
 	AppAdmin.TextPlacements.init();
 	AppAdmin.BatchAutoAssignTemplates.init();
 	AppAdmin.BatchAiMetadata.init();
+	AppAdmin.UploadZip.init();
+	
 	
 	let popStateHandlingActive = false; // Flag to manage popstate-triggered loads
 	
