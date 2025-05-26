@@ -92,7 +92,7 @@
 						// Process existing layers
 						if (isset($fullCoverJson['layers']) && is_array($fullCoverJson['layers'])) {
 							// First pass: identify author, title, and smallest text
-							foreach ($fullCoverJson['layers'] as &$layer) {
+							foreach ($fullCoverJson['layers'] as $layer) {
 								if (!isset($layer['type']) || $layer['type'] !== 'text') {
 									continue;
 								}
@@ -142,7 +142,7 @@
 									$layer['x'] += $offset;
 								}
 							}
-							unset($layer);
+							//unset($layer);
 
 							// Add spine elements if we found author and title
 							if ($authorLayer && $titleLayer) {
@@ -150,23 +150,29 @@
 								$spineAuthor = $authorLayer;
 								$spineAuthor['id'] = 'spine-author';
 								$spineAuthor['name'] = 'Spine Author';
-								$spineAuthor['x'] = $backWidth + ($spineWidth / 2);
-								$spineAuthor['y'] = 200; // Top of spine
+								$spineAuthor['x'] = $backWidth - 300;
+								$spineAuthor['y'] = 400; // Top of spine
+								$spineAuthor['align'] = 'left';
 								$spineAuthor['rotation'] = 90;
-								$spineAuthor['fontSize'] = max(14, $authorLayer['fontSize'] * 0.6); // Reduce font size
-								$spineAuthor['width'] = 800; // Adjust for rotated text
-								$spineAuthor['definition'] = 'spine_author';
+								$spineAuthor['fontSize'] = max(14, $authorLayer['fontSize'] * 0.3); // Reduce font size by 70%
+								$spineAuthor['width'] = 1200; // Adjust for rotated text
+								$spineAuthor['height'] = 200; // Set height to spine width
+								$spineAuthor['content'] = str_replace("\n", " ", $spineAuthor['content']); // Remove newlines
+								$spineAuthor['definition'] = 'spine_text';
 
 								// Clone title for spine (middle)
 								$spineTitle = $titleLayer;
 								$spineTitle['id'] = 'spine-title';
 								$spineTitle['name'] = 'Spine Title';
-								$spineTitle['x'] = $backWidth + ($spineWidth / 2);
-								$spineTitle['y'] = $fullCoverJson['canvas']['height'] / 2;
+								$spineTitle['x'] = $backWidth - 300;
+								$spineTitle['y'] = 1400;
+								$spineTitle['align'] = 'left';
 								$spineTitle['rotation'] = 90;
-								$spineTitle['fontSize'] = max(18, $titleLayer['fontSize'] * 0.6); // Reduce font size
+								$spineTitle['fontSize'] = max(18, $titleLayer['fontSize'] * 0.3); // Reduce font size by 70%
 								$spineTitle['width'] = 1200; // Adjust for rotated text
-								$spineTitle['definition'] = 'spine_title';
+								$spineTitle['height'] = 200; // Set height to spine width
+								$spineTitle['content'] = str_replace("\n", " ", $spineTitle['content']); // Remove newlines
+								$spineTitle['definition'] = 'spine_text';
 
 								// Add spine layers
 								$fullCoverJson['layers'][] = $spineAuthor;
@@ -179,31 +185,43 @@
 								$backTitle['name'] = 'Back Title';
 								$backTitle['x'] = 100;
 								$backTitle['y'] = 100;
+								$backTitle['align'] = 'left';
+								$backTitle['vAlign'] = 'top';
 								$backTitle['rotation'] = 0;
 								$backTitle['width'] = 1400;
-								$backTitle['definition'] = 'back_title';
+								$backTitle['height'] = round($titleLayer['height'] * 0.6); // Reduce height by 40%
+								$backTitle['fontSize'] = $titleLayer['fontSize'] * 0.6; // Reduce font size by 50%
+								$backTitle['content'] = str_replace("\n", " ", $backTitle['content']); // Remove newlines
+								$backTitle['definition'] = 'back_cover_text';
 
 								// Back cover author
 								$backAuthor = $authorLayer;
 								$backAuthor['id'] = 'back-author';
 								$backAuthor['name'] = 'Back Author';
 								$backAuthor['x'] = 100;
-								$backAuthor['y'] = 300;
+								$backAuthor['y'] = 100 + $backTitle['height'] + 50; // Changed from 300 to 400
+								$backAuthor['align'] = 'left';
+								$backAuthor['vAlign'] = 'top';
 								$backAuthor['rotation'] = 0;
 								$backAuthor['width'] = 1400;
-								$backAuthor['definition'] = 'back_author';
+								$backAuthor['height'] = round($authorLayer['height'] * 0.6); // Reduce height by 40%
+								$backAuthor['fontSize'] = $authorLayer['fontSize'] * 0.6; // Reduce font size by 50%
+								$backAuthor['content'] = str_replace("\n", " ", $backAuthor['content']); // Remove newlines
+								$backAuthor['definition'] = 'back_cover_text';
 
 								// Back cover text (lorem ipsum)
 								$backText = $smallestTextLayer ?: $authorLayer; // Fallback to author style if no smallest found
 								$backText['id'] = 'back-text';
 								$backText['name'] = 'Back Cover Text';
 								$backText['x'] = 100;
-								$backText['y'] = 500;
+								$backText['y'] = $backAuthor['y'] + $backAuthor['height'] + 50; // Changed from 500 to 650
+								$backText['align'] = 'left';
 								$backText['rotation'] = 0;
 								$backText['width'] = 1400;
-								$backText['height'] = 1800;
+								$backText['height'] = 800;
 								$backText['content'] = $this->generateLoremIpsum();
-								$backText['definition'] = 'back_text';
+								$backText['fontSize'] = ($smallestTextLayer ? $smallestTextLayer['fontSize'] : $authorLayer['fontSize']) * 1; // Reduce font size by 50%
+								$backText['definition'] = 'back_cover_text';
 								$backText['align'] = 'left';
 								$backText['vAlign'] = 'top';
 
@@ -212,11 +230,6 @@
 								$fullCoverJson['layers'][] = $backAuthor;
 								$fullCoverJson['layers'][] = $backText;
 
-								// Update z-indexes to ensure proper layering
-								$zIndex = 1;
-								foreach ($fullCoverJson['layers'] as &$layer) {
-									$layer['zIndex'] = $zIndex++;
-								}
 							} else {
 								$this->warn("Template ID: {$template->id} - Could not identify author and/or title layers.");
 							}

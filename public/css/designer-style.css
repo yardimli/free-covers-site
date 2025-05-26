@@ -1029,18 +1029,29 @@ body {
     top: 0;
     bottom: 0;
     width: 1px;
-    background-color: rgba(255, 0, 255, 0.7);
-    border-left: 1px dashed rgba(0, 0, 0, 0.5);
+    background-color: white;
+    mix-blend-mode: exclusion;
+    /*background-color: rgba(255, 0, 255, 0.7);*/
+    /*border-left: 1px dashed rgba(0, 0, 0, 0.5);*/
     z-index: 500;
     pointer-events: none;
     box-sizing: border-box;
 }
 
 .canvas-safe-zone {
-    border: 2px dashed rgba(255, 0, 255, 0.7);
+    position: relative;
     z-index: 500;
     pointer-events: none;
     box-sizing: border-box;
+}
+
+.canvas-safe-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0; /* top: 0, right: 0, bottom: 0, left: 0 */
+    border: 2px dashed white;
+    mix-blend-mode: difference;
+    pointer-events: none;
 }
 
 #locked-selection-highlight {
