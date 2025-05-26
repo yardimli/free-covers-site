@@ -2745,9 +2745,9 @@ ul.ordered-list li::before {
 .bj_theme_btn.strock_btn.blue_strock_btn {
   border-color: #4285F4;
   color: #4285F4;
-  text-transform: uppercase;
-  margin-left: 0;
-  margin-top: 20px;
+  /*text-transform: uppercase;*/
+  /*margin-left: 0;*/
+  /*margin-top: 20px;*/
 }
 
 .best_pr_tab {
@@ -6803,7 +6803,7 @@ input::-webkit-inner-spin-button {
 .bj_book_details .bj_theme_btn {
   margin-left: 0;
   margin-right: 10px;
-  padding: 5px 20px;
+  padding: 10px;
   font-weight: 400;
 }
 
@@ -6871,7 +6871,7 @@ input::-webkit-inner-spin-button {
 }
 .product_sidbar .bj_theme_btn {
   width: 100%;
-  border: 0px;
+  /*border: 0px;*/
 }
 .product_sidbar .add-to-cart-automated {
   background-color: #202420;

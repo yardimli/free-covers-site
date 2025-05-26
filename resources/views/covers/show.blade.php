@@ -5,6 +5,31 @@
 
 @php
 	$footerClass = '';
+
+	// Logic for customize URLs
+	$coverImagePathForDesigner = $cover->cover_path;
+	$canCustomize = (bool)$coverImagePathForDesigner;
+	$baseDesignerUrl = route('designer.index');
+	$setupCanvasBaseUrl = route('designer.setup');
+
+	// Kindle URL
+	$kindleParams = ['w' => 1600, 'h' => 2560];
+	if ($coverImagePathForDesigner) {
+			$kindleParams['image_path'] = $coverImagePathForDesigner;
+	}
+	if ($activeTemplateForView) {
+			$kindleParams['template_url'] = route('api.templates.json_data', ['template' => $activeTemplateForView->id]);
+	}
+	$customizeKindleUrl = $canCustomize ? $baseDesignerUrl . '?' . http_build_query($kindleParams) : '#';
+
+	// Print URL
+	$printParams = ['cover_id' => $cover->id];
+	if ($activeTemplateForView) {
+			$printParams['template_id'] = $activeTemplateForView->id;
+	}
+	$customizePrintUrl = $canCustomize ? $setupCanvasBaseUrl . '?' . http_build_query($printParams) : '#';
+
+	$genericCustomizeButtonTitle = !$canCustomize ? 'Customization unavailable: Cover source image missing.' : '';
 @endphp
 
 @push('styles')
@@ -48,10 +73,10 @@
 
       /* Styles for additional previews (thumbnails) */
       .cover-additional-previews {
-          /* The parent .free_kindle_covers_book_img handles overall centering.
-						 This div itself is text-align: center to center its inline/inline-block children. */
+          /* The parent .free_kindle_covers_book_img handles overall centering. This div itself is text-align: center to center its inline/inline-block children. */
       }
-      .cover-additional-previews .thumb-img { /* Common class for thumbnail images */
+      .cover-additional-previews .thumb-img {
+          /* Common class for thumbnail images */
           /* Bootstrap's img-thumbnail provides base styling (padding, border, bg, radius) */
           cursor: pointer;
           object-fit: contain; /* Ensures image fits well within specified dimensions */
@@ -61,7 +86,6 @@
       .cover-additional-previews .thumb-img:hover {
           border-color: #0d6efd; /* Bootstrap primary color for hover - !important might be needed if BS specificity is higher */
       }
-
       .cover-additional-previews .full-cover-thumb-img {
           width: 180px;
           /* height: auto; is implicit or inherited */
@@ -83,9 +107,9 @@
       }
       #imagePreviewModal #modalImage {
           max-height: 90vh; /* Max height to fit viewport */
-          max-width: 100%;   /* Max width to fit modal dialog */
-          display: block;   /* To remove extra space below image */
-          margin: auto;     /* Center image if it's smaller than modal-body */
+          max-width: 100%; /* Max width to fit modal dialog */
+          display: block; /* To remove extra space below image */
+          margin: auto; /* Center image if it's smaller than modal-body */
       }
       #imagePreviewModal .btn-close-modal {
           position: absolute;
@@ -100,7 +124,10 @@
       #imagePreviewModal .btn-close-modal:focus {
           box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.5);
       }
-	
+      /* Ensure FontAwesome icons are spaced nicely in buttons */
+      .btn i.fab, .btn i.fas {
+          margin-right: 0.35em;
+      }
 	</style>
 @endpush
 
@@ -126,20 +153,17 @@
 			<div class="row gy-xl-0 gy-3">
 				<div class="col-xl-9">
 					<div class="bj_book_single me-xl-3">
-						<div class="free_kindle_covers_book_img"> {{-- This container is 400px wide and text-align: center --}}
+						<div class="free_kindle_covers_book_img">
+							{{-- This container is 400px wide and text-align: center --}}
 							<div class="cover-image-container">
-								<img class="img-fluid cover-mockup-image"
-								     src="{{ asset('storage/' . $cover->mockup_2d_path ) }}"
-								     alt="{{ $cover->name ?: 'Cover Image' }}">
+								<img class="img-fluid cover-mockup-image" src="{{ asset('storage/' . $cover->mockup_2d_path ) }}" alt="{{ $cover->name ?: 'Cover Image' }}">
 								{{-- Use active_template_overlay_url --}}
 								@if($cover->active_template_overlay_url)
-									<img src="{{ $cover->active_template_overlay_url }}" alt="Template Overlay"
-									     class="template-overlay-image"/>
+									<img src="{{ $cover->active_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image"/>
 								@endif
 							</div>
-							
 							{{-- Additional Previews (Thumbnails) --}}
-							<div class="cover-additional-previews text-center">
+							<div class="cover-additional-previews text-center mt-2">
 								@if($cover->full_cover_thumbnail_path && $cover->full_cover_path)
 									<a href="#" data-bs-toggle="modal" data-bs-target="#imagePreviewModal" data-image-src="{{ asset('storage/' . $cover->full_cover_path) }}" title="View Full Cover">
 										<img src="{{ asset('storage/' . $cover->full_cover_thumbnail_path) }}" alt="Full Cover Thumbnail" class="img-thumbnail thumb-img full-cover-thumb-img me-2">
@@ -147,13 +171,11 @@
 								@endif
 								@if($cover->mockup_3d_path)
 									<a href="#" data-bs-toggle="modal" data-bs-target="#imagePreviewModal" data-image-src="{{ asset('storage/' . $cover->mockup_3d_path) }}" title="View 3D Mockup">
-										{{-- Using mockup_3d_path directly as thumbnail image. If it's large, a dedicated 3D thumbnail field would be better. --}}
 										<img src="{{ asset('storage/' . $cover->mockup_3d_path) }}" alt="3D Mockup Thumbnail" class="img-thumbnail thumb-img mockup-3d-thumb-img">
 									</a>
 								@endif
 							</div>
 						</div>
-						
 						<div class="bj_book_details">
 							<h2>{{ $cover->name ?: 'Untitled Cover' }}</h2>
 							<ul class="list-unstyled book_meta">
@@ -167,44 +189,37 @@
 								<li>ID: #{{ $cover->id }}</li>
 							</ul>
 							<div class="price my-3">Free</div>
-							
 							@if($cover->caption)
 								<p>{{ $cover->caption }}</p>
 							@endif
-							
 							<ul class="product_meta list-unstyled">
 								<li><span>Published:</span>{{ $cover->created_at->format('F j, Y') }}</li>
 								@if($cover->coverType)
 									<li><span>Type:</span>{{ $cover->coverType->type_name }}</li>
 								@endif
+								<li><span>Template:</span>{{ $activeTemplateForView->name }}</li>
 							</ul>
 							
-							<div class="d-flex mt-4">
+							<div class="d-flex flex-wrap mt-4">
 								@php
-									$customizeUrl = '#'; // Default
-									$coverImagePathForDesigner = $cover->cover_path;
-									$queryParams = ['cover_id' => $cover->id];
-									if ($activeTemplateForView) { // Use activeTemplateForView
-											$queryParams['template_id'] = $activeTemplateForView->id;
-									}
-									if ($coverImagePathForDesigner) {
-											$customizeUrl = route('designer.setup') . '?' . http_build_query($queryParams);
-									}
-									$customizeButtonTitle = !$coverImagePathForDesigner ? 'Customization unavailable: Cover source image missing.' : ($activeTemplateForView ? 'Customize This Cover with ' . Str::limit($activeTemplateForView->name, 20) : 'Customize This Cover');
+									$kindleButtonText = $activeTemplateForView ? 'Kindle: ' . Str::limit($activeTemplateForView->name, 15) : 'Kindle Cover';
+									$printButtonText = $activeTemplateForView ? 'Print: ' . Str::limit($activeTemplateForView->name, 15) : 'Print Cover';
 								@endphp
-								<a href="{{ $coverImagePathForDesigner ? $customizeUrl : '#' }}"
-								   class="bj_theme_btn me-2 p-3 {{ !$coverImagePathForDesigner ? 'disabled' : '' }}"
-								   title="{{ $customizeButtonTitle }}">
-									<i class="icon_pencil-edit"></i>
-									{{ $activeTemplateForView ? 'Customize Style: ' . Str::limit($activeTemplateForView->name, 20) : 'Customize This Cover' }}
+								<a href="{{ $customizeKindleUrl }}" class="bj_theme_btn {{ !$canCustomize ? 'disabled' : '' }}" title="{{ $genericCustomizeButtonTitle ?: 'Customize Kindle Cover'}}" target="_blank">
+									<i class="fab fa-amazon"></i> Customize Kindle
+								</a>
+								<a href="{{ $customizePrintUrl }}" class="bj_theme_btn  strock_btn {{ !$canCustomize ? 'disabled' : '' }}" title="{{ $genericCustomizeButtonTitle ?: 'Customize Print Cover'}}" target="_blank">
+									<i class="fas fa-print"></i> Customize Print
 								</a>
 							</div>
+							
 							@auth
 								@if(Auth::user()->isAdmin() && $activeTemplateForView)
 									<div class="mt-2" id="main-active-style-remove-form-container-{{ $activeTemplateForView->id }}"> {{-- Added ID --}}
 										<form method="POST" action="{{ route('admin.covers.templates.remove-assignment', ['cover' => $cover->id, 'template' => $activeTemplateForView->id]) }}"
 										      class="remove-template-assignment-form" {{-- Added class --}}
-										      data-cover-id="{{ $cover->id }}" data-template-id="{{ $activeTemplateForView->id }}">
+										      data-cover-id="{{ $cover->id }}"
+										      data-template-id="{{ $activeTemplateForView->id }}">
 											@csrf
 											<button type="submit" class="btn btn-sm btn-outline-danger admin-action-button">
 												<i class="fas fa-trash-alt"></i> Remove This Style ({{ Str::limit($activeTemplateForView->name, 20) }})
@@ -228,13 +243,9 @@
 										@endphp
 										<div class="col-lg-3 col-md-4 col-sm-6 mb-4" id="variation-card-{{ $variation['template_id'] }}">
 											<div class="cover-image-container text-center">
-												<img class="img-fluid cover-mockup-image"
-												     src="{{ asset('storage/' . $cover->mockup_2d_path) }}"
-												     alt="{{ $cover->name ?: 'Cover' }} - Style with {{ $variation['template_name'] }}">
+												<img class="img-fluid cover-mockup-image" src="{{ asset('storage/' . $cover->mockup_2d_path) }}" alt="{{ $cover->name ?: 'Cover' }} - Style with {{ $variation['template_name'] }}">
 												@if($variation['template_overlay_url'])
-													<img src="{{ $variation['template_overlay_url'] }}"
-													     alt="{{ $variation['template_name'] }} Overlay"
-													     class="template-overlay-image"/>
+													<img src="{{ $variation['template_overlay_url'] }}" alt="{{ $variation['template_name'] }} Overlay" class="template-overlay-image"/>
 												@endif
 											</div>
 											<div class="text-center mt-2">
@@ -253,7 +264,8 @@
 													@if(Auth::user()->isAdmin())
 														<form method="POST" action="{{ route('admin.covers.templates.remove-assignment', ['cover' => $cover->id, 'template' => $variation['template_id']]) }}"
 														      class="d-block mt-1 remove-template-assignment-form" {{-- Added class --}}
-														      data-cover-id="{{ $cover->id }}" data-template-id="{{ $variation['template_id'] }}">
+														      data-cover-id="{{ $cover->id }}"
+														      data-template-id="{{ $variation['template_id'] }}">
 															@csrf
 															<button type="submit" class="btn btn-sm btn-outline-danger admin-action-button w-100">
 																<i class="fas fa-trash-alt"></i> Remove Style
@@ -287,7 +299,6 @@
 								@endforeach
 							</div>
 						@endif
-						
 						<ul class="list-unstyled">
 							<li class="mb-2 d-flex align-items-center">
 								<img src="{{ asset('template/assets/img/arrow.png') }}" alt="" style="width:16px; margin-right: 8px;">
@@ -303,17 +314,16 @@
 							</li>
 						</ul>
 						<h3 class="mt-3">Available</h3>
-						<div class="d-flex flex-column gap-3 mt-3">
-							{{-- Sidebar Customize Button - also uses $activeTemplateForView logic --}}
-							<a href="{{ $coverImagePathForDesigner ? $customizeUrl : '#' }}"
-							   class="bj_theme_btn {{ !$coverImagePathForDesigner ? 'disabled' : '' }}"
-							   title="{{ $customizeButtonTitle }}"
-							   data-name="{{ $cover->name }}"
-							   data-price="0"
-							   data-img="{{ asset('storage/' . $cover->mockup_2d_path ) }}"
-							   data-mrp="0">
-								<i class="icon_pencil-edit"></i>
-								{{ $activeTemplateForView ? 'Customize Style: ' . Str::limit($activeTemplateForView->name, 15) : 'Customize This Cover' }}
+						<div class="d-flex flex-column gap-2 mt-3">
+							@php
+								$sidebarKindleButtonText = $activeTemplateForView ? Str::limit($activeTemplateForView->name, 10) : 'Kindle';
+								$sidebarPrintButtonText = $activeTemplateForView ? Str::limit($activeTemplateForView->name, 10) : 'Print';
+							@endphp
+							<a href="{{ $customizeKindleUrl }}" class="bj_theme_btn {{ !$canCustomize ? 'disabled' : '' }}" title="{{ $genericCustomizeButtonTitle ?: 'Customize Kindle: ' . $sidebarKindleButtonText }}" target="_blank">
+								<i class="fab fa-amazon"></i> Kindle {{ $sidebarKindleButtonText }}
+							</a>
+							<a href="{{ $customizePrintUrl }}" class="bj_theme_btn strock_btn {{ !$canCustomize ? 'disabled' : '' }}" title="{{ $genericCustomizeButtonTitle ?: 'Customize Print: ' . $sidebarPrintButtonText }}" target="_blank"> {{-- Added target="_blank" --}}
+								<i class="fas fa-print"></i> Print {{ $sidebarPrintButtonText }}
 							</a>
 						</div>
 					</div>
@@ -417,6 +427,7 @@
 				if (toastEl) {
 					var toastHeader = toastEl.querySelector('.toast-header');
 					var toastBody = toastEl.querySelector('.toast-body');
+					
 					toastHeader.querySelector('strong').textContent = title;
 					// Remove existing bg classes from header
 					toastHeader.className = 'toast-header'; // Reset
@@ -425,6 +436,7 @@
 					//toastHeader.classList.add('text-white'); // Optional: white text on colored header
 					// }
 					toastBody.textContent = message;
+					
 					var toast = new bootstrap.Toast(toastEl);
 					toast.show();
 				}
@@ -438,7 +450,7 @@
 					const csrfToken = this.querySelector('input[name="_token"]').value;
 					
 					// if (!confirm('Are you sure you want to remove this style from the cover?')) {
-					// return;
+					//     return;
 					// }
 					
 					fetch(actionUrl, {
@@ -462,6 +474,7 @@
 									// Remove the main form container itself
 									const mainFormContainer = document.getElementById(`main-active-style-remove-form-container-${templateId}`);
 									if (mainFormContainer) mainFormContainer.remove();
+									
 									// Redirect to the base cover URL to refresh the main view
 									window.location.href = "{{ route('covers.show', ['cover' => $cover->id]) }}";
 									return; // Stop further JS execution as page will reload/redirect
@@ -482,6 +495,7 @@
 										variationsContainer.innerHTML = '<h5 class="content_header mb-3">Available Styles</h5><p>No styles currently assigned to this cover.</p>';
 									}
 								}
+								
 							} else {
 								showToast('Error', data.message || 'Could not remove style.', 'bg-danger');
 							}

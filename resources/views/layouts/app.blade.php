@@ -52,7 +52,7 @@
 <script src="{{ asset('template/assets/vendors/swiper/swiper-bundle.min.js') }}"></script>
 <script src="{{ asset('template/assets/vendors/wow/wow.min.js') }}"></script>
 @stack('scripts') {{-- For page-specific scripts --}}
-<script src="{{ asset('js/custom.js') }}"></script>
-<script src="{{ asset('js/script.js') }}"></script>
+<script src="{{ asset('js/frontend-ui.js') }}"></script>
+<script src="{{ asset('js/frontend-index.js') }}"></script>
 </body>
 </html>
