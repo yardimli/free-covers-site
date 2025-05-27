@@ -28,6 +28,20 @@
 	@stack('styles')
 </head>
 <body data-scroll-animation="true">
+{{-- Toast Notification Container (can be part of layout if used globally) --}}
+<div class="toast-container position-fixed p-3 top-0 end-0" style="z-index: 1090;">
+	<div id="actionToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+		<div class="toast-header">
+			<strong class="me-auto">Notification</strong>
+			<small>just now</small>
+			<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+		</div>
+		<div class="toast-body">
+			Action performed! (This is a demo)
+		</div>
+	</div>
+</div>
+
 <div class="body_wrapper">
 	<div class="click_capture"></div>
 	

@@ -2848,7 +2848,7 @@ ul.ordered-list li::before {
 }
 .bj_new_pr_item_two .img img {
   transition: all 0.3s linear;
-  object-fit: cover;
+  object-fit: contain;
   max-width: 100%;
   height: 100%;
 }

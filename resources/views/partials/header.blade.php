@@ -50,7 +50,7 @@
 						</li>
 						<li class="nav-item user ms-3">
 							@auth
-								<a class="nav-link" href="{{ route('profile.edit') }}"><i class="icon-user"></i></a>
+								<a class="nav-link" href="{{ route('dashboard') }}"><i class="icon-user"></i></a>
 							@else
 								<a class="nav-link" href="{{ route('login') }}"><i class="icon-user"></i></a>
 							@endauth

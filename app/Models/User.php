@@ -57,4 +57,9 @@
 		{
 			return $this->user_type === self::TYPE_ADMIN;
 		}
+
+		public function favorites(): HasMany
+		{
+			return $this->hasMany(Favorite::class);
+		}
 	}

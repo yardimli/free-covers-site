@@ -4,6 +4,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Template extends Model
 {
@@ -61,6 +62,11 @@ class Template extends Model
 	public function covers(): BelongsToMany
 	{
 		return $this->belongsToMany(Cover::class, 'cover_template', 'template_id', 'cover_id');
+	}
+
+	public function favorites(): HasMany
+	{
+		return $this->hasMany(Favorite::class);
 	}
 
 	// Helper to get all image paths for deletion

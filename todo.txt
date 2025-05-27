@@ -1,0 +1,32 @@
+make favorites work from book page ........................................................................OK
+save both cover and template to favorites .................................................................OK
+update user dashboard to show favorites ...................................................................OK
+make top user link open dashboard .........................................................................OK
+remove creat new cover from dashboard .....................................................................OK
+add link to user profile page on dashboard ................................................................OK
+update main page new arrivals to use mockup 2d ............................................................OK
+remove my uploads from dashboard ..........................................................................OK
+
+update admin to allow to edit and save templates directly
+update admin ai to auto assign template to covers with better prompt
+update the designer to hide templates and covers buttons with query parameter
+when templates or covers are hidden, the designer should not load them
+
+allow user to save their work on the covers (json file) to my ebook and print covers
+
+make signin/up with google work
+make forget password work
+
+create social media accounts for the site update the footer
+
+make blog page work
+add blog to admin
+
+add list of members with summary of their work to admin
+add login as user to admin
+
+make top search work
+
+on book details page overlay full cover template image on top of full cover image
+
+in designer make the spine align correctly with the cover

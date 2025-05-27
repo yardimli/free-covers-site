@@ -3,6 +3,7 @@
 	use App\Http\Controllers\Admin\DashboardController;
 	use App\Http\Controllers\CoverController;
 	use App\Http\Controllers\DesignerController;
+	use App\Http\Controllers\FavoriteController;
 	use App\Http\Controllers\HomeController;
 	use App\Http\Controllers\ProfileController;
 	use App\Http\Controllers\ShopController;
@@ -91,6 +92,11 @@
 
 		Route::get('/designer/setup-canvas', [DesignerController::class, 'setupCanvas'])->name('designer.setup');
 		Route::get('/designer', [DesignerController::class, 'index'])->name('designer.index');
+
+		// Favorite Routes
+		Route::post('/favorites', [FavoriteController::class, 'store'])->name('favorites.store');
+		Route::delete('/favorites', [FavoriteController::class, 'destroy'])->name('favorites.destroy');
+		Route::delete('/favorites/{favorite}', [FavoriteController::class, 'destroyById'])->name('favorites.destroyById');
 	});
 
 

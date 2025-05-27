@@ -1,3 +1,23 @@
+function showToast(title, message, bgClass) {
+  var toastEl = document.getElementById('actionToast');
+  if (toastEl) {
+    var toastHeader = toastEl.querySelector('.toast-header');
+    var toastBody = toastEl.querySelector('.toast-body');
+    
+    toastHeader.querySelector('strong').textContent = title;
+    // Remove existing bg classes from header
+    toastHeader.className = 'toast-header'; // Reset
+    // if(bgClass) { // Optional: color header
+    //toastHeader.classList.add(bgClass);
+    //toastHeader.classList.add('text-white'); // Optional: white text on colored header
+    // }
+    toastBody.textContent = message;
+    
+    var toast = new bootstrap.Toast(toastEl);
+    toast.show();
+  }
+}
+
 (function ($) {
   "use strict";
   

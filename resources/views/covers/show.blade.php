@@ -149,25 +149,25 @@
           border-color: #0d6efd !important; /* Ensure hover stands out */
           color: #0d6efd !important;
       }
+
+      .bj_theme_btn.favorited_btn {
+          background-color: #e74c3c; /* A distinct color for favorited state */
+          color: white;
+          border-color: #e74c3c;
+      }
+      .bj_theme_btn.favorited_btn:hover {
+          background-color: #c0392b;
+          border-color: #c0392b;
+      }
+      .bj_theme_btn.favorited_btn i, .bj_theme_btn.strock_btn i.fa-heart {
+          margin-right: 0.35em;
+      }
 	</style>
 @endpush
 
 @section('content')
 	@include('partials.cover_breadcrumb', ['cover' => $cover])
 	
-	{{-- Toast Notification Container (can be part of layout if used globally) --}}
-	<div class="toast-container position-fixed p-3 top-0 end-0" style="z-index: 1090;">
-		<div id="actionToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-			<div class="toast-header">
-				<strong class="me-auto">Notification</strong>
-				<small>just now</small>
-				<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-			</div>
-			<div class="toast-body">
-				Action performed! (This is a demo)
-			</div>
-		</div>
-	</div>
 	
 	<section class="product_details_area sec_padding" data-bg-color="#f5f5f5">
 		<div class="container">
@@ -244,6 +244,22 @@
 								   title="{{ $genericCustomizeButtonTitle ?: 'Customize Print Cover'}}" target="_blank">
 									<i class="fas fa-print"></i> Customize Print
 								</a>
+								
+								@auth
+									<button id="favoriteButton"
+									        class="bj_theme_btn mt-2 {{ $isFavorited ? 'favorited_btn' : 'strock_btn' }}"
+									        data-cover-id="{{ $cover->id }}"
+									        data-template-id="{{ $activeTemplateForView ? $activeTemplateForView->id : '' }}"
+									        data-is-favorited="{{ $isFavorited ? 'true' : 'false' }}"
+									        title="{{ $isFavorited ? 'Remove from Favorites' : 'Add to Favorites' }}">
+										<i class="fas {{ $isFavorited ? 'fa-heart-broken' : 'fa-heart' }}"></i>
+										<span class="button-text">{{ $isFavorited ? 'Favorited' : 'Favorite' }}</span>
+									</button>
+								@else
+									<a href="{{ route('login') }}" class="bj_theme_btn strock_btn ms-2" title="Login to add to favorites">
+										<i class="fas fa-heart"></i> Favorite
+									</a>
+								@endauth
 							</div>
 							@auth
 								@if(Auth::user()->isAdmin() && $activeTemplateForView)
@@ -382,6 +398,8 @@
 							   target="_blank"> {{-- Added target="_blank" --}}
 								<i class="fas fa-print"></i> Print {{ $sidebarPrintButtonText }}
 							</a>
+							
+							
 						</div>
 					</div>
 					
@@ -479,26 +497,6 @@
 			@endif
 			@if(session('info')) showToast('Info', '{{ session('info') }}', 'bg-info'); @endif
 			
-			function showToast(title, message, bgClass) {
-				var toastEl = document.getElementById('actionToast');
-				if (toastEl) {
-					var toastHeader = toastEl.querySelector('.toast-header');
-					var toastBody = toastEl.querySelector('.toast-body');
-					
-					toastHeader.querySelector('strong').textContent = title;
-					// Remove existing bg classes from header
-					toastHeader.className = 'toast-header'; // Reset
-					// if(bgClass) { // Optional: color header
-					//toastHeader.classList.add(bgClass);
-					//toastHeader.classList.add('text-white'); // Optional: white text on colored header
-					// }
-					toastBody.textContent = message;
-					
-					var toast = new bootstrap.Toast(toastEl);
-					toast.show();
-				}
-			}
-			
 			document.querySelectorAll('.remove-template-assignment-form').forEach(form => {
 				form.addEventListener('submit', function (event) {
 					event.preventDefault(); // Prevent default form submission
@@ -580,6 +578,77 @@
 					if (modalImageEl) {
 						modalImageEl.setAttribute('src', '');
 					}
+				});
+			}
+			
+			const favoriteButton = document.getElementById('favoriteButton');
+			if (favoriteButton) {
+				favoriteButton.addEventListener('click', function() {
+					const coverId = this.dataset.coverId;
+					const templateId = this.dataset.templateId || null; // Ensure null if empty string
+					let isFavorited = this.dataset.isFavorited === 'true';
+					const csrfToken = document.querySelector('input[name="_token"]')?.value || '{{ csrf_token() }}'; // Get CSRF from a form or Blade
+					
+					const url = isFavorited ? '{{ route("favorites.destroy") }}' : '{{ route("favorites.store") }}';
+					const method = isFavorited ? 'DELETE' : 'POST';
+					
+					// Add loading state
+					this.disabled = true;
+					const originalIconClass = this.querySelector('i').className;
+					this.querySelector('i').className = 'fas fa-spinner fa-spin';
+					
+					
+					fetch(url, {
+						method: method,
+						headers: {
+							'X-CSRF-TOKEN': csrfToken,
+							'Accept': 'application/json',
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							cover_id: coverId,
+							template_id: templateId
+						})
+					})
+						.then(response => {
+							this.disabled = false; // Re-enable button
+							this.querySelector('i').className = originalIconClass; // Restore icon
+							if (!response.ok) {
+								return response.json().then(err => { throw err; });
+							}
+							return response.json();
+						})
+						.then(data => {
+							if (data.success) {
+								showToast('Success', data.message, 'bg-success');
+								isFavorited = data.is_favorited;
+								this.dataset.isFavorited = isFavorited ? 'true' : 'false';
+								const icon = this.querySelector('i');
+								const text = this.querySelector('.button-text');
+								
+								if (isFavorited) {
+									this.classList.remove('strock_btn');
+									this.classList.add('favorited_btn');
+									icon.className = 'fas fa-heart-broken';
+									text.textContent = 'Favorited';
+									this.title = 'Remove from Favorites';
+								} else {
+									this.classList.remove('favorited_btn');
+									this.classList.add('strock_btn');
+									icon.className = 'fas fa-heart';
+									text.textContent = 'Favorite';
+									this.title = 'Add to Favorites';
+								}
+							} else {
+								showToast('Error', data.message || 'Could not update favorite status.', 'bg-danger');
+							}
+						})
+						.catch(error => {
+							this.disabled = false; // Re-enable button on error
+							this.querySelector('i').className = originalIconClass; // Restore icon
+							console.error('Error:', error);
+							showToast('Error', error.message || 'An unexpected error occurred.', 'bg-danger');
+						});
 				});
 			}
 		});
