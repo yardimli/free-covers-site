@@ -256,7 +256,7 @@
 										<span class="button-text">{{ $isFavorited ? 'Favorited' : 'Favorite' }}</span>
 									</button>
 								@else
-									<a href="{{ route('login') }}" class="bj_theme_btn strock_btn ms-2" title="Login to add to favorites">
+									<a href="{{ route('login') }}" class="bj_theme_btn strock_btn mt-2" title="Login to add to favorites">
 										<i class="fas fa-heart"></i> Favorite
 									</a>
 								@endauth
