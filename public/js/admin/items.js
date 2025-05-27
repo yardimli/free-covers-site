@@ -1,7 +1,7 @@
 // public/js/admin/items.js
 window.AppAdmin = window.AppAdmin || {};
-AppAdmin.Items = (function() {
-	const { showAlert, escapeHtml, renderKeywords } = AppAdmin.Utils;
+AppAdmin.Items = (function () {
+	const {showAlert, escapeHtml, renderKeywords} = AppAdmin.Utils;
 	const ITEMS_PER_PAGE = 30; // Should match config
 	
 	function updateUrl(itemType, page, searchQuery, coverTypeIdFilter, filterNoTemplatesState) {
@@ -23,7 +23,14 @@ AppAdmin.Items = (function() {
 		const currentQueryString = window.location.search.substring(1);
 		if (currentQueryString !== newQueryString) {
 			const newUrl = newQueryString ? `${window.location.pathname}?${newQueryString}` : window.location.pathname;
-			history.pushState({ path: newUrl, itemType, page, searchQuery, coverTypeIdFilter, filterNoTemplatesState }, '', newUrl);
+			history.pushState({
+				path: newUrl,
+				itemType,
+				page,
+				searchQuery,
+				coverTypeIdFilter,
+				filterNoTemplatesState
+			}, '', newUrl);
 		}
 	}
 	
@@ -69,7 +76,7 @@ AppAdmin.Items = (function() {
 			type: 'GET',
 			data: ajaxData,
 			dataType: 'json',
-			success: function(response) {
+			success: function (response) {
 				if (response.success) {
 					$tableBody.empty();
 					const items = response.data.items;
@@ -93,26 +100,31 @@ AppAdmin.Items = (function() {
 								rowHtml += `<td style="vertical-align: top;"><span class="small">${escapeHtml(item.caption || '')}</span><br>`;
 								rowHtml += `${renderKeywords(item.keywords)}</td>`;
 								rowHtml += `<td style="vertical-align: top; font-size: 0.8em;">`;
-								if(item.mockup_2d_url) rowHtml += `2D: <a href="${escapeHtml(item.mockup_2d_url)}" target="_blank">View</a><br>`;
-								if(item.mockup_3d_url) rowHtml += `3D: <a href="${escapeHtml(item.mockup_3d_url)}" target="_blank">View</a><br>`;
-								if(item.full_cover_url) rowHtml += `Full: <a href="${escapeHtml(item.full_cover_url)}" target="_blank">View</a>`;
-								if(item.full_cover_thumbnail_url && !item.full_cover_url) rowHtml += `Full (Thumb): <a href="${escapeHtml(item.full_cover_thumbnail_url)}" target="_blank">View</a>`;
+								if (item.mockup_2d_url) rowHtml += `2D: <a href="${escapeHtml(item.mockup_2d_url)}" target="_blank">View</a><br>`;
+								if (item.mockup_3d_url) rowHtml += `3D: <a href="${escapeHtml(item.mockup_3d_url)}" target="_blank">View</a><br>`;
+								if (item.full_cover_url) rowHtml += `Full: <a href="${escapeHtml(item.full_cover_url)}" target="_blank">View</a>`;
+								if (item.full_cover_thumbnail_url && !item.full_cover_url) rowHtml += `Full (Thumb): <a href="${escapeHtml(item.full_cover_thumbnail_url)}" target="_blank">View</a>`;
 								rowHtml += `</td>`;
 								rowHtml += `<td style="vertical-align: top;">${renderKeywords(item.text_placements)}<br>`;
 								rowHtml += `${renderKeywords(item.assigned_templates_names.split(','))}<br>`;
 								rowHtml += `${renderKeywords(item.categories)}</td>`;
 							} else if (itemType === 'templates') {
-								const thumbUrl = item.cover_image_url || 'images/placeholder.png';
-								rowHtml += `<td><img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(item.name)}" class="thumbnail-preview" loading="lazy"></td>`;
-								rowHtml += `<td>${escapeHtml(item.name)}<br>`;
-								rowHtml += `${escapeHtml(item.cover_type_name || 'N/A')}</td>`;
-								rowHtml += `<td>${renderKeywords(item.keywords)}</td>`;
-								rowHtml += `<td>${renderKeywords(item.text_placements)}</td>`;
-								rowHtml += `<td style="vertical-align: top; font-size: 0.8em;">`;
-								if(item.full_cover_image_url) rowHtml += `Full Img: <a href="${escapeHtml(item.full_cover_image_url)}" target="_blank">View</a><br>`;
-								if(item.full_cover_image_thumbnail_url && !item.full_cover_image_url) rowHtml += `Full Img (Thumb): <a href="${escapeHtml(item.full_cover_image_thumbnail_url)}" target="_blank">View</a>`;
-								// JSON content is not typically linked here
-								rowHtml += `</td>`;
+								let fullCoverPreviewHtml = 'N/A';
+								if (item.full_cover_image_thumbnail_url) {
+									fullCoverPreviewHtml = `<img src="${item.full_cover_image_thumbnail_url}" alt="Full Cover Preview" class="thumbnail-preview square">`;
+								}
+								
+								let keywordsHtml = renderKeywords(item.keywords);
+								let textPlacementsHtml = renderKeywords(item.text_placements);
+								
+								
+								rowHtml += `
+						        <td><img src="${item.cover_image_url}" alt="${escapeHtml(item.name)}" class="thumbnail-preview square"></td>
+						        <td>${fullCoverPreviewHtml}</td>
+						        <td>${escapeHtml(item.name)}<br><small class="text-muted">${escapeHtml(item.cover_type_name || 'N/A')}</small></td>
+						        <td>${keywordsHtml}</td>
+						        <td>${textPlacementsHtml}</td>
+						    `;
 							} else if (itemType === 'elements' || itemType === 'overlays') {
 								// Assuming these still use thumbnail_url and are square
 								const thumbUrl = item.thumbnail_url || 'images/placeholder.png';
@@ -126,7 +138,28 @@ AppAdmin.Items = (function() {
 								rowHtml += ` <button class="btn btn-primary btn-sm assign-templates" data-id="${item.id}" data-name="${escapeHtml(item.name)}" title="Assign Templates"> <i class="fas fa-layer-group"></i> </button>`;
 							}
 							if (itemType === 'templates') {
-								rowHtml += ` <button class="btn btn-success btn-sm generate-similar-template" data-id="${item.id}" data-type="${itemType}" title="Generate Similar with AI"> <i class="fas fa-robot"></i> </button>`;
+								// Edit JSON buttons
+								let editFrontJsonUrl = '#';
+								let editFullJsonUrl = '#';
+								
+								if (item.json_content && item.json_content.canvas && item.json_content.canvas.width && item.json_content.canvas.height) {
+									const frontCanvasWidth = item.json_content.canvas.width;
+									const frontCanvasHeight = item.json_content.canvas.height;
+									const templateUrlFront = `${window.location.origin}/api/templates/${item.id}/json?type=front`; // Assuming 'front' is default or specific
+									editFrontJsonUrl = `/designer?w=${frontCanvasWidth}&h=${frontCanvasHeight}&template_url=${encodeURIComponent(templateUrlFront)}&from_admin=true&template_id_to_update=${item.id}&json_type_to_update=front`;
+								}
+								
+								if (item.full_cover_json_content && item.full_cover_json_content.canvas && item.full_cover_json_content.canvas.width && item.full_cover_json_content.canvas.height) {
+									const fullCanvasWidth = item.full_cover_json_content.canvas.width;
+									const fullCanvasHeight = item.full_cover_json_content.canvas.height;
+									const templateUrlFull = `${window.location.origin}/api/templates/${item.id}/json?type=full`;
+									editFullJsonUrl = `/designer?w=${fullCanvasWidth}&h=${fullCanvasHeight}&template_url=${encodeURIComponent(templateUrlFull)}&from_admin=true&template_id_to_update=${item.id}&json_type_to_update=full`;
+								}
+								
+								const editFrontJsonButton = (item.json_content && item.json_content.canvas) ? `<a href="${editFrontJsonUrl}" target="_blank" class="btn btn-outline-primary btn-sm mb-1 w-100" title="Edit Front JSON"><i class="fas fa-palette"></i> Front JSON</a>` : '';
+								const editFullJsonButton = (item.full_cover_json_content && item.full_cover_json_content.canvas) ? `<a href="${editFullJsonUrl}" target="_blank" class="btn btn-outline-primary btn-sm w-100" title="Edit Full JSON"><i class="fas fa-ruler-combined"></i> Full JSON</a>` : '';
+								
+								rowHtml += `${editFrontJsonButton} ${editFullJsonButton}`;
 							}
 							if (itemType === 'covers' || itemType === 'templates') {
 								rowHtml += ` <button class="btn btn-secondary btn-sm edit-text-placements" data-id="${item.id}" data-type="${itemType}" data-name="${escapeHtml(item.name)}" title="Edit Text Placements"> <i class="fas fa-map-signs"></i> </button>`;
@@ -141,26 +174,30 @@ AppAdmin.Items = (function() {
 					}
 					renderPagination(itemType, pagination, $paginationContainer);
 					if (scrollYToRestore !== null) {
-						requestAnimationFrame(() => { window.scrollTo(0, scrollYToRestore); });
+						requestAnimationFrame(() => {
+							window.scrollTo(0, scrollYToRestore);
+						});
 					}
 				} else {
 					$tableBody.html(`<tr><td colspan="100%" class="text-center text-danger">Error loading ${itemType}: ${escapeHtml(response.message)}</td></tr>`);
 					showAlert(`Error loading ${itemType}: ${escapeHtml(response.message)}`, 'danger');
 				}
 			},
-			error: function(xhr, status, error) {
+			error: function (xhr, status, error) {
 				$tableBody.html(`<tr><td colspan="100%" class="text-center text-danger">AJAX Error loading ${itemType}. Check console.</td></tr>`);
 				showAlert(`AJAX Error loading ${itemType}: ${escapeHtml(xhr.responseText || error)}`, 'danger');
 				console.error("AJAX Error:", status, error, xhr.responseText);
 				if (scrollYToRestore !== null) {
-					requestAnimationFrame(() => { window.scrollTo(0, scrollYToRestore); });
+					requestAnimationFrame(() => {
+						window.scrollTo(0, scrollYToRestore);
+					});
 				}
 			}
 		});
 	}
 	
 	function renderPagination(itemType, pagination, $paginationContainer) {
-		const { totalItems, itemsPerPage, currentPage, totalPages } = pagination;
+		const {totalItems, itemsPerPage, currentPage, totalPages} = pagination;
 		$paginationContainer.empty();
 		if (totalPages <= 1) {
 			return;

@@ -108,10 +108,10 @@
 					<thead>
 					<tr>
 						<th>Cover Image</th>
+						<th>Full Cover Preview</th>
 						<th style="width: 200px;">Name/Cover Type</th>
 						<th>Keywords</th>
 						<th>Text Placements</th>
-						<th>Full Cover Image</th>
 						<th style="width: 135px;">Actions</th>
 					</tr>
 					</thead>

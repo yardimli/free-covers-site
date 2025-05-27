@@ -1299,4 +1299,39 @@ class DashboardController extends Controller
 
 		return response()->json(['success' => true, 'message' => trim($finalMessage), 'data' => $results]);
 	}
+
+	public function updateTemplateJson(Request $request, Template $template) {
+		$validator = Validator::make($request->all(), [
+			'json_type' => ['required', Rule::in(['front', 'full'])],
+			'json_data' => 'required|array',
+			'json_data.canvas' => 'required|array',
+			'json_data.canvas.width' => 'required|numeric|min:1',
+			'json_data.canvas.height' => 'required|numeric|min:1',
+			'json_data.layers' => 'nullable|array',
+		]);
+
+		if ($validator->fails()) {
+			return response()->json(['success' => false, 'message' => 'Invalid data.', 'errors' => $validator->errors()], 422);
+		}
+
+		$jsonType = $request->input('json_type');
+		$jsonData = $request->input('json_data'); // This will be an array from JSON.parse
+
+		try {
+			if ($jsonType === 'front') {
+				$template->json_content = $jsonData;
+			} elseif ($jsonType === 'full') {
+				$template->full_cover_json_content = $jsonData;
+			} else {
+				return response()->json(['success' => false, 'message' => 'Invalid JSON type specified.'], 400);
+			}
+
+			$template->save();
+			return response()->json(['success' => true, 'message' => 'Template JSON updated successfully.']);
+
+		} catch (\Exception $e) {
+			Log::error("Error updating template JSON for template ID {$template->id}: " . $e->getMessage());
+			return response()->json(['success' => false, 'message' => 'Server error while updating template JSON.'], 500);
+		}
+	}
 }

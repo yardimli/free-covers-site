@@ -3,7 +3,8 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Book Cover Designer</title>
+	<meta name="csrf-token" content="{{ csrf_token() }}">
+	<title>Free Kindle Covers Designer</title>
 	<!-- Dependencies -->
 	<link href="{{ asset('vendors/bootstrap5.3.5/css/bootstrap.min.css') }}" rel="stylesheet">
 	<link rel="stylesheet" href="{{ asset('vendors/fontawesome-free-6.7.2/css/all.min.css') }}">
@@ -17,12 +18,26 @@
 	<link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon-16x16.png') }}">
 	<link rel="manifest" href="{{ asset('images/site.webmanifest') }}">
 </head>
+<script>
+	window.IS_ADMIN_DESIGNER_MODE = {{ $from_admin_mode ? 'true' : 'false' }};
+	@if (request()->has('template_id_to_update'))
+		window.TEMPLATE_ID_TO_UPDATE = {{ intval(request()->get('template_id_to_update')) }};
+	@else
+		window.TEMPLATE_ID_TO_UPDATE = null;
+	@endif
+		@if (request()->has('json_type_to_update'))
+		window.JSON_TYPE_TO_UPDATE = "{{ request()->get('json_type_to_update') }}";
+	@else
+		window.JSON_TYPE_TO_UPDATE = null;
+	@endif
+</script>
 <body>
 <div class="app-container d-flex flex-column vh-100">
 	<!-- Top Toolbar (Simplified) -->
 	<nav class="navbar navbar-expand-sm navbar-dark bg-dark top-toolbar" style="padding: 0px 0px;">
 		<div class="container-fluid">
-			<span class="navbar-brand mb-0 h1"><img src="{{ asset('template/assets/img/home/logo-dark.png') }}" style="height: 34px;"> Free Kindle Covers Designer</span>
+			<span class="navbar-brand mb-0 h1"><img src="{{ asset('template/assets/img/home/logo-dark.png') }}"
+			                                        style="height: 34px;"> Free Kindle Covers Designer</span>
 		</div>
 	</nav>
 	
@@ -33,18 +48,38 @@
 	<div class="d-flex flex-grow-1 overflow-hidden main-content position-relative">
 		<!-- Icon Bar (Fixed Width) -->
 		<ul class="nav nav-pills flex-column text-center sidebar-nav flex-shrink-0">
-			<li class="nav-item" id="coversPanelLink" style="display: none;"><a class="nav-link" href="#" data-panel-target="#coversPanel" title="Covers"><i class="fas fa-image fa-lg"></i></a></li>
-			<li class="nav-item" id="templatesPanelLink" style="display: none;"><a class="nav-link" href="#" data-panel-target="#templatesPanel" title="Templates"><i class="fas fa-th-large fa-lg"></i></a></li>
-			<li class="nav-item"><a class="nav-link" href="#" data-panel-target="#elementsPanel" title="Elements"><i class="fas fa-shapes fa-lg"></i></a></li>
-			<li class="nav-item"><a class="nav-link" href="#" data-panel-target="#overlaysPanel" title="Overlays"><i class="fas fa-clone fa-lg"></i></a></li>
-			<li class="nav-item"><a class="nav-link" href="#" data-panel-target="#uploadPanel" title="Upload"><i class="fas fa-upload fa-lg"></i></a></li>
-			<li class="nav-item"><a class="nav-link" href="#" data-panel-target="#layersPanel" title="Layers"><i class="fas fa-layer-group fa-lg"></i></a></li>
+			<li class="nav-item" id="coversPanelLink"><a class="nav-link" href="#" data-panel-target="#coversPanel"
+			                                             title="Covers"><i class="fas fa-image fa-lg"></i></a></li>
+			<li class="nav-item" id="templatesPanelLink"><a class="nav-link" href="#" data-panel-target="#templatesPanel"
+			                                                title="Templates"><i class="fas fa-th-large fa-lg"></i></a></li>
+			<li class="nav-item"><a class="nav-link" href="#" data-panel-target="#elementsPanel" title="Elements"><i
+						class="fas fa-shapes fa-lg"></i></a></li>
+			<li class="nav-item"><a class="nav-link" href="#" data-panel-target="#overlaysPanel" title="Overlays"><i
+						class="fas fa-clone fa-lg"></i></a></li>
+			<li class="nav-item"><a class="nav-link" href="#" data-panel-target="#uploadPanel" title="Upload"><i
+						class="fas fa-upload fa-lg"></i></a></li>
+			<li class="nav-item"><a class="nav-link" href="#" data-panel-target="#layersPanel" title="Layers"><i
+						class="fas fa-layer-group fa-lg"></i></a></li>
 			<hr class="mx-2" style="border-top: 1px solid #495057;">
-			<li class="nav-item" id="loadDesignPanelLink" style="display: none;"><a class="nav-link" href="#" id="loadDesignIconBtn" title="Load Design (.json)"><i class="fas fa-folder-open fa-lg"></i></a></li>
-			<li class="nav-item" id="saveDesignPanelLink" style="display: none;"><a class="nav-link" href="#" id="saveDesign" title="Save Design (.json)"><i class="fas fa-save fa-lg"></i></a></li>
-			<li class="nav-item"><a class="nav-link" href="#" id="undoBtn" title="Undo"><i class="fas fa-undo fa-lg"></i></a></li>
-			<li class="nav-item"><a class="nav-link" href="#" id="redoBtn" title="Redo"><i class="fas fa-redo fa-lg"></i></a></li>
-			<li class="nav-item"><a class="nav-link" href="#" id="downloadBtn" title="Download Image (PNG)"><i class="fas fa-download fa-lg"></i></a></li>
+			@if($from_admin_mode)
+				<li class="nav-item" id="loadDesignPanelLink"><a class="nav-link" href="#" id="loadDesignIconBtn"
+				                                                 title="Load Design (.json)"><i
+							class="fas fa-folder-open fa-lg"></i></a></li>
+				<li class="nav-item" id="saveDesignPanelLink"><a class="nav-link" href="#" id="saveDesign"
+				                                                 title="Save Design (.json)"><i
+							class="fas fa-save fa-lg"></i></a></li>
+				@if(request()->has('template_id_to_update'))
+					<li class="nav-item" id="updateTemplateInDbLink"><a class="nav-link" href="#" id="updateTemplateInDbBtn"
+					                                                    title="Update Template in Database"><i
+								class="fas fa-database fa-lg text-warning"></i></a></li>
+				@endif
+			@endif
+			<li class="nav-item"><a class="nav-link" href="#" id="undoBtn" title="Undo"><i class="fas fa-undo fa-lg"></i></a>
+			</li>
+			<li class="nav-item"><a class="nav-link" href="#" id="redoBtn" title="Redo"><i class="fas fa-redo fa-lg"></i></a>
+			</li>
+			<li class="nav-item"><a class="nav-link" href="#" id="downloadBtn" title="Download Image (PNG)"><i
+						class="fas fa-download fa-lg"></i></a></li>
 		</ul>
 		
 		<!-- Sliding Panels Container (Absolute Position) -->
@@ -53,7 +88,8 @@
 			<div id="coversPanel" class="sidebar-panel">
 				<div class="panel-content-wrapper">
 					<div class="panel-header">
-						<input type="search" id="coverSearch" class="form-control form-control-sm" placeholder="Search covers..." style="flex-grow: 1;">
+						<input type="search" id="coverSearch" class="form-control form-control-sm" placeholder="Search covers..."
+						       style="flex-grow: 1;">
 					</div>
 					<div id="coverList" class="row item-grid panel-scrollable-content"><p>Loading covers...</p></div>
 				</div>
@@ -62,7 +98,8 @@
 			<div id="templatesPanel" class="sidebar-panel">
 				<div class="panel-content-wrapper">
 					<div class="panel-header">
-						<input type="search" id="templateSearch" class="form-control form-control-sm" placeholder="Search templates..." style="flex-grow: 1;">
+						<input type="search" id="templateSearch" class="form-control form-control-sm"
+						       placeholder="Search templates..." style="flex-grow: 1;">
 					</div>
 					<div id="templateList" class="row item-grid panel-scrollable-content"><p>Loading templates...</p></div>
 				</div>
@@ -71,7 +108,8 @@
 			<div id="elementsPanel" class="sidebar-panel">
 				<div class="panel-content-wrapper">
 					<div class="panel-header">
-						<input type="search" id="elementSearch" class="form-control form-control-sm" placeholder="Search elements...">
+						<input type="search" id="elementSearch" class="form-control form-control-sm"
+						       placeholder="Search elements...">
 					</div>
 					<div id="elementList" class="row item-grid panel-scrollable-content"><p>Loading elements...</p></div>
 				</div>
@@ -80,7 +118,8 @@
 			<div id="overlaysPanel" class="sidebar-panel">
 				<div class="panel-content-wrapper">
 					<div class="panel-header">
-						<input type="search" id="overlaySearch" class="form-control form-control-sm" placeholder="Search overlays...">
+						<input type="search" id="overlaySearch" class="form-control form-control-sm"
+						       placeholder="Search overlays...">
 					</div>
 					<div id="overlayList" class="row item-grid panel-scrollable-content"><p>Loading overlays...</p></div>
 				</div>
@@ -117,10 +156,12 @@
 				</div>
 			</div>
 			<!-- Zoom Controls -->
-			<div id="zoom-controls" class="position-fixed rounded shadow-sm p-1 m-2 bg-dark d-flex align-items-center" style="bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 1060;">
+			<div id="zoom-controls" class="position-fixed rounded shadow-sm p-1 m-2 bg-dark d-flex align-items-center"
+			     style="bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 1060;">
 				<button id="zoom-out" class="btn btn-sm me-1" title="Zoom Out"><i class="fas fa-search-minus"></i></button>
 				<div class="dropup mx-1">
-					<button class="btn btn-sm dropdown-toggle zoom-percentage-display" type="button" id="zoom-percentage-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+					<button class="btn btn-sm dropdown-toggle zoom-percentage-display" type="button" id="zoom-percentage-toggle"
+					        data-bs-toggle="dropdown" aria-expanded="false">
 						100%
 					</button>
 					<ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="zoom-percentage-toggle" id="zoom-options-menu">
@@ -131,7 +172,9 @@
 						<li><a class="dropdown-item zoom-option" href="#" data-zoom="1.5">150%</a></li>
 						<li><a class="dropdown-item zoom-option" href="#" data-zoom="2.0">200%</a></li>
 						<li><a class="dropdown-item zoom-option" href="#" data-zoom="3.0">300%</a></li>
-						<li><hr class="dropdown-divider"></li>
+						<li>
+							<hr class="dropdown-divider">
+						</li>
 						<li><a class="dropdown-item zoom-option" href="#" data-zoom="fit">Fit</a></li>
 					</ul>
 				</div>
@@ -159,7 +202,8 @@
 @include('designer.partials.canvasSizeModal')
 
 <!-- Overlay Confirmation Modal -->
-<div class="modal fade" id="overlayConfirmModal" tabindex="-1" aria-labelledby="overlayConfirmModalLabel" aria-hidden="true">
+<div class="modal fade" id="overlayConfirmModal" tabindex="-1" aria-labelledby="overlayConfirmModalLabel"
+     aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -167,7 +211,8 @@
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
 			<div class="modal-body">
-				An overlay layer already exists. Would you like to replace the existing overlay(s) or add this as an additional one?
+				An overlay layer already exists. Would you like to replace the existing overlay(s) or add this as an additional
+				one?
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

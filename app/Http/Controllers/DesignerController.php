@@ -12,7 +12,7 @@ use App\Models\Overlay;
 
 class DesignerController extends Controller
 {
-	public function index()
+	public function index(Request $request)
 	{
 		// Fetch Cover Types
 		$cover_types_data = CoverType::orderBy('type_name')->get(['id', 'type_name'])->toArray();
@@ -99,13 +99,16 @@ class DesignerController extends Controller
 			Log::error("DesignerController: page-numbers.json not found. Expected at: " . $page_numbers_json_path);
 		}
 
+		$from_admin_mode = filter_var($request->query('from_admin', false), FILTER_VALIDATE_BOOLEAN);
+
 		return view('designer.index', [
 			'cover_types_json' => json_encode($cover_types_data),
 			'covers_json' => json_encode($covers_data),
 			'overlays_json' => json_encode($overlays_data),
 			'templates_json' => json_encode($templates_data),
 			'elements_json' => json_encode($elements_data),
-			'page_numbers_json_for_modal' => json_encode($page_numbers_data), // Used by CanvasSizeModal.js
+			'page_numbers_json_for_modal' => json_encode($page_numbers_data),
+			'from_admin_mode' => $from_admin_mode,
 		]);
 	}
 

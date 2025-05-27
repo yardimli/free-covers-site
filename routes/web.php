@@ -55,6 +55,8 @@
 		Route::get('/cover-template-management', [DashboardController::class, 'coverTemplateManagementIndex'])->name('covers.template-management.index');
 		Route::post('/covers/{cover}/templates/{template}/remove', [DashboardController::class, 'removeCoverTemplateAssignment'])->name('covers.templates.remove-assignment');
 
+		Route::post('/templates/{template}/update-json', [DashboardController::class, 'updateTemplateJson'])->name('templates.update-json');
+
 	});
 
 

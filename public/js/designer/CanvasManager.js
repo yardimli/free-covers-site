@@ -459,6 +459,32 @@ class CanvasManager {
 		});
 	}
 	
+	getDesignDataAsObject() {
+		if (!this.layerManager) {
+			console.error("LayerManager not available in CanvasManager for getDesignDataAsObject.");
+			return null;
+		}
+		// Ensure layers are sorted by zIndex
+		const sortedLayers = [...this.layerManager.getLayers()].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+		
+		const designData = {
+			version: "1.3", // Or your current version
+			canvas: {
+				width: this.currentCanvasWidth,
+				height: this.currentCanvasHeight,
+				frontWidth: this.frontCoverWidth,
+				spineWidth: this.spineWidth,
+				backWidth: this.backCoverWidth
+			},
+			layers: sortedLayers.map(layer => {
+				// Remove any internal-only properties if necessary
+				const { shadowOffsetInternal, shadowAngleInternal, ...layerToSave } = layer;
+				return layerToSave;
+			})
+		};
+		return designData;
+	}
+	
 	// Zooms by a factor, keeping the center of the view stable
 	zoom(factor) {
 		const newZoom = this.currentZoom * factor;

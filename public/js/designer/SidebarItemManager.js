@@ -458,8 +458,47 @@ class SidebarItemManager {
 	}
 	
 	loadAll() {
+		const IS_ADMIN_MODE = window.IS_ADMIN_DESIGNER_MODE || false;
+		
 		Object.keys(this.itemTypesConfig).forEach(type => {
-			this.loadItems(type);
+			const config = this.itemTypesConfig[type];
+			if (!config) return;
+			
+			if (IS_ADMIN_MODE) {
+				this.loadItems(type); // Admin mode: load all
+			} else {
+				// Non-admin mode: only load elements and overlays initially
+				if (type === 'elements' || type === 'overlays') {
+					this.loadItems(type);
+				} else if (type === 'covers' || type === 'templates') {
+					// For covers and templates, set up listeners but don't load data yet
+					const $list = $(config.listSelector);
+					$list.html(`<p class="text-muted p-2">Click panel icon to load ${type}.</p>`);
+					
+					if (config.searchSelector) {
+						this.initializeSearchListener(type); // Setup search even if not initially loaded
+					}
+					this.initializeScrollListener(type); // Setup scroll even if not initially loaded
+					
+					// Add a one-time click listener to the panel icon to load items
+					const panelId = type.charAt(0).toUpperCase() + type.slice(1) + "Panel"; // e.g., CoversPanel
+					const $panelIcon = $(`.sidebar-nav .nav-link[data-panel-target="#${panelId}"]`);
+					
+					if ($panelIcon.length) {
+						$panelIcon.one('click.loadInitialData', () => {
+							console.log(`Loading ${type} on panel open (non-admin mode).`);
+							if (config.allData.length === 0) { // Only load if not already loaded by some other means
+								this.loadItems(type);
+							} else { // If data somehow got loaded, just display it
+								this.filterItems(type);
+								this.displayMoreItems(type, true);
+							}
+						});
+					} else {
+						console.warn(`Panel icon for ${type} not found for deferred loading.`);
+					}
+				}
+			}
 		});
 		this.initializeUpload();
 		this.initializeOverlayConfirmModal();

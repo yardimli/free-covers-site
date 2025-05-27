@@ -1,4 +1,8 @@
 // free-cover-designer/js/App.js:
+const IS_ADMIN_MODE = window.IS_ADMIN_DESIGNER_MODE || false;
+const TEMPLATE_ID_TO_UPDATE = window.TEMPLATE_ID_TO_UPDATE || null;
+const JSON_TYPE_TO_UPDATE = window.JSON_TYPE_TO_UPDATE || null;
+
 $(document).ready(function () {
 	// --- DOM References ---
 	const $canvas = $('#canvas');
@@ -132,7 +136,51 @@ $(document).ready(function () {
 		hideGlobalLoadingOverlay(); // Ensure it's hidden if it was shown by file loading
 	}
 	
-	if (queryFileUrl) {
+	if (queryFileUrl && IS_ADMIN_MODE && queryFileUrl.includes('/api/templates/')) { // Check if it's an admin template edit
+		showGlobalLoadingOverlay("Loading template for editing...");
+		fetch(queryFileUrl)
+			.then(response => {
+				if (!response.ok) {
+					throw new Error(`HTTP error! status: ${response.status} for ${queryFileUrl}`);
+				}
+				return response.json();
+			})
+			.then(jsonData => {
+				console.log("Successfully fetched template JSON from URL for admin edit:", queryFileUrl);
+				if (jsonData && jsonData.canvas) {
+					const width = parseInt(jsonData.canvas.width, 10);
+					const height = parseInt(jsonData.canvas.height, 10);
+					const frontWidth = parseInt(jsonData.canvas.frontWidth, 10) || width;
+					const spineWidth = parseInt(jsonData.canvas.spineWidth, 10) || 0;
+					const backWidth = parseInt(jsonData.canvas.backWidth, 10) || 0;
+					
+					if (!isNaN(width) && width > 0 && !isNaN(height) && height > 0) {
+						canvasManager.setCanvasSize({
+							totalWidth: width,
+							height: height,
+							frontWidth: frontWidth,
+							spineWidth: spineWidth,
+							backWidth: backWidth
+						});
+						canvasManager.loadDesign(jsonData, false); // Load as full design, not as a template to apply
+						designLoadedOrSizeSetFromQuery = true;
+					} else {
+						console.error("Invalid canvas dimensions in fetched template JSON.");
+						alert("Error: Template data has invalid canvas dimensions.");
+					}
+				} else {
+					console.error("Invalid template JSON structure (missing canvas data).");
+					alert("Error: Could not load template data structure.");
+				}
+			})
+			.catch(error => {
+				console.error("Error loading/parsing template from URL for admin edit:", queryFileUrl, error);
+				alert(`Failed to load template for editing: ${error.message}. Defaulting to initial setup.`);
+			})
+			.finally(() => {
+				finalizeAppSetup();
+			});
+	} else if (queryFileUrl) {
 		showGlobalLoadingOverlay("Loading design from URL...");
 		fetch(queryFileUrl)
 			.then(response => {
@@ -329,6 +377,64 @@ $(document).ready(function () {
 			}
 			actionFn(); // Execute the action
 		};
+		
+		if (!IS_ADMIN_MODE) {
+			// If not in admin mode, hide the specific admin buttons if they were rendered
+			// Note: The Blade template already hides them if !from_admin_mode,
+			// this is just a JS fallback or for buttons not controlled by Blade's @if
+			$('#loadDesignPanelLink').hide();
+			$('#saveDesignPanelLink').hide();
+			$('#updateTemplateInDbLink').hide();
+		}
+
+// Add listener for the "Update Template in DB" button
+		if (IS_ADMIN_MODE && TEMPLATE_ID_TO_UPDATE && JSON_TYPE_TO_UPDATE) {
+			$('#updateTemplateInDbBtn').on('click', (e) => {
+				e.preventDefault();
+				if (!canvasManager) {
+					alert("CanvasManager is not available.");
+					return;
+				}
+				const designData = canvasManager.getDesignDataAsObject(); // Ensure this method exists
+				if (!designData) {
+					alert("Could not retrieve current design data.");
+					return;
+				}
+				
+				if (confirm(`Are you sure you want to update Template ID ${TEMPLATE_ID_TO_UPDATE} (${JSON_TYPE_TO_UPDATE} JSON) in the database with the current design?`)) {
+					showGlobalLoadingOverlay("Updating template in database...");
+					$.ajax({
+						url: `/admin/templates/${TEMPLATE_ID_TO_UPDATE}/update-json`,
+						type: 'POST',
+						contentType: 'application/json',
+						data: JSON.stringify({
+							json_type: JSON_TYPE_TO_UPDATE,
+							json_data: designData // Send the design data object
+						}),
+						headers: {
+							'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+						},
+						success: function(response) {
+							hideGlobalLoadingOverlay();
+							if (response.success) {
+								alert('Template updated successfully in the database!');
+							} else {
+								alert('Failed to update template: ' + (response.message || 'Unknown error'));
+								console.error("Update template error response:", response);
+							}
+						},
+						error: function(xhr) {
+							hideGlobalLoadingOverlay();
+							const errorMsg = xhr.responseJSON?.message || xhr.responseJSON?.errors || xhr.statusText || 'Server error';
+							alert('Error updating template: ' + JSON.stringify(errorMsg));
+							console.error("Update template AJAX error:", xhr);
+						}
+					});
+				}
+			});
+		} else {
+			$('#updateTemplateInDbLink').hide(); // Ensure it's hidden if params are missing
+		}
 		
 		// History Actions
 		$('#undoBtn').on('click', () => historyManager.undo());
