@@ -7,11 +7,9 @@
 					<div class="f_widget link_widget wow fadeInUp" data-wow-delay="0.2s">
 						<h2 class="f_widget_title">Company</h2>
 						<ul class="list-unstyled list">
-							<li><a href="#">About Us</a></li>
-							<li><a href="#">Contact us</a></li>
+							<li><a href="{{ route('about') }}">About Us</a></li>
+							<li><a href="{{ route('contact.show') }}">Contact us</a></li>
 							<li><a href="{{ route('blog.index') }}">Blog</a></li>
-							<li><a href="#">Author</a></li>
-							<li><a href="#">Books</a></li>
 						</ul>
 					</div>
 				</div>
@@ -19,10 +17,7 @@
 					<div class="f_widget link_widget ps-lg-5 wow fadeInUp" data-wow-delay="0.3s">
 						<h2 class="f_widget_title">Services</h2>
 						<ul class="list-unstyled list">
-							<li><a href="{{ route('shop.index') }}">Shop</a></li>
-							<li><a href="#">Order</a></li>
-							<li><a href="#">Cart</a></li>
-							<li><a href="#">Checkout</a></li>
+							<li><a href="{{ route('shop.index') }}">Browse Covers</a></li>
 							<li><a href="#">Wishlist</a></li>
 						</ul>
 					</div>
@@ -34,23 +29,8 @@
 							<li><a href="{{ route('login') }}">Login</a></li>
 							<li><a href="{{ route('register') }}">Register</a></li>
 							<li><a href="{{ route('password.request') }}">Forgot Password</a></li>
-							<li><a href="#">Profile</a></li>
 							<li><a href="#">Dashboard</a></li>
 						</ul>
-					</div>
-				</div>
-				<div class="col-lg-4 col-sm-6">
-					<div class="f_widget link_widget ps-lg-5 wow fadeInUp" data-wow-delay="0.4s">
-						<h2 class="f_widget_title">Newsletter</h2>
-						<p>
-							Stay updated with our latest designs and freebies
-						</p>
-						<form action="#" class="d-flex justify-content-end footer-search">
-							<input type="email" class="form-control email-form" placeholder="Your email address" />
-							<button class="bj_theme_btn btn-Subscribe" type="submit">
-								<i class="arrow_right"></i>
-							</button>
-						</form>
 					</div>
 				</div>
 			</div>
@@ -85,8 +65,8 @@
 				</div>
 				<div class="col-lg-4 col-md-6">
 					<div class="footer_terms text-end">
-						<a href="#">Terms of service</a>
-						<a href="#">Privacy policy</a>
+						<a href="{{ route('terms') }}">Terms of service</a>
+						<a href="{{ route('privacy') }}">Privacy policy</a>
 					</div>
 				</div>
 			</div>

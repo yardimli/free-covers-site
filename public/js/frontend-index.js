@@ -117,7 +117,7 @@ $(document).ready(function () {
 						// if (typeof $.fn.slick === 'function') { ... }
 						
 						// START: Add the "Show all covers in category" button
-						var shopUrl = '/shop?category=' + encodeURIComponent(genreName);
+						var shopUrl = '/browse-covers?category=' + encodeURIComponent(genreName);
 						var buttonHtml = `
                         <div class="text-center mt-4">
                             <a href="${shopUrl}" class="bj_theme_btn strock_btn blue_strock_btn">

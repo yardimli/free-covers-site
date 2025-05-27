@@ -60,8 +60,18 @@
 	Route::get('/', [HomeController::class, 'index'])->name('home');
 	Route::get('/api/genres/{genreSlug}/covers', [HomeController::class, 'getCoversForGenre'])->name('api.genres.covers');
 
-	Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
+	Route::get('/browse-covers', [ShopController::class, 'index'])->name('shop.index');
+	Route::get('/about-us', [HomeController::class, 'about'])->name('about');
+	Route::get('/terms-and-conditions', function () {
+		return view('terms');
+	})->name('terms');
 
+	Route::get('/privacy-policy', function () {
+		return view('privacy');
+	})->name('privacy');
+
+	Route::get('/contact-us', [HomeController::class, 'showContactForm'])->name('contact.show');
+	Route::post('/contact-us', [HomeController::class, 'submitContactForm'])->name('contact.submit');
 
 	Route::get('/blog', function () {
 		return "Blog Page";
