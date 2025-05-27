@@ -195,15 +195,15 @@
 							<ul class="product_meta list-unstyled">
 								<li><span>Published:</span>{{ $cover->created_at->format('F j, Y') }}</li>
 								@if($cover->coverType)
-									<li><span>Type:</span>{{ $cover->coverType->type_name }}</li>
+									<li><span>Type:</span>{{ $cover->coverType->type_name ?? '' }}</li>
 								@endif
-								<li><span>Template:</span>{{ $activeTemplateForView->name }}</li>
+								<li><span>Template:</span>{{ $activeTemplateForView->name ?? '' }}</li>
 							</ul>
 							
 							<div class="d-flex flex-wrap mt-4">
 								@php
-									$kindleButtonText = $activeTemplateForView ? 'Kindle: ' . Str::limit($activeTemplateForView->name, 15) : 'Kindle Cover';
-									$printButtonText = $activeTemplateForView ? 'Print: ' . Str::limit($activeTemplateForView->name, 15) : 'Print Cover';
+									$kindleButtonText = $activeTemplateForView ? 'Kindle: ' . Str::limit($activeTemplateForView->name ?? '', 15) : 'Kindle Cover';
+									$printButtonText = $activeTemplateForView ? 'Print: ' . Str::limit($activeTemplateForView->name ?? '', 15) : 'Print Cover';
 								@endphp
 								<a href="{{ $customizeKindleUrl }}" class="bj_theme_btn {{ !$canCustomize ? 'disabled' : '' }}" title="{{ $genericCustomizeButtonTitle ?: 'Customize Kindle Cover'}}" target="_blank">
 									<i class="fab fa-amazon"></i> Customize Kindle
@@ -222,7 +222,7 @@
 										      data-template-id="{{ $activeTemplateForView->id }}">
 											@csrf
 											<button type="submit" class="btn btn-sm btn-outline-danger admin-action-button">
-												<i class="fas fa-trash-alt"></i> Remove This Style ({{ Str::limit($activeTemplateForView->name, 20) }})
+												<i class="fas fa-trash-alt"></i> Remove This Style ({{ Str::limit($activeTemplateForView->name ?? '', 20) }})
 											</button>
 										</form>
 									</div>
@@ -316,8 +316,8 @@
 						<h3 class="mt-3">Available</h3>
 						<div class="d-flex flex-column gap-2 mt-3">
 							@php
-								$sidebarKindleButtonText = $activeTemplateForView ? Str::limit($activeTemplateForView->name, 10) : 'Kindle';
-								$sidebarPrintButtonText = $activeTemplateForView ? Str::limit($activeTemplateForView->name, 10) : 'Print';
+								$sidebarKindleButtonText = $activeTemplateForView ? Str::limit($activeTemplateForView->name ?? '', 10) : 'Kindle';
+								$sidebarPrintButtonText = $activeTemplateForView ? Str::limit($activeTemplateForView->name ?? '', 10) : 'Print';
 							@endphp
 							<a href="{{ $customizeKindleUrl }}" class="bj_theme_btn {{ !$canCustomize ? 'disabled' : '' }}" title="{{ $genericCustomizeButtonTitle ?: 'Customize Kindle: ' . $sidebarKindleButtonText }}" target="_blank">
 								<i class="fab fa-amazon"></i> Kindle {{ $sidebarKindleButtonText }}

@@ -123,6 +123,7 @@ class HomeController extends Controller
 			return [
 				'id' => $cover->id,
 				'name' => $cover->name,
+				'mockup_2d_path' => $cover->mockup_2d_path ? asset('storage/' . $cover->mockup_2d_path) : null,
 				'random_template_overlay_url' => $randomTemplateOverlayUrl,
 				'show_url' => route('covers.show', $cover->id),
 				'limited_name' => Str::limit($cover->caption, 40),

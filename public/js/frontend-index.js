@@ -86,7 +86,7 @@ $(document).ready(function () {
 						var coversHtml = '<div class="covers-grid-container"><div class="row">'; // Bootstrap row for grid
 						for (var i = 0; i < response.covers.length; i++) {
 							var cover = response.covers[i];
-							var mockupSrc = '/storage/' + cover.mockup_2d_path;
+							var mockupSrc = cover.mockup_2d_path;
 							var overlaySrc = cover.random_template_overlay_url; // This is a full URL
 							
 							coversHtml += `
