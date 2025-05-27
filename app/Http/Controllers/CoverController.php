@@ -19,12 +19,12 @@ class CoverController extends Controller
 	{
 		// Eager load templates and coverType for the single cover view
 		$cover->load('templates', 'coverType');
-
 		$cover->active_template_overlay_url = null; // Renamed from random_template_overlay_url
 		$activeTemplateForView = null; // Renamed from randomTemplateForView
 
 		// Determine the active template for the main view
-		if ($template) { // A template ID was present in the URL and resolved to a Template model
+		if ($template) {
+			// A template ID was present in the URL and resolved to a Template model
 			// Verify this template actually belongs to this cover
 			if ($cover->templates->contains($template->id)) {
 				$activeTemplateForView = $template;
@@ -36,13 +36,14 @@ class CoverController extends Controller
 					$activeTemplateForView = $cover->templates->random();
 				}
 			}
-		} elseif ($cover->templates->isNotEmpty()) { // No template ID in URL, pick random if available
+		} elseif ($cover->templates->isNotEmpty()) {
+			// No template ID in URL, pick random if available
 			$activeTemplateForView = $cover->templates->random();
 		}
+
 		// If $activeTemplateForView is still null here, it means either:
 		// 1. No template ID in URL AND cover has no templates.
 		// 2. Invalid template ID in URL (and not associated) AND cover has no templates.
-
 		if ($activeTemplateForView && $activeTemplateForView->cover_image_path) {
 			$cover->active_template_overlay_url = asset('storage/' . $activeTemplateForView->cover_image_path);
 		}
@@ -50,15 +51,15 @@ class CoverController extends Controller
 		// Prepare cover variations with each associated template
 		$coverVariations = [];
 		if ($cover->templates->isNotEmpty()) {
-			foreach ($cover->templates as $template) {
+			foreach ($cover->templates as $t) { // Changed $template to $t to avoid conflict
 				$variationOverlayUrl = null;
-				if ($template->cover_image_path) {
-					$variationOverlayUrl = asset('storage/' . $template->cover_image_path);
+				if ($t->cover_image_path) {
+					$variationOverlayUrl = asset('storage/' . $t->cover_image_path);
 				}
 				$coverVariations[] = [
 					'template_overlay_url' => $variationOverlayUrl,
-					'template_name' => $template->name, // For alt text or title
-					'template_id' => $template->id, // Pass template ID for actions
+					'template_name' => $t->name, // For alt text or title
+					'template_id' => $t->id, // Pass template ID for actions
 				];
 			}
 		}
@@ -99,6 +100,48 @@ class CoverController extends Controller
 			}
 		}
 
-		return view('covers.show', compact('cover', 'relatedCovers', 'coverVariations', 'activeTemplateForView'));
+		// Prepare keyword data with counts
+		$keywordData = [];
+		if ($cover->keywords && is_array($cover->keywords) && !empty(array_filter($cover->keywords))) {
+			$uniqueOriginalKeywords = array_values(array_unique(array_map('trim', array_filter($cover->keywords))));
+			$processedDisplayNames = []; // To track display names already handled
+
+			foreach ($uniqueOriginalKeywords as $originalKeyword) {
+				if (empty($originalKeyword)) {
+					continue;
+				}
+
+				$displayName = Str::title($originalKeyword);
+
+				if (in_array($displayName, $processedDisplayNames)) {
+					continue;
+				}
+				$processedDisplayNames[] = $displayName;
+
+				$termsForCounting = array_unique([
+					$displayName,
+					Str::lower($displayName)
+				]);
+
+				$count = Cover::where(function ($query) use ($termsForCounting) {
+					$firstTerm = true;
+					foreach ($termsForCounting as $term) {
+						if ($firstTerm) {
+							$query->whereJsonContains('keywords', $term);
+							$firstTerm = false;
+						} else {
+							$query->orWhereJsonContains('keywords', $term);
+						}
+					}
+				})->count();
+
+				$keywordData[] = [
+					'displayName' => $displayName,
+					'count' => $count,
+				];
+			}
+		}
+
+		return view('covers.show', compact('cover', 'relatedCovers', 'coverVariations', 'activeTemplateForView', 'keywordData'));
 	}
 }

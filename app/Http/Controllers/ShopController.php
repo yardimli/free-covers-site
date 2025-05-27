@@ -11,6 +11,7 @@ class ShopController extends Controller
 		$searchTerm = $request->input('s');
 		$sortBy = $request->input('orderby', 'latest'); // 'latest', 'name_asc', 'name_desc'
 		$selectedCategory = $request->input('category'); // This will be TitleCase from the dropdown
+		$selectedKeyword = $request->input('keyword'); // New: For keyword filtering
 
 		// Fetch all unique categories for the filter dropdown
 		$allCoversForCategories = Cover::select(['categories'])
@@ -47,20 +48,26 @@ class ShopController extends Controller
 		}
 
 		if ($selectedCategory) {
-			// $selectedCategory is TitleCase (e.g., "Fiction")
-			$dbQueryCategoryNameLower = Str::lower($selectedCategory); // e.g., "fiction"
-
+			$dbQueryCategoryNameLower = Str::lower($selectedCategory);
 			$query->where(function ($q) use ($dbQueryCategoryNameLower, $selectedCategory) {
-				// Search for the lowercase version
 				$q->whereJsonContains('categories', $dbQueryCategoryNameLower);
-				// If the lowercase version is different from the original TitleCase version,
-				// also search for the TitleCase version. This covers categories stored as "Fiction".
 				if ($dbQueryCategoryNameLower !== $selectedCategory) {
 					$q->orWhereJsonContains('categories', $selectedCategory);
 				}
-				// As an alternative, more direct way if $selectedCategory is always TitleCase:
-				// $q->whereJsonContains('categories', $dbQueryCategoryNameLower)
-				//   ->orWhereJsonContains('categories', $selectedCategory);
+			});
+		}
+
+		// New: Filter by selected keyword
+		if ($selectedKeyword) {
+			$query->where(function ($q) use ($selectedKeyword) {
+				// Search for the keyword as provided (likely TitleCase from URL)
+				$q->whereJsonContains('keywords', $selectedKeyword);
+
+				// Also search for the lowercase version
+				$lowerKeyword = Str::lower($selectedKeyword);
+				if ($lowerKeyword !== $selectedKeyword) { // Avoid redundant query if already lowercase
+					$q->orWhereJsonContains('keywords', $lowerKeyword);
+				}
 			});
 		}
 
@@ -90,6 +97,6 @@ class ShopController extends Controller
 			}
 		}
 
-		return view('shop.index', compact('covers', 'searchTerm', 'sortBy', 'availableCategories', 'selectedCategory'));
+		return view('shop.index', compact('covers', 'searchTerm', 'sortBy', 'availableCategories', 'selectedCategory', 'selectedKeyword'));
 	}
 }
