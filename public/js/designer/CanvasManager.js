@@ -895,12 +895,14 @@ class CanvasManager {
 		// --- Handle the promise with try...finally for restoration --- (same as before)
 		try {
 			const dataUrl = await screenshotPromise;
-			const a = document.createElement('a');
-			a.href = dataUrl;
-			a.download = filename;
-			document.body.appendChild(a);
-			a.click();
-			document.body.removeChild(a);
+			// const a = document.createElement('a');
+			// a.href = dataUrl;
+			// a.download = filename;
+			// document.body.appendChild(a);
+			// a.click();
+			// document.body.removeChild(a);
+			
+			return dataUrl;
 		} catch (err) {
 			console.error(`Error exporting canvas with modernScreenshot (.${format}):`, err);
 			alert(`Error exporting canvas as ${format.toUpperCase()}. Check console. Embedded font processing might have failed.`);

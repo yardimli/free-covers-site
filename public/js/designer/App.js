@@ -366,6 +366,15 @@ $(document).ready(function () {
 		}
 	}
 	
+	function dataURLtoBlob(dataurl) {
+		let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+			bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+		while(n--){
+			u8arr[n] = bstr.charCodeAt(n);
+		}
+		return new Blob([u8arr], {type:mime});
+	}
+	
 	// --- Global Action Button Setup & Updates ---
 	function initializeGlobalActions() {
 		// --- Helper to prevent action on disabled links ---
@@ -390,28 +399,50 @@ $(document).ready(function () {
 		
 // Add listener for the "Update Template in DB" button
 		if (IS_ADMIN_MODE && TEMPLATE_ID_TO_UPDATE && JSON_TYPE_TO_UPDATE) {
-			$('#updateTemplateInDbBtn').on('click', (e) => {
+			$('#updateTemplateInDbBtn').on('click', async (e) => { // Make the handler async
 				e.preventDefault();
 				if (!canvasManager) {
 					alert("CanvasManager is not available.");
 					return;
 				}
-				const designData = canvasManager.getDesignDataAsObject(); // Ensure this method exists
+				const designData = canvasManager.getDesignDataAsObject();
 				if (!designData) {
 					alert("Could not retrieve current design data.");
 					return;
 				}
 				
-				if (confirm(`Are you sure you want to update Template ID ${TEMPLATE_ID_TO_UPDATE} (${JSON_TYPE_TO_UPDATE} JSON) in the database with the current design?`)) {
+				if (confirm(`Are you sure you want to update Template ID ${TEMPLATE_ID_TO_UPDATE} (${JSON_TYPE_TO_UPDATE} JSON) in the database with the current design and a new preview image?`)) {
+					showGlobalLoadingOverlay("Generating preview image...");
+					let imageBlob;
+					let dataUrl;
+					try {
+						dataUrl = await canvasManager.exportCanvas('png', true);
+						
+						if (!dataUrl) { // <<< --- ADD THIS CHECK
+							throw new Error("Canvas export did not return a valid data URL.");
+						}
+						
+						imageBlob = dataURLtoBlob(dataUrl);
+					} catch (exportError) {
+						hideGlobalLoadingOverlay();
+						console.error("Error exporting canvas for template update:", exportError);
+						alert("Failed to generate preview image for the template. Update aborted.");
+						return;
+					}
+					
 					showGlobalLoadingOverlay("Updating template in database...");
+					
+					const formData = new FormData();
+					formData.append('json_type', JSON_TYPE_TO_UPDATE);
+					formData.append('json_data', JSON.stringify(designData)); // Server will json_decode
+					formData.append('updated_image_file', imageBlob, `template_preview_${TEMPLATE_ID_TO_UPDATE}_${JSON_TYPE_TO_UPDATE}.png`);
+					
 					$.ajax({
 						url: `/admin/templates/${TEMPLATE_ID_TO_UPDATE}/update-json`,
 						type: 'POST',
-						contentType: 'application/json',
-						data: JSON.stringify({
-							json_type: JSON_TYPE_TO_UPDATE,
-							json_data: designData // Send the design data object
-						}),
+						data: formData,
+						contentType: false, // Important for FormData
+						processData: false, // Important for FormData
 						headers: {
 							'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
 						},
@@ -419,6 +450,7 @@ $(document).ready(function () {
 							hideGlobalLoadingOverlay();
 							if (response.success) {
 								alert('Template updated successfully in the database!');
+								// Optionally, refresh the admin view or redirect
 							} else {
 								alert('Failed to update template: ' + (response.message || 'Unknown error'));
 								console.error("Update template error response:", response);
@@ -426,8 +458,8 @@ $(document).ready(function () {
 						},
 						error: function(xhr) {
 							hideGlobalLoadingOverlay();
-							const errorMsg = xhr.responseJSON?.message || xhr.responseJSON?.errors || xhr.statusText || 'Server error';
-							alert('Error updating template: ' + JSON.stringify(errorMsg));
+							const errorMsg = xhr.responseJSON?.message || (xhr.responseJSON?.errors ? JSON.stringify(xhr.responseJSON.errors) : xhr.statusText) || 'Server error';
+							alert('Error updating template: ' + errorMsg);
 							console.error("Update template AJAX error:", xhr);
 						}
 					});
@@ -464,7 +496,29 @@ $(document).ready(function () {
 		});
 		
 		// Export Actions
-		$('#downloadBtn').on('click', (e) => preventDisabled(e, () => canvasManager.exportCanvas('png', true))); // Default to PNG
+		$('#downloadBtn').on('click', (e) => preventDisabled(e, async () => { // Make it async if not already
+			try {
+				const dataUrl = await canvasManager.exportCanvas('png', true); // Default to PNG, transparent
+				if (dataUrl) {
+					const filename = `book-cover-export.png`; // Or derive from format
+					const a = document.createElement('a');
+					a.href = dataUrl;
+					a.download = filename;
+					document.body.appendChild(a);
+					a.click();
+					document.body.removeChild(a);
+				} else {
+					// This case should ideally be handled by exportCanvas throwing an error
+					console.error("Download failed: exportCanvas did not return a data URL.");
+					alert("Failed to generate image for download. Please try again.");
+				}
+			} catch (error) {
+				console.error("Error during download:", error);
+				// Alert is likely already shown by exportCanvas, but you can add another one if needed
+				// alert("An error occurred while preparing the image for download.");
+			}
+		}));
+		
 		
 		$('#openCanvasSizeModalBtn').on('click', (e) => {
 			e.preventDefault();

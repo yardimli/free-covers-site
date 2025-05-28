@@ -97,6 +97,7 @@
 		aiEvaluateTemplateFitBase: "{{ url('admin/covers') }}",
 		getCoversWithoutTemplates: "{{ route('admin.covers.without-templates') }}",
 		uploadCoverZip: "{{ route('admin.covers.upload-zip') }}",
+		generateFullCoverJsonForTemplateBase: "{{ url('admin/templates') }}",
 	};
 	window.AppAdmin = window.AppAdmin || {}; // Initialize the global namespace
 </script>

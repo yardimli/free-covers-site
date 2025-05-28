@@ -248,26 +248,29 @@ class DashboardController extends Controller
 					$paths = $this->imageUploadService->uploadImageWithThumbnail($request->file('cover_image_file'), 'templates_cover_image');
 					$data['cover_image_path'] = $paths['original_path']; // Assuming templates_cover_image config might not generate a separate thumb
 				}
+
 				if ($request->hasFile('json_file')) {
-					$jsonContent = file_get_contents($request->file('json_file')->getRealPath());
-					if (json_decode($jsonContent) === null && json_last_error() !== JSON_ERROR_NONE) {
-						return response()->json(['success' => false, 'message' => 'Invalid JSON content: ' . json_last_error_msg()], 400);
+					$jsonContentString = file_get_contents($request->file('json_file')->getRealPath());
+					$decodedJson = json_decode($jsonContentString, true); // Decode to associative array
+					if ($decodedJson === null && json_last_error() !== JSON_ERROR_NONE) {
+						return response()->json(['success' => false, 'message' => 'Invalid JSON content in json_file: ' . json_last_error_msg()], 400);
 					}
-					$data['json_content'] = $jsonContent;
-					// Optionally store the JSON file itself if 'templates_main_json' config exists
-					// $data['cover_json_file_path'] = $this->imageUploadService->storeUploadedFile($request->file('json_file'), 'templates_main_json');
+					$data['json_content'] = $decodedJson; // Assign the PHP array
 				}
+
 				if ($request->hasFile('full_cover_image_file')) {
 					$paths = $this->imageUploadService->uploadImageWithThumbnail($request->file('full_cover_image_file'), 'templates_full_cover_image');
 					$data['full_cover_image_path'] = $paths['original_path'];
 					$data['full_cover_image_thumbnail_path'] = $paths['thumbnail_path'];
 				}
+
 				if ($request->hasFile('full_cover_json_file')) {
-					$jsonContent = file_get_contents($request->file('full_cover_json_file')->getRealPath());
-					if (json_decode($jsonContent) === null && json_last_error() !== JSON_ERROR_NONE) {
-						return response()->json(['success' => false, 'message' => 'Invalid Full Cover JSON: ' . json_last_error_msg()], 400);
+					$jsonContentString = file_get_contents($request->file('full_cover_json_file')->getRealPath());
+					$decodedJson = json_decode($jsonContentString, true); // Decode to associative array
+					if ($decodedJson === null && json_last_error() !== JSON_ERROR_NONE) {
+						return response()->json(['success' => false, 'message' => 'Invalid JSON content in full_cover_json_file: ' . json_last_error_msg()], 400);
 					}
-					$data['full_cover_json_content'] = $jsonContent;
+					$data['full_cover_json_content'] = $decodedJson; // Assign the PHP array
 				}
 				if (!isset($data['text_placements'])) {
 					$data['text_placements'] = [];
@@ -444,25 +447,31 @@ class DashboardController extends Controller
 					$paths = $this->imageUploadService->uploadImageWithThumbnail($request->file('cover_image_file'), 'templates_cover_image', $item->cover_image_path);
 					$data['cover_image_path'] = $paths['original_path'];
 				}
+
 				if ($request->hasFile('json_file')) {
-					$jsonContent = file_get_contents($request->file('json_file')->getRealPath());
-					if (json_decode($jsonContent) === null && json_last_error() !== JSON_ERROR_NONE) {
-						return response()->json(['success' => false, 'message' => 'Invalid JSON content for update: ' . json_last_error_msg()], 400);
+					$jsonContentString = file_get_contents($request->file('json_file')->getRealPath());
+					$decodedJson = json_decode($jsonContentString, true); // Decode to associative array
+					if ($decodedJson === null && json_last_error() !== JSON_ERROR_NONE) {
+						return response()->json(['success' => false, 'message' => 'Invalid JSON content for update in json_file: ' . json_last_error_msg()], 400);
 					}
-					$data['json_content'] = $jsonContent;
+					$data['json_content'] = $decodedJson; // Assign the PHP array
 				}
+
 				if ($request->hasFile('full_cover_image_file')) {
 					$paths = $this->imageUploadService->uploadImageWithThumbnail($request->file('full_cover_image_file'), 'templates_full_cover_image', $item->full_cover_image_path, $item->full_cover_image_thumbnail_path);
 					$data['full_cover_image_path'] = $paths['original_path'];
 					$data['full_cover_image_thumbnail_path'] = $paths['thumbnail_path'];
 				}
+
 				if ($request->hasFile('full_cover_json_file')) {
-					$jsonContent = file_get_contents($request->file('full_cover_json_file')->getRealPath());
-					if (json_decode($jsonContent) === null && json_last_error() !== JSON_ERROR_NONE) {
-						return response()->json(['success' => false, 'message' => 'Invalid Full Cover JSON for update: ' . json_last_error_msg()], 400);
+					$jsonContentString = file_get_contents($request->file('full_cover_json_file')->getRealPath());
+					$decodedJson = json_decode($jsonContentString, true); // Decode to associative array
+					if ($decodedJson === null && json_last_error() !== JSON_ERROR_NONE) {
+						return response()->json(['success' => false, 'message' => 'Invalid JSON content for update in full_cover_json_file: ' . json_last_error_msg()], 400);
 					}
-					$data['full_cover_json_content'] = $jsonContent;
+					$data['full_cover_json_content'] = $decodedJson; // Assign the PHP array
 				}
+
 				// Text Placements for templates (from main edit form, if applicable)
 				$tpInput = $request->input('text_placements');
 				if ($tpInput !== null) {
@@ -1300,38 +1309,284 @@ class DashboardController extends Controller
 		return response()->json(['success' => true, 'message' => trim($finalMessage), 'data' => $results]);
 	}
 
-	public function updateTemplateJson(Request $request, Template $template) {
-		$validator = Validator::make($request->all(), [
+	public function updateTemplateJson(Request $request, Template $template)
+	{
+		$baseRules = [
 			'json_type' => ['required', Rule::in(['front', 'full'])],
-			'json_data' => 'required|array',
-			'json_data.canvas' => 'required|array',
-			'json_data.canvas.width' => 'required|numeric|min:1',
-			'json_data.canvas.height' => 'required|numeric|min:1',
-			'json_data.layers' => 'nullable|array',
-		]);
+			'json_data' => 'required|string', // Will be a JSON string
+			'updated_image_file' => 'nullable|image|mimes:png|max:5120', // Max 5MB PNG
+		];
+
+		$validator = Validator::make($request->all(), $baseRules);
 
 		if ($validator->fails()) {
-			return response()->json(['success' => false, 'message' => 'Invalid data.', 'errors' => $validator->errors()], 422);
+			return response()->json(['success' => false, 'message' => 'Validation failed.', 'errors' => $validator->errors()], 422);
 		}
 
 		$jsonType = $request->input('json_type');
-		$jsonData = $request->input('json_data'); // This will be an array from JSON.parse
+		$jsonDataString = $request->input('json_data');
+		$jsonData = json_decode($jsonDataString, true);
+
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			return response()->json(['success' => false, 'message' => 'Invalid JSON data provided: ' . json_last_error_msg()], 422);
+		}
+
+		// Further validate the structure of the decoded JSON
+		$jsonStructureValidator = Validator::make($jsonData, [
+			'canvas' => 'required|array',
+			'canvas.width' => 'required|numeric|min:1',
+			'canvas.height' => 'required|numeric|min:1',
+			'layers' => 'nullable|array',
+		]);
+
+		if ($jsonStructureValidator->fails()) {
+			return response()->json(['success' => false, 'message' => 'Invalid JSON data structure.', 'errors' => $jsonStructureValidator->errors()], 422);
+		}
 
 		try {
+			$updateData = [];
+
+			// Handle image upload if a new file is provided
+			if ($request->hasFile('updated_image_file')) {
+				$file = $request->file('updated_image_file');
+				Log::info("Updating template {$template->id} ({$jsonType}) with new image file: " . $file->getClientOriginalName());
+
+				if ($jsonType === 'front') {
+					// This is for the 'cover_image_path' which is the main preview for the template editor
+					$paths = $this->imageUploadService->uploadImageWithThumbnail(
+						$file,
+						'templates_cover_image', // Config key for template's main cover image
+						$template->cover_image_path // Old original path to delete
+					// Assuming 'templates_cover_image' config might not generate a separate thumbnail,
+					// or if it does, the Template model doesn't have a dedicated field for it.
+					);
+					$updateData['cover_image_path'] = $paths['original_path'];
+					Log::info("Updated cover_image_path for template {$template->id} to: " . $paths['original_path']);
+
+				} elseif ($jsonType === 'full') {
+					// This is for the 'full_cover_image_path' and its thumbnail
+					$paths = $this->imageUploadService->uploadImageWithThumbnail(
+						$file,
+						'templates_full_cover_image', // Config key for template's full cover image
+						$template->full_cover_image_path, // Old original path
+						$template->full_cover_image_thumbnail_path // Old thumbnail path
+					);
+					$updateData['full_cover_image_path'] = $paths['original_path'];
+					$updateData['full_cover_image_thumbnail_path'] = $paths['thumbnail_path'];
+					Log::info("Updated full_cover_image_path for template {$template->id} to: " . $paths['original_path']);
+					Log::info("Updated full_cover_image_thumbnail_path for template {$template->id} to: " . $paths['thumbnail_path']);
+				}
+			}
+
+			// Update JSON content
 			if ($jsonType === 'front') {
-				$template->json_content = $jsonData;
+				$updateData['json_content'] = $jsonData;
 			} elseif ($jsonType === 'full') {
-				$template->full_cover_json_content = $jsonData;
+				$updateData['full_cover_json_content'] = $jsonData;
 			} else {
+				// Should be caught by initial validation, but as a safeguard
 				return response()->json(['success' => false, 'message' => 'Invalid JSON type specified.'], 400);
 			}
 
-			$template->save();
-			return response()->json(['success' => true, 'message' => 'Template JSON updated successfully.']);
+			if (!empty($updateData)) {
+				$template->update($updateData);
+				Log::info("Template {$template->id} ({$jsonType}) updated successfully with data: " . json_encode(array_keys($updateData)));
+			} else {
+				Log::info("No data to update for template {$template->id} ({$jsonType}). JSON content might be identical and no new image provided.");
+				// Still return success if no actual change was needed but process was valid
+			}
+
+			return response()->json(['success' => true, 'message' => 'Template JSON and preview updated successfully.']);
 
 		} catch (\Exception $e) {
-			Log::error("Error updating template JSON for template ID {$template->id}: " . $e->getMessage());
-			return response()->json(['success' => false, 'message' => 'Server error while updating template JSON.'], 500);
+			Log::error("Error updating template JSON for template ID {$template->id} ({$jsonType}): " . $e->getMessage() . "\n" . $e->getTraceAsString());
+			return response()->json(['success' => false, 'message' => 'Server error while updating template JSON: ' . $e->getMessage()], 500);
+		}
+	}
+
+	// Properties and methods from GenerateFullCoverTemplates command
+	protected $authorNames = ['Morgan', 'Casey', 'Peyton', 'Emerson', 'Jordan', 'Parker', 'Avery', 'Rowan', 'Taylor'];
+
+	protected function generateLoremIpsumForFullCover()
+	{
+		$paragraphs = [
+			"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+			"Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+			"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo."
+		];
+		return implode("\n\n", $paragraphs);
+	}
+
+	public function generateFullCoverJsonForTemplate(Request $request, Template $template)
+	{
+		try {
+			$jsonContent = $template->json_content;
+
+			if (!is_array($jsonContent) || empty($jsonContent)) {
+				Log::warning("Skipping Template ID: {$template->id} - json_content is empty or not an array for full cover generation.");
+				return response()->json(['success' => false, 'message' => 'Template json_content is empty or not an array.'], 400);
+			}
+
+			// Check if it's a front-only template (spineWidth and backWidth must exist and be 0)
+			if (!isset($jsonContent['canvas']) ||
+				!isset($jsonContent['canvas']['backWidth']) ||
+				!isset($jsonContent['canvas']['spineWidth']) ||
+				$jsonContent['canvas']['backWidth'] != 0 ||
+				$jsonContent['canvas']['spineWidth'] != 0) {
+				Log::info("Skipping Template ID: {$template->id} - Not a front-only template suitable for full cover generation. Spine/back widths are not both zero, or canvas data missing.");
+				return response()->json(['success' => false, 'message' => 'Template is not a front-only template (spine/back widths must both be explicitly zero, or canvas data is missing).'], 400);
+			}
+
+			$fullCoverJson = $jsonContent;
+
+			$spineWidth = 300; // Default spine width
+			$frontWidth = $fullCoverJson['canvas']['frontWidth'] ?? ($fullCoverJson['canvas']['width'] ?? 1540);
+
+			$backWidth = $frontWidth;
+
+			$fullCoverJson['canvas']['spineWidth'] = $spineWidth;
+			$fullCoverJson['canvas']['backWidth'] = $backWidth;
+			$fullCoverJson['canvas']['width'] = $frontWidth + $spineWidth + $backWidth;
+
+			$offset = $backWidth + $spineWidth;
+
+			$authorLayer = null;
+			$titleLayer = null;
+			$smallestTextLayer = null;
+			$smallestFontSize = PHP_INT_MAX;
+
+			if (isset($fullCoverJson['layers']) && is_array($fullCoverJson['layers'])) {
+				foreach ($fullCoverJson['layers'] as $layer) {
+					if (!isset($layer['type']) || $layer['type'] !== 'text') {
+						continue;
+					}
+					$content = $layer['content'] ?? '';
+					foreach ($this->authorNames as $authorName) {
+						if (stripos($content, $authorName) !== false) {
+							$authorLayer = $layer;
+							break;
+						}
+					}
+					$fontSize = $layer['fontSize'] ?? 16;
+					if ($fontSize < $smallestFontSize) {
+						$smallestFontSize = $fontSize;
+						$smallestTextLayer = $layer;
+					}
+				}
+
+				$largestFontSize = 0;
+				foreach ($fullCoverJson['layers'] as $layer) {
+					if (!isset($layer['type']) || $layer['type'] !== 'text') {
+						continue;
+					}
+					$fontSize = $layer['fontSize'] ?? 16;
+					$content = $layer['content'] ?? '';
+					if ($authorLayer && isset($authorLayer['content']) && $content === $authorLayer['content']) {
+						continue;
+					}
+					if ($fontSize > $largestFontSize) {
+						$largestFontSize = $fontSize;
+						$titleLayer = $layer;
+					}
+				}
+
+				foreach ($fullCoverJson['layers'] as &$layer) {
+					if (isset($layer['x'])) {
+						$layer['x'] = (is_numeric($layer['x']) ? floatval($layer['x']) : 0) + $offset;
+					}
+				}
+				unset($layer);
+
+				if ($authorLayer && $titleLayer) {
+					$spineAuthor = $authorLayer;
+					$spineAuthor['id'] = 'spine-author-' . Str::random(4);
+					$spineAuthor['name'] = 'Spine Author';
+					$spineAuthor['x'] = $backWidth - 300;
+					$spineAuthor['y'] = 400;
+					$spineAuthor['align'] = 'left';
+					$spineAuthor['rotation'] = 90;
+					$spineAuthor['fontSize'] = max(14, ($authorLayer['fontSize'] ?? 16) * 0.3);
+					$spineAuthor['width'] = 1200;
+					$spineAuthor['height'] = 200;
+					$spineAuthor['content'] = str_replace("\n", " ", $spineAuthor['content'] ?? '');
+					$spineAuthor['definition'] = 'spine_text';
+
+					$spineTitle = $titleLayer;
+					$spineTitle['id'] = 'spine-title-' . Str::random(4);
+					$spineTitle['name'] = 'Spine Title';
+					$spineTitle['x'] = $backWidth - 300;
+					$spineTitle['y'] = 1400;
+					$spineTitle['align'] = 'left';
+					$spineTitle['rotation'] = 90;
+					$spineTitle['fontSize'] = max(18, ($titleLayer['fontSize'] ?? 24) * 0.3);
+					$spineTitle['width'] = 1200;
+					$spineTitle['height'] = 200;
+					$spineTitle['content'] = str_replace("\n", " ", $spineTitle['content'] ?? '');
+					$spineTitle['definition'] = 'spine_text';
+
+					$fullCoverJson['layers'][] = $spineAuthor;
+					$fullCoverJson['layers'][] = $spineTitle;
+
+					$backTitle = $titleLayer;
+					$backTitle['id'] = 'back-title-' . Str::random(4);
+					$backTitle['name'] = 'Back Title';
+					$backTitle['x'] = 100;
+					$backTitle['y'] = 100;
+					$backTitle['align'] = 'left';
+					$backTitle['vAlign'] = 'top';
+					$backTitle['rotation'] = 0;
+					$backTitle['width'] = 1400;
+					$backTitle['height'] = round(($titleLayer['height'] ?? 50) * 0.6);
+					$backTitle['fontSize'] = ($titleLayer['fontSize'] ?? 24) * 0.6;
+					$backTitle['content'] = str_replace("\n", " ", $backTitle['content'] ?? '');
+					$backTitle['definition'] = 'back_cover_text';
+
+					$backAuthor = $authorLayer;
+					$backAuthor['id'] = 'back-author-' . Str::random(4);
+					$backAuthor['name'] = 'Back Author';
+					$backAuthor['x'] = 100;
+					$backAuthor['y'] = 100 + ($backTitle['height'] ?? 30) + 50;
+					$backAuthor['align'] = 'left';
+					$backAuthor['vAlign'] = 'top';
+					$backAuthor['rotation'] = 0;
+					$backAuthor['width'] = 1400;
+					$backAuthor['height'] = round(($authorLayer['height'] ?? 30) * 0.6);
+					$backAuthor['fontSize'] = ($authorLayer['fontSize'] ?? 16) * 0.6;
+					$backAuthor['content'] = str_replace("\n", " ", $backAuthor['content'] ?? '');
+					$backAuthor['definition'] = 'back_cover_text';
+
+					$backText = $smallestTextLayer ?: $authorLayer; // Fallback
+					$backText['id'] = 'back-text-' . Str::random(4);
+					$backText['name'] = 'Back Cover Text';
+					$backText['x'] = 100;
+					$backText['y'] = ($backAuthor['y'] ?? 180) + ($backAuthor['height'] ?? 18) + 50;
+					$backText['align'] = 'left';
+					$backText['rotation'] = 0;
+					$backText['width'] = 1400;
+					$backText['height'] = 800;
+					$backText['content'] = $this->generateLoremIpsumForFullCover();
+					$backText['fontSize'] = (($smallestTextLayer['fontSize'] ?? ($authorLayer['fontSize'] ?? 16))) * 1; // Keep original smallest size or default
+					$backText['definition'] = 'back_cover_text';
+					$backText['align'] = 'left';
+					$backText['vAlign'] = 'top';
+
+					$fullCoverJson['layers'][] = $backTitle;
+					$fullCoverJson['layers'][] = $backAuthor;
+					$fullCoverJson['layers'][] = $backText;
+				} else {
+					Log::warning("Template ID: {$template->id} - Could not identify author and/or title layers for full cover generation. Spine/back elements not added.");
+				}
+			}
+
+			$template->full_cover_json_content = $fullCoverJson;
+			$template->save();
+
+			Log::info("Generated full cover JSON for Template ID: {$template->id}");
+			return response()->json(['success' => true, 'message' => 'Full cover JSON generated successfully.']);
+
+		} catch (\Exception $e) {
+			Log::error("Error generating full cover JSON for Template ID: {$template->id} - " . $e->getMessage(), ['exception' => $e->getTraceAsString()]);
+			return response()->json(['success' => false, 'message' => 'Server error generating full cover JSON: ' . $e->getMessage()], 500);
 		}
 	}
 }

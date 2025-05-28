@@ -161,7 +161,9 @@ AppAdmin.Items = (function () {
 								const editFrontJsonButton = (item.json_content && item.json_content.canvas) ? `<a href="${editFrontJsonUrl}" target="_blank" class="btn btn-outline-primary btn-sm mb-1 w-100" title="Edit Front JSON"><i class="fas fa-palette"></i> Front JSON</a>` : '';
 								const editFullJsonButton = (item.full_cover_json_content && item.full_cover_json_content.canvas) ? `<a href="${editFullJsonUrl}" target="_blank" class="btn btn-outline-primary btn-sm w-100" title="Edit Full JSON"><i class="fas fa-ruler-combined"></i> Full JSON</a>` : '';
 								
-								rowHtml += `${editFrontJsonButton} ${editFullJsonButton}`;
+								const generateFullJsonButton = `<button class="btn btn-sm btn-info generate-full-cover-btn" data-id="${item.id}" title="Generate Full Cover JSON"><i class="fas fa-book-open"></i></button>`;
+								
+								rowHtml += `${editFrontJsonButton} ${editFullJsonButton} ${generateFullJsonButton}`;
 							}
 							if (itemType === 'covers' || itemType === 'templates') {
 								rowHtml += ` <button class="btn btn-secondary btn-sm edit-text-placements" data-id="${item.id}" data-type="${itemType}" data-name="${escapeHtml(item.name)}" title="Edit Text Placements"> <i class="fas fa-map-signs"></i> </button>`;
@@ -229,8 +231,65 @@ AppAdmin.Items = (function () {
 		$paginationContainer.html(paginationHtml);
 	}
 	
+	function init() {
+		// Event listener for "Generate Full Cover JSON" button for templates
+		// This can be placed here or in admin.js's $(document).ready()
+		// For organization, keeping it within AppAdmin.Items.init is good if this module handles all item table interactions.
+		// If admin.js is the main orchestrator, it can go there.
+		// Let's assume admin.js will call this init, so we add it here.
+		
+		$(document).on('click', '.generate-full-cover-btn', function() { // Delegated event
+			const templateId = $(this).data('id');
+			if (!templateId) {
+				AppAdmin.Utils.showAlert('Could not get template ID.', 'danger');
+				return;
+			}
+			
+			if (!confirm('Are you sure you want to generate/overwrite the full cover JSON for this template? This will modify its existing front cover elements and add spine/back elements.')) {
+				return;
+			}
+			
+			const $button = $(this);
+			$button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...');
+			
+			$.ajax({
+				url: `${window.adminRoutes.generateFullCoverJsonForTemplateBase}/${templateId}/generate-full-cover-json`,
+				type: 'POST',
+				headers: {
+					'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+				},
+				success: function(response) {
+					if (response.success) {
+						AppAdmin.Utils.showAlert(response.message || 'Full cover JSON generated successfully!', 'success');
+						// Reload current page of templates to reflect changes
+						const currentPage = parseInt($('#templatesPagination .active .page-link').data('page'), 10) || 1;
+						const currentSearch = $('#templates-panel .search-input').val() || '';
+						const currentFilter = $('#templates-panel .cover-type-filter').val() || '';
+						AppAdmin.Items.loadItems('templates', currentPage, currentSearch, currentFilter);
+					} else {
+						AppAdmin.Utils.showAlert(response.message || 'Failed to generate full cover JSON.', 'danger');
+						$button.prop('disabled', false).html('<i class="fas fa-book-open"></i>');
+					}
+				},
+				error: function(xhr) {
+					const errorMsg = xhr.responseJSON?.message || xhr.responseText || 'An unknown error occurred.';
+					AppAdmin.Utils.showAlert(`Error: ${errorMsg}`, 'danger');
+					console.error("Generate Full Cover JSON error:", xhr);
+					$button.prop('disabled', false).html('<i class="fas fa-book-open"></i>');
+				}
+			});
+		});
+	}
+	
+	
 	return {
-		loadItems,
-		ITEMS_PER_PAGE
+		loadItems: loadItems,
+		ITEMS_PER_PAGE: ITEMS_PER_PAGE, // Expose ITEMS_PER_PAGE for use in admin.js
+		init: init // Expose init to be called by admin.js
 	};
+	
+	// return {
+	// 	loadItems,
+	// 	ITEMS_PER_PAGE
+	// };
 })();

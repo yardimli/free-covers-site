@@ -7,26 +7,25 @@ add link to user profile page on dashboard .....................................
 update main page new arrivals to use mockup 2d ............................................................OK
 remove my uploads from dashboard ..........................................................................OK
 
-update admin to allow to edit and save templates directly
-update admin ai to auto assign template to covers with better prompt
-update the designer to hide templates and covers buttons with query parameter
-when templates or covers are hidden, the designer should not load them
+update admin to allow to edit and save templates directly .................................................OK
+update the designer to hide templates and covers buttons with query parameter .............................OK
+when templates or covers are hidden, the designer should not load them ....................................OK
+auto gen full cover from front json .......................................................................OK
+in admin update json and png of template when saving ......................................................OK
+
+on book details page overlay full cover template image on top of full cover image
+make top search work
+make blog page work
+add blog to admin
 
 allow user to save their work on the covers (json file) to my ebook and print covers
+in designer make the spine align correctly with the cover
 
 make signin/up with google work
 make forget password work
 
-create social media accounts for the site update the footer
-
-make blog page work
-add blog to admin
-
 add list of members with summary of their work to admin
 add login as user to admin
 
-make top search work
-
-on book details page overlay full cover template image on top of full cover image
-
-in designer make the spine align correctly with the cover
+update admin ai to auto assign template to covers with better prompt
+create social media accounts for the site update the footer

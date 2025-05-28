@@ -32,6 +32,7 @@ $(document).ready(function () {
 	AppAdmin.BatchAutoAssignTemplates.init();
 	AppAdmin.BatchAiMetadata.init();
 	AppAdmin.UploadZip.init();
+	AppAdmin.Items.init();
 	
 	
 	let popStateHandlingActive = false; // Flag to manage popstate-triggered loads

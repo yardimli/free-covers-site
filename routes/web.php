@@ -57,6 +57,8 @@
 
 		Route::post('/templates/{template}/update-json', [DashboardController::class, 'updateTemplateJson'])->name('templates.update-json');
 
+		Route::post('/templates/{template}/generate-full-cover-json', [DashboardController::class, 'generateFullCoverJsonForTemplate'])->name('templates.generate-full-cover-json');
+
 	});
 
 
