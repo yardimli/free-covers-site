@@ -1029,13 +1029,18 @@ body {
     top: 0;
     bottom: 0;
     width: 1px;
-    background-color: white;
-    mix-blend-mode: exclusion;
-    /*background-color: rgba(255, 0, 255, 0.7);*/
-    /*border-left: 1px dashed rgba(0, 0, 0, 0.5);*/
+    background-image: repeating-linear-gradient(
+            -45deg,
+            #000 0,
+            #000 10px,
+            #fff 10px,
+            #fff 20px
+    );
     z-index: 500;
     pointer-events: none;
     box-sizing: border-box;
+    opacity: 0.5;
+    animation: march 4s linear infinite;
 }
 
 .canvas-safe-zone {
@@ -1048,10 +1053,30 @@ body {
 .canvas-safe-zone::before {
     content: '';
     position: absolute;
-    inset: 0; /* top: 0, right: 0, bottom: 0, left: 0 */
-    border: 2px dashed white;
-    mix-blend-mode: difference;
+    inset: 0;
+    background-image:
+            repeating-linear-gradient(
+                    45deg,
+                    #000 0,
+                    #000 10px,
+                    #fff 10px,
+                    #fff 20px
+            );
+    -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    padding: 2px;
     pointer-events: none;
+    opacity: 0.5;
+    animation: march 4s linear infinite;
+}
+
+@keyframes march {
+    to {
+        background-position: 28.28px 0; /* sqrt(2) * 20px */
+    }
 }
 
 #locked-selection-highlight {

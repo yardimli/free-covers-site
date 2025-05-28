@@ -95,7 +95,7 @@ AppAdmin.Items = (function () {
 							if (itemType === 'covers') {
 								const thumbUrl = item.cover_thumbnail_url || 'images/placeholder.png';
 								rowHtml += `<td><img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(item.name)}" class="thumbnail-preview" loading="lazy"></td>`;
-								rowHtml += `<td style="vertical-align: top;"><span class="small">${escapeHtml(item.name)}<br>`;
+								rowHtml += `<td style="vertical-align: top;"><span class="small">${escapeHtml(item.name)} (${item.id})<br>`;
 								rowHtml += `${escapeHtml(item.cover_type_name || 'N/A')}</span></td>`;
 								rowHtml += `<td style="vertical-align: top;"><span class="small">${escapeHtml(item.caption || '')}</span><br>`;
 								rowHtml += `${renderKeywords(item.keywords)}</td>`;
@@ -121,7 +121,7 @@ AppAdmin.Items = (function () {
 								rowHtml += `
 						        <td><img src="${item.cover_image_url}" alt="${escapeHtml(item.name)}" class="thumbnail-preview square"></td>
 						        <td>${fullCoverPreviewHtml}</td>
-						        <td>${escapeHtml(item.name)}<br><small class="text-muted">${escapeHtml(item.cover_type_name || 'N/A')}</small></td>
+						        <td>${escapeHtml(item.name)} (${item.id})<br><small class="text-muted">${escapeHtml(item.cover_type_name || 'N/A')}</small></td>
 						        <td>${keywordsHtml}</td>
 						        <td>${textPlacementsHtml}</td>
 						    `;
@@ -129,7 +129,7 @@ AppAdmin.Items = (function () {
 								// Assuming these still use thumbnail_url and are square
 								const thumbUrl = item.thumbnail_url || 'images/placeholder.png';
 								rowHtml += `<td><img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(item.name)}" class="thumbnail-preview square" loading="lazy"></td>`;
-								rowHtml += `<td>${escapeHtml(item.name)}</td>`;
+								rowHtml += `<td>${escapeHtml(item.name)} (${item.id})</td>`;
 								rowHtml += `<td>${renderKeywords(item.keywords)}</td>`;
 							}
 							
@@ -152,8 +152,10 @@ AppAdmin.Items = (function () {
 								if (item.full_cover_json_content && item.full_cover_json_content.canvas && item.full_cover_json_content.canvas.width && item.full_cover_json_content.canvas.height) {
 									const fullCanvasWidth = item.full_cover_json_content.canvas.width;
 									const fullCanvasHeight = item.full_cover_json_content.canvas.height;
+									const fullCanvasFrontWidth = item.full_cover_json_content.canvas.frontWidth;
+									const fullCanvasSpineWidth = item.full_cover_json_content.canvas.spineWidth;
 									const templateUrlFull = `${window.location.origin}/api/templates/${item.id}/json?type=full`;
-									editFullJsonUrl = `/designer?w=${fullCanvasWidth}&h=${fullCanvasHeight}&template_url=${encodeURIComponent(templateUrlFull)}&from_admin=true&template_id_to_update=${item.id}&json_type_to_update=full`;
+									editFullJsonUrl = `/designer?w=${fullCanvasWidth}&h=${fullCanvasHeight}&spine_width=${fullCanvasSpineWidth}&front_width=${fullCanvasFrontWidth}&template_url=${encodeURIComponent(templateUrlFull)}&from_admin=true&template_id_to_update=${item.id}&json_type_to_update=full`;
 								}
 								
 								const editFrontJsonButton = (item.json_content && item.json_content.canvas) ? `<a href="${editFrontJsonUrl}" target="_blank" class="btn btn-outline-primary btn-sm mb-1 w-100" title="Edit Front JSON"><i class="fas fa-palette"></i> Front JSON</a>` : '';

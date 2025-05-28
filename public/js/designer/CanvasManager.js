@@ -986,7 +986,7 @@ class CanvasManager {
 						};
 					}
 					
-					if (isTemplate) {
+					if (isTemplate && !IS_ADMIN_MODE) {
 						console.log("Applying template: Calculating centering offset.");
 						
 						if (designData.layers.length > 0) {

@@ -386,7 +386,8 @@ $(document).ready(function () {
 			$('#saveDesignPanelLink').hide();
 			$('#updateTemplateInDbLink').hide();
 		}
-
+		
+		
 // Add listener for the "Update Template in DB" button
 		if (IS_ADMIN_MODE && TEMPLATE_ID_TO_UPDATE && JSON_TYPE_TO_UPDATE) {
 			$('#updateTemplateInDbBtn').on('click', (e) => {

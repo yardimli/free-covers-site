@@ -48,10 +48,12 @@
 	<div class="d-flex flex-grow-1 overflow-hidden main-content position-relative">
 		<!-- Icon Bar (Fixed Width) -->
 		<ul class="nav nav-pills flex-column text-center sidebar-nav flex-shrink-0">
+			@if($from_admin_mode)
 			<li class="nav-item" id="coversPanelLink"><a class="nav-link" href="#" data-panel-target="#coversPanel"
 			                                             title="Covers"><i class="fas fa-image fa-lg"></i></a></li>
 			<li class="nav-item" id="templatesPanelLink"><a class="nav-link" href="#" data-panel-target="#templatesPanel"
 			                                                title="Templates"><i class="fas fa-th-large fa-lg"></i></a></li>
+			@endif
 			<li class="nav-item"><a class="nav-link" href="#" data-panel-target="#elementsPanel" title="Elements"><i
 						class="fas fa-shapes fa-lg"></i></a></li>
 			<li class="nav-item"><a class="nav-link" href="#" data-panel-target="#overlaysPanel" title="Overlays"><i
