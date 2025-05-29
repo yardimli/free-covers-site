@@ -7,7 +7,9 @@
 	use Illuminate\Support\Str;
 	use Carbon\Carbon;
 	use App\Models\Cover;
-	use App\Models\Favorite; // Added
+	use App\Models\Favorite;
+	use App\Models\UserDesign;
+	use App\Services\ImageUploadService;
 
 	class DashboardController extends Controller
 	{
@@ -15,45 +17,19 @@
 		{
 			$user = Auth::user();
 
-			// --- Fetch Real eBook Covers ---
-			$ebookCovers = Cover::with('templates')
-				->where('cover_type_id', 1)
-				->whereNotNull('mockup_2d_path')
-				->where('mockup_2d_path', '!=', '')
-				->inRandomOrder()
-				->take(4)
+			$userSavedDesigns = UserDesign::where('user_id', $user->id)
+				->orderBy('updated_at', 'desc')
+				->take(12) // Example: limit to 12, or implement pagination
 				->get();
-			foreach ($ebookCovers as $cover) {
-				$cover->active_template_overlay_url = null;
-				if ($cover->templates->isNotEmpty()) {
-					$randomTemplate = $cover->templates->random();
-					if ($randomTemplate->cover_image_path) {
-						$cover->active_template_overlay_url = asset('storage/' . $randomTemplate->cover_image_path);
-					}
-				}
-				if (is_string($cover->updated_at)) {
-					$cover->updated_at = Carbon::parse($cover->updated_at);
-				}
-			}
 
-			// --- Fetch Real Print Covers ---
-			$printCovers = Cover::with('templates')
-				->where('cover_type_id', 2)
-				->whereNotNull('mockup_2d_path')
-				->where('mockup_2d_path', '!=', '')
-				->inRandomOrder()
-				->take(2)
-				->get();
-			foreach ($printCovers as $cover) {
-				$cover->active_template_overlay_url = null;
-				if ($cover->templates->isNotEmpty()) {
-					$randomTemplate = $cover->templates->random();
-					if ($randomTemplate->cover_image_path) {
-						$cover->active_template_overlay_url = asset('storage/' . $randomTemplate->cover_image_path);
-					}
+			$imageUploadService = app(ImageUploadService::class); // Get service instance
+			foreach ($userSavedDesigns as $design) {
+				$design->preview_image_url = $imageUploadService->getUrl($design->preview_image_path);
+				if (is_string($design->updated_at)) {
+					$design->updated_at = Carbon::parse($design->updated_at);
 				}
-				if (is_string($cover->updated_at)) {
-					$cover->updated_at = Carbon::parse($cover->updated_at);
+				if (is_string($design->created_at)) { // Also parse created_at if needed
+					$design->created_at = Carbon::parse($design->created_at);
 				}
 			}
 
@@ -101,9 +77,8 @@
 
 			return view('dashboard', [
 				'user' => $user,
-				'ebookCovers' => $ebookCovers,
-				'printCovers' => $printCovers,
-				'favoriteCoversData' => $favoriteCoversData, // Use the new variable
+				'favoriteCoversData' => $favoriteCoversData,
+				'userSavedDesigns' => $userSavedDesigns,
 				'footerClass' => 'bj_footer_area_two',
 			]);
 		}

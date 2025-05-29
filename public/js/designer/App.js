@@ -118,6 +118,8 @@ $(document).ready(function () {
 	const querySpineWidth = urlParams.get('spine_width');
 	const queryFrontWidth = urlParams.get('front_width');
 	
+	const queryUserDesignId = urlParams.get('ud_id');
+	
 	let designLoadedOrSizeSetFromQuery = false;
 	
 	function finalizeAppSetup() {
@@ -176,6 +178,35 @@ $(document).ready(function () {
 			.catch(error => {
 				console.error("Error loading/parsing template from URL for admin edit:", queryFileUrl, error);
 				alert(`Failed to load template for editing: ${error.message}. Defaulting to initial setup.`);
+			})
+			.finally(() => {
+				finalizeAppSetup();
+			});
+	} else if (queryUserDesignId) { // <<< --- NEW: Load User Design ---
+		showGlobalLoadingOverlay("Loading your saved design...");
+		const userDesignJsonUrl = `/user-designs/${queryUserDesignId}/json`;
+		fetch(userDesignJsonUrl, {headers: {'Accept': 'application/json'}})
+			.then(response => {
+				if (!response.ok) {
+					if (response.status === 403) throw new Error("Access denied. You may not have permission to load this design.");
+					if (response.status === 404) throw new Error("Saved design not found. It might have been deleted.");
+					throw new Error(`Error fetching design: ${response.status} ${response.statusText}`);
+				}
+				return response.json();
+			})
+			.then(jsonData => {
+				console.log("Successfully fetched user design JSON:", userDesignJsonUrl);
+				if (jsonData && jsonData.canvas) {
+					canvasManager.loadDesign(jsonData, false); // Load as full design
+					designLoadedOrSizeSetFromQuery = true;
+				} else {
+					console.error("Invalid user design JSON structure. Missing 'canvas' property or data is not an object.", jsonData);
+					alert("Error: Could not load saved design data due to invalid format.");
+				}
+			})
+			.catch(error => {
+				console.error("Error loading/parsing user design from URL:", userDesignJsonUrl, error);
+				alert(`Failed to load your saved design: ${error.message}. Defaulting to initial setup.`);
 			})
 			.finally(() => {
 				finalizeAppSetup();
@@ -369,10 +400,10 @@ $(document).ready(function () {
 	function dataURLtoBlob(dataurl) {
 		let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
 			bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-		while(n--){
+		while (n--) {
 			u8arr[n] = bstr.charCodeAt(n);
 		}
-		return new Blob([u8arr], {type:mime});
+		return new Blob([u8arr], {type: mime});
 	}
 	
 	// --- Global Action Button Setup & Updates ---
@@ -395,8 +426,8 @@ $(document).ready(function () {
 			$('#saveDesignPanelLink').hide();
 			$('#updateTemplateInDbLink').hide();
 		}
-		
-		
+
+
 // Add listener for the "Update Template in DB" button
 		if (IS_ADMIN_MODE && TEMPLATE_ID_TO_UPDATE && JSON_TYPE_TO_UPDATE) {
 			$('#updateTemplateInDbBtn').on('click', async (e) => { // Make the handler async
@@ -446,7 +477,7 @@ $(document).ready(function () {
 						headers: {
 							'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
 						},
-						success: function(response) {
+						success: function (response) {
 							hideGlobalLoadingOverlay();
 							if (response.success) {
 								alert('Template updated successfully in the database!');
@@ -456,7 +487,7 @@ $(document).ready(function () {
 								console.error("Update template error response:", response);
 							}
 						},
-						error: function(xhr) {
+						error: function (xhr) {
 							hideGlobalLoadingOverlay();
 							const errorMsg = xhr.responseJSON?.message || (xhr.responseJSON?.errors ? JSON.stringify(xhr.responseJSON.errors) : xhr.statusText) || 'Server error';
 							alert('Error updating template: ' + errorMsg);
@@ -523,6 +554,91 @@ $(document).ready(function () {
 		$('#openCanvasSizeModalBtn').on('click', (e) => {
 			e.preventDefault();
 			canvasSizeModal.show();
+		});
+		
+		$('#saveUserDesignBtn').on('click', async (e) => {
+			e.preventDefault();
+			if (!canvasManager) {
+				alert("CanvasManager is not available.");
+				return;
+			}
+			
+			const designName = prompt("Enter a name for your design (e.g., My Sci-Fi Cover):", "My Awesome Design");
+			if (!designName || designName.trim() === "") {
+				alert("Design name cannot be empty.");
+				return;
+			}
+			
+			showGlobalLoadingOverlay("Saving your design...");
+			
+			let designData;
+			try {
+				designData = canvasManager.getDesignDataAsObject();
+				if (!designData) {
+					throw new Error("Could not retrieve current design data.");
+				}
+			} catch (err) {
+				hideGlobalLoadingOverlay();
+				console.error("Error getting design data:", err);
+				alert("Error preparing design data: " + err.message);
+				return;
+			}
+			
+			let imageBlob;
+			try {
+				const dataUrl = await canvasManager.exportCanvas('jpeg', false);
+				if (!dataUrl) {
+					throw new Error("Canvas export did not return a valid data URL.");
+				}
+				imageBlob = dataURLtoBlob(dataUrl); // Assumes dataURLtoBlob function exists
+			} catch (exportError) {
+				hideGlobalLoadingOverlay();
+				console.error("Error exporting canvas for user design save:", exportError);
+				alert("Failed to generate preview image for saving. Save aborted.");
+				return;
+			}
+			
+			const formData = new FormData();
+			formData.append('name', designName.trim());
+			formData.append('json_data', JSON.stringify(designData));
+			// Sanitize filename a bit for the blob
+			const safeFilename = designName.trim().replace(/[^a-z0-9_.-]/gi, '_').substring(0, 50) || 'design_preview';
+			formData.append('preview_image_file', imageBlob, `${safeFilename}.png`);
+			
+			$.ajax({
+				url: '/user-designs', // Route: user-designs.store
+				type: 'POST',
+				data: formData,
+				contentType: false,
+				processData: false,
+				headers: {
+					'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+				},
+				success: function (response) {
+					hideGlobalLoadingOverlay();
+					if (response.success) {
+						alert('Design saved successfully!');
+						// Optionally, you could update a list of saved designs if displayed in designer
+						// or provide a link to the dashboard.
+					} else {
+						let errorMessages = response.message || 'Unknown error';
+						if (response.errors) {
+							errorMessages += "\nDetails:\n";
+							for (const field in response.errors) {
+								errorMessages += `- ${response.errors[field].join(', ')}\n`;
+							}
+						}
+						alert('Failed to save design: ' + errorMessages);
+						console.error("Save user design error response:", response);
+					}
+				},
+				error: function (xhr) {
+					hideGlobalLoadingOverlay();
+					const errorMsg = xhr.responseJSON?.message || (xhr.responseJSON?.errors ? JSON.stringify(xhr.responseJSON.errors) : xhr.statusText) || 'Server error';
+					alert('Error saving design: ' + errorMsg);
+					console.error("Save user design AJAX error:", xhr);
+				}
+			});
 		});
 	}
 	

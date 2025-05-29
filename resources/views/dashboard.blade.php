@@ -153,41 +153,39 @@
 				</div>
 			</div>
 			
-			<!-- My eBook Covers Section -->
-			<div class="dashboard-section">
+			<!-- My Saved Designs Section -->
+			<div class="dashboard-section" id="saved-designs-section">
 				<div class="dashboard-section-header">
-					<h3><i class="fas fa-book me-2 text-primary"></i>My eBook Covers</h3>
-					@if($ebookCovers->count() > 0)
-						<a href="{{ route('shop.index', ['user_covers' => 'ebook']) }}" class="btn btn-sm btn-outline-primary">View
-							All</a>
-					@endif
+					<h3><i class="fas fa-save me-2 text-info"></i>My Saved Designs</h3>
+					{{-- Optional: Link to a page showing all saved designs if you implement pagination --}}
 				</div>
-				@if($ebookCovers->isNotEmpty())
+				@if($userSavedDesigns->isNotEmpty())
 					<div class="row">
-						@foreach($ebookCovers as $cover)
-							<div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+						@foreach($userSavedDesigns as $design)
+							<div class="col-lg-3 col-md-4 col-sm-6 mb-4 saved-design-item-card"
+							     id="saved-design-item-{{ $design->id }}">
 								<div class="dashboard-item-card">
-									<a href="{{ route('covers.show', $cover->id) }}" class="cover-image-container">
-										<img src="{{ asset('storage/' . $cover->mockup_2d_path ) }}" alt="{{ $cover->name }}"
-										     class="cover-mockup-image">
-										@if($cover->active_template_overlay_url)
-											<img src="{{ $cover->active_template_overlay_url }}" alt="Template Overlay"
-											     class="template-overlay-image">
-										@endif
+									<a href="{{ route('designer.index', ['ud_id' => $design->id]) }}" target="_blank" class="cover-image-container">
+										<img src="{{ $design->preview_image_url }}" alt="{{ $design->name }}" class="cover-mockup-image"
+										     style="object-fit: contain; width: 100%; height: 100%;">
 									</a>
 									<div class="dashboard-item-content">
 										<div>
-											<h5 data-bs-toggle="tooltip" title="{{ $cover->name }}">{{ Str::limit($cover->name, 25) }}</h5>
-											<p class="text-muted small mb-2">Last updated: {{ $cover->updated_at->format('M d, Y') }}</p>
+											<h5 data-bs-toggle="tooltip" title="{{ $design->name }}">{{ Str::limit($design->name, 25) }}</h5>
+											<p class="text-muted small mb-2">
+												Saved: {{ $design->updated_at->format('M d, Y H:i') }}
+											</p>
 										</div>
 										<div class="dashboard-item-actions">
-											<a href="{{ route('designer.index', ['cover_id' => $cover->id]) }}"
-											   class="btn btn-sm btn-primary"><i class="fas fa-edit"></i> Edit</a>
-											<a href="#" class="btn btn-sm btn-outline-secondary"><i class="fas fa-download"></i> DL</a>
-											{{-- <form action="{{ route('dashboard.covers.favorite', $cover->id) }}" method="POST" style="display:inline;">
-													@csrf
-													<button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-heart"></i></button>
-											</form> --}}
+											<a href="{{ route('designer.index', ['ud_id' => $design->id]) }}" target="_blank" class="btn btn-sm btn-info"><i
+													class="fas fa-edit"></i> Edit</a>
+											<a href="{{ $design->preview_image_url }}"
+											   download="{{ Str::slug($design->name ?: 'design') . '.jpg' }}"
+											   class="btn btn-sm btn-outline-secondary"><i class="fas fa-download"></i> JPG</a>
+											<button class="btn btn-sm btn-outline-danger remove-saved-design-btn"
+											        data-design-id="{{ $design->id }}">
+												<i class="fas fa-trash-alt"></i> Delete
+											</button>
 										</div>
 									</div>
 								</div>
@@ -196,58 +194,13 @@
 					</div>
 				@else
 					<div class="empty-state">
-						<i class="fas fa-book-open"></i>
-						<p>You haven't created any eBook covers yet.</p>
-						<a href="{{ route('designer.index', ['type' => 'ebook']) }}" class="bj_theme_btn small_btn">Create an eBook
-							Cover</a>
+						<i class="far fa-save"></i>
+						<p>You haven't saved any designs yet.</p>
+						<a href="{{ route('designer.index') }}" class="bj_theme_btn small_btn btn-info">Create a Design</a>
 					</div>
 				@endif
 			</div>
 			
-			<!-- My Print Covers Section -->
-			<div class="dashboard-section">
-				<div class="dashboard-section-header">
-					<h3><i class="fas fa-book-reader me-2 text-success"></i>My Print Covers</h3>
-					@if($printCovers->count() > 0)
-						<a href="{{ route('shop.index', ['user_covers' => 'print']) }}" class="btn btn-sm btn-outline-success">View
-							All</a>
-					@endif
-				</div>
-				@if($printCovers->isNotEmpty())
-					<div class="row">
-						@foreach($printCovers as $cover)
-							<div class="col-lg-3 col-md-4 col-sm-6 mb-4">
-								<div class="dashboard-item-card">
-									<a href="{{ route('covers.show', $cover->id) }}" class="cover-image-container">
-										<img
-											src="{{ $cover->mockup_2d_path ? asset('storage/' . $cover->mockup_2d_path) : asset('images/placeholder.png') }}"
-											alt="{{ $cover->name }}" class="cover-mockup-image">
-										{{-- Add overlay if applicable for print covers --}}
-									</a>
-									<div class="dashboard-item-content">
-										<div>
-											<h5 data-bs-toggle="tooltip" title="{{ $cover->name }}">{{ Str::limit($cover->name, 25) }}</h5>
-											<p class="text-muted small mb-2">Last updated: {{ $cover->updated_at->format('M d, Y') }}</p>
-										</div>
-										<div class="dashboard-item-actions">
-											<a href="{{ route('designer.index', ['cover_id' => $cover->id]) }}"
-											   class="btn btn-sm btn-success"><i class="fas fa-edit"></i> Edit</a>
-											<a href="#" class="btn btn-sm btn-outline-secondary"><i class="fas fa-download"></i> DL</a>
-										</div>
-									</div>
-								</div>
-							</div>
-						@endforeach
-					</div>
-				@else
-					<div class="empty-state">
-						<i class="fas fa-print"></i>
-						<p>You haven't created any print covers yet.</p>
-						<a href="{{ route('designer.index', ['type' => 'print']) }}" class="bj_theme_btn small_btn btn-success">Create
-							a Print Cover</a>
-					</div>
-				@endif
-			</div>
 			
 			<!-- Favorites Section -->
 			<div class="dashboard-section" id="favorites-section">
@@ -318,7 +271,11 @@
 	<script>
 		// Dashboard Favorite Removal
 		document.addEventListener('click', function (event) {
-			if (event.target.matches('.remove-favorite-btn') || event.target.closest('.remove-favorite-btn')) {
+			const removeFavoriteButton = event.target.closest('.remove-favorite-btn');
+			const removeDesignButton = event.target.closest('.remove-saved-design-btn');
+			
+			
+			if (removeFavoriteButton) {
 				const button = event.target.closest('.remove-favorite-btn');
 				const favoriteId = button.dataset.favoriteId;
 				const csrfToken = '{{ csrf_token() }}'; // Make sure CSRF token is available
@@ -387,8 +344,76 @@
 						button.innerHTML = originalButtonHtml;
 						button.disabled = false;
 					});
+			} else if (removeDesignButton) {
+				const button = removeDesignButton;
+				const designId = button.dataset.designId;
+				const csrfToken = '{{ csrf_token() }}';
+				
+				if (!confirm('Are you sure you want to delete this saved design? This action cannot be undone.')) {
+					return;
+				}
+				
+				const originalButtonHtml = button.innerHTML;
+				button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+				button.disabled = true;
+				
+				fetch(`/user-designs/${designId}`, { // Route: user-designs.destroy
+					method: 'DELETE',
+					headers: {
+						'X-CSRF-TOKEN': csrfToken,
+						'Accept': 'application/json'
+					}
+				})
+					.then(response => {
+						if (!response.ok) {
+							return response.json().then(err => {
+								throw err;
+							});
+						}
+						return response.json();
+					})
+					.then(data => {
+						button.innerHTML = originalButtonHtml; // Restore button content first
+						button.disabled = false;
+						
+						if (data.success) {
+							const itemCard = document.getElementById(`saved-design-item-${designId}`);
+							if (itemCard) {
+								itemCard.remove();
+							}
+							// Check if the saved designs list is now empty
+							const designsSection = document.getElementById('saved-designs-section');
+							const remainingItems = designsSection.querySelectorAll('.saved-design-item-card');
+							if (remainingItems.length === 0) {
+								const rowContainer = designsSection.querySelector('.row');
+								if (rowContainer) rowContainer.remove();
+								const emptyStateHtml = `
+                        <div class="empty-state">
+                            <i class="far fa-save"></i>
+                            <p>You haven't saved any designs yet.</p>
+                            <a href="{{ route('designer.index') }}" class="bj_theme_btn small_btn btn-info">Create a Design</a>
+                        </div>`;
+								const header = designsSection.querySelector('.dashboard-section-header');
+								if (header) {
+									header.insertAdjacentHTML('afterend', emptyStateHtml);
+								} else { // Fallback if header isn't found for some reason
+									designsSection.innerHTML += emptyStateHtml;
+								}
+							}
+							showToast('Success', data.message, 'bg-success'); // Ensure showToast is globally available
+						} else {
+							showToast('Error', data.message || 'Could not delete saved design.', 'bg-danger');
+						}
+					})
+					.catch(error => {
+						button.innerHTML = originalButtonHtml;
+						button.disabled = false;
+						console.error('Error:', error);
+						showToast('Error', error.message || 'An unexpected error occurred.', 'bg-danger');
+					});
 			}
 		});
+		
 		
 		// Tooltip initialization (if not already global)
 		var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))

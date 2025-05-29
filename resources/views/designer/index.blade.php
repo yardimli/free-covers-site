@@ -75,8 +75,13 @@
 					                                                    title="Update Template in Database"><i
 								class="fas fa-database fa-lg text-warning"></i></a></li>
 				@endif
-			@endif
-			<li class="nav-item"><a class="nav-link" href="#" id="undoBtn" title="Undo"><i class="fas fa-undo fa-lg"></i></a>
+				@else
+					{{-- Regular user save design button --}}
+					@auth
+						<li class="nav-item" id="saveUserDesignLink"><a class="nav-link" href="#" id="saveUserDesignBtn" title="Save My Design"><i class="fas fa-cloud-upload-alt fa-lg"></i></a></li>
+					@endauth
+				@endif
+				<li class="nav-item"><a class="nav-link" href="#" id="undoBtn" title="Undo"><i class="fas fa-undo fa-lg"></i></a>
 			</li>
 			<li class="nav-item"><a class="nav-link" href="#" id="redoBtn" title="Redo"><i class="fas fa-redo fa-lg"></i></a>
 			</li>

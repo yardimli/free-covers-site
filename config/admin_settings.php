@@ -37,6 +37,14 @@
 				'thumb_h' => 150
 			],
 
+			'user_design_previews' => [
+				'disk' => 'public',
+				'originals' => 'user_designs/previews/{year}/{month}/{day}', // Path for original images
+				'thumbnails' => 'user_designs/thumbnails/{year}/{month}/{day}', // Path for original images
+				'thumb_w' => 400,
+				'thumb_h' => 400,
+			],
+
 			// Templates
 			'templates_cover_image' => [
 				'originals' => 'templates/cover_images'
@@ -68,7 +76,10 @@
 				'thumb_h' => 200, // Example: Adjust as needed
 				'thumb_quality' => 80,
 			],
+
 		],
+
+
 
 		// For AI generated template files (if you decide to save them to disk again)
 		// Relative to upload_path_prefix

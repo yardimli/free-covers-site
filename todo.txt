@@ -13,13 +13,11 @@ when templates or covers are hidden, the designer should not load them .........
 auto gen full cover from front json .......................................................................OK
 in admin update json and png of template when saving ......................................................OK
 
-on book details page overlay full cover template image on top of full cover image
-make top search work
-make blog page work
-add blog to admin
+on book details page overlay full cover template image on top of full cover image .........................OK
+make blog page work .......................................................................................OK
+add blog to admin .........................................................................................OK
 
-allow user to save their work on the covers (json file) to my ebook and print covers
-in designer make the spine align correctly with the cover
+allow user to save their work on the covers (json file) to my ebook and print covers ......................OK
 
 make signin/up with google work
 make forget password work
@@ -27,5 +25,7 @@ make forget password work
 add list of members with summary of their work to admin
 add login as user to admin
 
+make top search work
+in designer make the spine align correctly with the cover
 update admin ai to auto assign template to covers with better prompt
 create social media accounts for the site update the footer

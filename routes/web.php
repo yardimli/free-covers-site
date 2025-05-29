@@ -10,6 +10,7 @@
 	use App\Http\Controllers\HomeController;
 	use App\Http\Controllers\ProfileController;
 	use App\Http\Controllers\ShopController;
+	use App\Http\Controllers\UserDesignController;
 	use Illuminate\Support\Facades\Route;
 
 	/*
@@ -124,6 +125,15 @@
 		Route::post('/favorites', [FavoriteController::class, 'store'])->name('favorites.store');
 		Route::delete('/favorites', [FavoriteController::class, 'destroy'])->name('favorites.destroy');
 		Route::delete('/favorites/{favorite}', [FavoriteController::class, 'destroyById'])->name('favorites.destroyById');
+
+		Route::prefix('user-designs')->name('user-designs.')->group(function () {
+			Route::post('/', [UserDesignController::class, 'store'])->name('store');
+			Route::get('/{userDesign}/json', [UserDesignController::class, 'getJsonData'])->name('json_data');
+			Route::delete('/{userDesign}', [UserDesignController::class, 'destroy'])->name('destroy');
+			// Add update route if needed later for renaming etc.
+			// Route::put('/{userDesign}', [UserDesignController::class, 'update'])->name('update');
+		});
+
 	});
 
 
