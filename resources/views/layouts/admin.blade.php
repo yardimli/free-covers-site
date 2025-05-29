@@ -1,23 +1,26 @@
-<!DOCTYPE html>
+{{-- free-cover-site/resources/views/layouts/admin.blade.php --}}
+	<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="csrf-token" content="{{ csrf_token() }}">
-	<title>Admin - {{ config('app.name', 'Laravel') }}</title>
+	<title>Admin - {{ config('app.name', 'Laravel') }} - @yield('title', 'Dashboard')</title>
 	
 	<link href="{{ asset('vendors/bootstrap5.3.5/css/bootstrap.min.css') }}" rel="stylesheet">
 	<link rel="stylesheet" href="{{ asset('vendors/fontawesome-free-6.7.2/css/all.min.css') }}">
+	
+	<!-- Quill.js CSS -->
+	<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+	
 	<link rel="stylesheet" href="{{ asset('css/admin.css') }}">
 	
-
 	<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">
 	<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32x32.png') }}">
 	<link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon-16x16.png') }}">
 	<link rel="manifest" href="{{ asset('images/site.webmanifest') }}">
 	
 	@stack('styles')
-
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
@@ -41,6 +44,9 @@
 			</li>
 			<li class="nav-item">
 				<a href="{{ route('admin.covers.template-management.index') }}" class="btn btn-sm btn-outline-light me-2" target="_blank">Prune Cover/Template Pairs</a>
+			</li>
+			<li class="nav-item">
+				<a href="{{ route('admin.blog.index') }}" class="btn btn-sm btn-outline-secondary me-2">Blog Management</a>
 			</li>
 			<li class="nav-item">
 				<a href="{{ route('home') }}" class="btn btn-sm btn-outline-light me-2" target="_blank">View App</a>
@@ -77,6 +83,10 @@
 <script src="{{ asset('vendors/jquery-ui-1.14.1/external/jquery/jquery.js') }}"></script>
 <script src="{{ asset('vendors/bootstrap5.3.5/js/bootstrap.bundle.min.js') }}"></script>
 
+<!-- Quill.js JS -->
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
+
 <!-- Pass routes to JS -->
 <script>
 	window.adminRoutes = {
@@ -98,6 +108,16 @@
 		getCoversWithoutTemplates: "{{ route('admin.covers.without-templates') }}",
 		uploadCoverZip: "{{ route('admin.covers.upload-zip') }}",
 		generateFullCoverJsonForTemplateBase: "{{ url('admin/templates') }}",
+		
+		blogCategoriesList: "{{ route('admin.blog.categories.list') }}",
+		blogCategoriesStore: "{{ route('admin.blog.categories.store') }}",
+		blogCategoriesUpdateBase: "{{ url('admin/blog/categories') }}",
+		blogCategoriesDestroyBase: "{{ url('admin/blog/categories') }}",
+		
+		blogPostsList: "{{ route('admin.blog.posts.list') }}",
+		blogPostsGetBase: "{{ url('admin/blog/posts') }}", // Used for constructing edit links
+		blogPostsDestroyBase: "{{ url('admin/blog/posts') }}",
+		generateAiBlogPost: "{{ route('admin.blog.posts.generate-ai') }}",
 	};
 	window.AppAdmin = window.AppAdmin || {}; // Initialize the global namespace
 </script>
@@ -117,6 +137,7 @@
 <script src="{{ asset('js/admin/batchAutoAssignTemplates.js') }}"></script>
 <script src="{{ asset('js/admin/batchAiMetadata.js') }}"></script>
 <script src="{{ asset('js/admin/uploadZip.js') }}"></script>
+<script src="{{ asset('js/admin/blogManagement.js') }}"></script>
 
 <!-- Main Admin Orchestrator -->
 <script src="{{ asset('js/admin.js') }}"></script>

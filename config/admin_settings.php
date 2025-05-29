@@ -60,6 +60,14 @@
 				'thumb_w' => 100,
 				'thumb_h' => 100
 			],
+
+			'blog_post_images' => [
+				'originals' => 'blog/posts/originals',
+				'thumbnails' => 'blog/posts/thumbnails',
+				'thumb_w' => 300, // Example: Adjust as needed
+				'thumb_h' => 200, // Example: Adjust as needed
+				'thumb_quality' => 80,
+			],
 		],
 
 		// For AI generated template files (if you decide to save them to disk again)
