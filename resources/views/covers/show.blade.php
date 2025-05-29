@@ -94,12 +94,24 @@
       }
 
       .cover-additional-previews .full-cover-thumb-img {
-          width: 180px; /* height: auto; is implicit or inherited */
+          width: 180px;
+          /* height: auto; is implicit or inherited */
       }
 
       .cover-additional-previews .mockup-3d-thumb-img {
-          width: 160px; /* height: auto; is implicit or inherited */
+          width: 160px;
+          /* height: auto; is implicit or inherited */
       }
+
+      /* Ensure cover-image-container used for thumbnails behaves correctly */
+      .cover-additional-previews .cover-image-container {
+          vertical-align: middle; /* Align with other potential inline-block elements */
+      }
+
+      .cover-additional-previews .cover-image-container .template-overlay-image {
+          /* Ensure overlay respects thumbnail context if different from main image */
+      }
+
 
       /* Styles for the image preview modal */
       #imagePreviewModal .modal-content {
@@ -110,7 +122,7 @@
 
       #imagePreviewModal .modal-body {
           padding: 0;
-          position: relative; /* For positioning the close button */
+          position: relative; /* For positioning the close button AND overlay */
       }
 
       #imagePreviewModal #modalImage {
@@ -118,6 +130,8 @@
           max-width: 100%; /* Max width to fit modal dialog */
           display: block; /* To remove extra space below image */
           margin: auto; /* Center image if it's smaller than modal-body */
+          position: relative; /* Stacking context for potential direct children overlays */
+          z-index: 0;
       }
 
       #imagePreviewModal .btn-close-modal {
@@ -127,7 +141,7 @@
           background-color: rgba(255, 255, 255, 0.8);
           border-radius: 50%;
           padding: 0.5rem;
-          z-index: 1056; /* Ensure it's above the image */
+          z-index: 1056; /* Ensure it's above the image and overlay */
           border: none;
       }
 
@@ -155,11 +169,14 @@
           color: white;
           border-color: #e74c3c;
       }
+
       .bj_theme_btn.favorited_btn:hover {
           background-color: #c0392b;
           border-color: #c0392b;
       }
-      .bj_theme_btn.favorited_btn i, .bj_theme_btn.strock_btn i.fa-heart {
+
+      .bj_theme_btn.favorited_btn i,
+      .bj_theme_btn.strock_btn i.fa-heart {
           margin-right: 0.35em;
       }
 	</style>
@@ -167,7 +184,6 @@
 
 @section('content')
 	@include('partials.cover_breadcrumb', ['cover' => $cover])
-	
 	
 	<section class="product_details_area sec_padding" data-bg-color="#f5f5f5">
 		<div class="container">
@@ -185,13 +201,27 @@
 									     class="template-overlay-image"/>
 								@endif
 							</div>
+							
 							{{-- Additional Previews (Thumbnails) --}}
 							<div class="cover-additional-previews text-center mt-2">
 								@if($cover->full_cover_thumbnail_path && $cover->full_cover_path)
-									<a href="#" data-bs-toggle="modal" data-bs-target="#imagePreviewModal"
-									   data-image-src="{{ asset('storage/' . $cover->full_cover_path) }}" title="View Full Cover">
+									<a href="#"
+									   class="cover-image-container me-2"
+									   {{-- Added cover-image-container for relative positioning of overlay --}}
+									   style="display: inline-block;" {{-- Ensure proper layout with other thumbnails --}}
+									   data-bs-toggle="modal"
+									   data-bs-target="#imagePreviewModal"
+									   data-image-src="{{ asset('storage/' . $cover->full_cover_path) }}"
+									   @if(isset($activeTemplateFullCoverOverlayUrl)) data-overlay-src="{{ $activeTemplateFullCoverOverlayUrl }}"
+									   @endif
+									   title="View Full Cover">
 										<img src="{{ asset('storage/' . $cover->full_cover_thumbnail_path) }}" alt="Full Cover Thumbnail"
-										     class="img-thumbnail thumb-img full-cover-thumb-img me-2">
+										     class="img-thumbnail thumb-img full-cover-thumb-img">
+										@if(isset($activeTemplateFullCoverOverlayUrl))
+											<img src="{{ $activeTemplateFullCoverOverlayUrl }}" alt="Template Full Cover Overlay"
+											     class="template-overlay-image"
+											     style="top:10; left:10; width:93% !important; height:93% !important; object-fit: contain;">
+										@endif
 									</a>
 								@endif
 								@if($cover->mockup_3d_path)
@@ -244,7 +274,6 @@
 								   title="{{ $genericCustomizeButtonTitle ?: 'Customize Print Cover'}}" target="_blank">
 									<i class="fas fa-print"></i> Customize Print
 								</a>
-								
 								@auth
 									<button id="favoriteButton"
 									        class="bj_theme_btn mt-2 {{ $isFavorited ? 'favorited_btn' : 'strock_btn' }}"
@@ -252,8 +281,8 @@
 									        data-template-id="{{ $activeTemplateForView ? $activeTemplateForView->id : '' }}"
 									        data-is-favorited="{{ $isFavorited ? 'true' : 'false' }}"
 									        title="{{ $isFavorited ? 'Remove from Favorites' : 'Add to Favorites' }}">
-										<i class="fas {{ $isFavorited ? 'fa-heart-broken' : 'fa-heart' }}"></i>
-										<span class="button-text">{{ $isFavorited ? 'Favorited' : 'Favorite' }}</span>
+										<i class="fas {{ $isFavorited ? 'fa-heart-broken' : 'fa-heart' }}"></i> <span
+											class="button-text">{{ $isFavorited ? 'Favorited' : 'Favorite' }}</span>
 									</button>
 								@else
 									<a href="{{ route('login') }}" class="bj_theme_btn strock_btn mt-2" title="Login to add to favorites">
@@ -341,6 +370,7 @@
 						@endif
 					</div>
 				</div>
+				
 				<div class="col-xl-3">
 					<div class="product_sidbar p-4"
 					     style="background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
@@ -361,8 +391,8 @@
 									@else
 										<span class="badge bg-light text-dark me-1 mb-1 p-2 keyword-badge-link"
 										      title="Keyword: {{ $kwData['displayName'] }}">
-										{{ $kwData['displayName'] }}
-									</span>
+                                            {{ $kwData['displayName'] }}
+                                        </span>
 									@endif
 								@endforeach
 							</div>
@@ -398,8 +428,6 @@
 							   target="_blank"> {{-- Added target="_blank" --}}
 								<i class="fas fa-print"></i> Print {{ $sidebarPrintButtonText }}
 							</a>
-							
-							
 						</div>
 					</div>
 					
@@ -453,6 +481,7 @@
 				<div class="modal-body">
 					<button type="button" class="btn-close btn-close-modal" data-bs-dismiss="modal" aria-label="Close"></button>
 					<img id="modalImage" src="" alt="Cover Preview" class="img-fluid">
+					{{-- Overlay will be added here by JavaScript if applicable --}}
 				</div>
 			</div>
 		</div>
@@ -495,7 +524,8 @@
 			@endif
 			@if(session('error')) showToast('Error', '{{ session('error') }}', 'bg-danger');
 			@endif
-			@if(session('info')) showToast('Info', '{{ session('info') }}', 'bg-info'); @endif
+			@if(session('info')) showToast('Info', '{{ session('info') }}', 'bg-info');
+			@endif
 			
 			document.querySelectorAll('.remove-template-assignment-form').forEach(form => {
 				form.addEventListener('submit', function (event) {
@@ -504,52 +534,35 @@
 					const templateId = this.dataset.templateId;
 					const csrfToken = this.querySelector('input[name="_token"]').value;
 					
-					// if (!confirm('Are you sure you want to remove this style from the cover?')) {
-					//     return;
-					// }
-					
 					fetch(actionUrl, {
 						method: 'POST',
 						headers: {
 							'X-CSRF-TOKEN': csrfToken,
 							'Accept': 'application/json',
-							// 'Content-Type': 'application/json' // Not strictly needed if body is empty
 						},
-						// body: JSON.stringify({}) // No body needed as IDs are in URL
 					})
 						.then(response => response.json())
 						.then(data => {
 							if (data.success) {
 								showToast('Success', data.message, 'bg-success');
 								const activeTemplateIdOnPage = {{ $activeTemplateForView ? $activeTemplateForView->id : 'null' }};
-								
-								// If the removed template was the main active one, redirect to the cover page without template params
-								// This will allow the backend to pick a new random one or show none.
 								if (activeTemplateIdOnPage && parseInt(templateId) === activeTemplateIdOnPage) {
-									// Remove the main form container itself
 									const mainFormContainer = document.getElementById(`main-active-style-remove-form-container-${templateId}`);
 									if (mainFormContainer) mainFormContainer.remove();
-									// Redirect to the base cover URL to refresh the main view
 									window.location.href = "{{ route('covers.show', ['cover' => $cover->id]) }}";
-									return; // Stop further JS execution as page will reload/redirect
+									return;
 								}
-								
-								// Remove the specific variation card from the DOM
 								const variationCard = document.getElementById(`variation-card-${templateId}`);
 								if (variationCard) {
 									variationCard.remove();
 								}
-								
-								// Check if the variations grid is now empty
 								const variationsGridRow = document.querySelector('.cover-variations-grid .row');
 								if (variationsGridRow && variationsGridRow.children.length === 0) {
 									const variationsContainer = document.querySelector('.cover-variations-grid');
 									if (variationsContainer) {
-										// Replace content with a message
 										variationsContainer.innerHTML = '<h5 class="content_header mb-3">Available Styles</h5><p>No styles currently assigned to this cover.</p>';
 									}
 								}
-								
 							} else {
 								showToast('Error', data.message || 'Could not remove style.', 'bg-danger');
 							}
@@ -563,40 +576,109 @@
 			
 			// Image Preview Modal Logic
 			var imagePreviewModalEl = document.getElementById('imagePreviewModal');
-			if (imagePreviewModalEl) {
-				var modalImageEl = document.getElementById('modalImage');
+			var modalImageEl = document.getElementById('modalImage');
+			var currentModalOverlayImage = null; // Keep track of the current overlay in the modal
+			
+			if (imagePreviewModalEl && modalImageEl) {
 				imagePreviewModalEl.addEventListener('show.bs.modal', function (event) {
-					var button = event.relatedTarget; // Anchor tag that triggered the modal
+					var button = event.relatedTarget;
 					var imageSrc = button.getAttribute('data-image-src');
-					if (modalImageEl && imageSrc) {
+					var overlaySrc = button.getAttribute('data-overlay-src');
+					
+					// 1. Clear previous overlay image from DOM
+					if (currentModalOverlayImage) {
+						currentModalOverlayImage.remove();
+						currentModalOverlayImage = null;
+					}
+					
+					// 2. Clear src of modal image and any existing onload handler to prepare for new image
+					//    It's important to clear src before setting onload for a fresh state.
+					modalImageEl.setAttribute('src', '');
+					modalImageEl.onload = null;
+					
+					if (imageSrc) {
+						// 3. Define the onload handler for the main modal image (modalImageEl)
+						//    This will be called AFTER modalImageEl has loaded its image data from imageSrc.
+						modalImageEl.onload = function() {
+							// Use requestAnimationFrame to ensure that the browser has completed
+							// layout calculations and modalImageEl.offsetWidth/Height are accurate.
+							requestAnimationFrame(function() {
+								// Safeguard: Clear any overlay that might have been added if this somehow runs multiple times
+								if (currentModalOverlayImage) {
+									currentModalOverlayImage.remove();
+									currentModalOverlayImage = null;
+								}
+								
+								if (overlaySrc) {
+									// Check if modalImageEl has valid dimensions now
+									// This check is crucial after rAF.
+									if (modalImageEl.offsetWidth > 0 && modalImageEl.offsetHeight > 0) {
+										var overlayImg = document.createElement('img');
+										overlayImg.src = overlaySrc;
+										overlayImg.alt = "Template Overlay";
+										overlayImg.style.position = 'absolute';
+										overlayImg.style.top = modalImageEl.offsetTop + 'px';
+										overlayImg.style.left = modalImageEl.offsetLeft + 'px';
+										overlayImg.style.width = modalImageEl.offsetWidth + 'px';
+										overlayImg.style.height = modalImageEl.offsetHeight + 'px';
+										overlayImg.style.objectFit = 'contain';
+										overlayImg.style.pointerEvents = 'none';
+										overlayImg.style.zIndex = '1'; // Above base image, below close button
+										
+										// Append the overlay as a sibling to the modalImageEl, within the modal-body
+										modalImageEl.parentNode.appendChild(overlayImg);
+										currentModalOverlayImage = overlayImg;
+									} else {
+										// This case should be rare with rAF, but log if it happens
+										console.warn("Modal image dimensions are still zero after load and requestAnimationFrame. Overlay not applied.", {
+											width: modalImageEl.offsetWidth,
+											height: modalImageEl.offsetHeight,
+											src: modalImageEl.src
+										});
+									}
+								}
+							});
+							// The onload handler for modalImageEl is effectively single-use for this specific load.
+							// It will be cleared and re-assigned at the start of the next 'show.bs.modal'.
+						};
+						
+						// 4. Set the new image source for modalImageEl.
+						//    This action triggers the image loading process, which will eventually call the modalImageEl.onload handler.
 						modalImageEl.setAttribute('src', imageSrc);
+						
+					} else {
+						// If no imageSrc is provided, ensure modalImageEl is empty.
+						modalImageEl.setAttribute('src', '');
 					}
 				});
-				// Optional: Clear image src when modal is hidden to prevent brief display of old image
-				// and to free up memory if the image is large.
+				
 				imagePreviewModalEl.addEventListener('hidden.bs.modal', function () {
+					// Clear the main image source to free memory and prepare for next open
 					if (modalImageEl) {
 						modalImageEl.setAttribute('src', '');
+						modalImageEl.onload = null; // Important: Clear the onload handler
+					}
+					// Remove the overlay image from the DOM
+					if (currentModalOverlayImage) {
+						currentModalOverlayImage.remove();
+						currentModalOverlayImage = null;
 					}
 				});
 			}
 			
 			const favoriteButton = document.getElementById('favoriteButton');
 			if (favoriteButton) {
-				favoriteButton.addEventListener('click', function() {
+				favoriteButton.addEventListener('click', function () {
 					const coverId = this.dataset.coverId;
-					const templateId = this.dataset.templateId || null; // Ensure null if empty string
+					const templateId = this.dataset.templateId || null;
 					let isFavorited = this.dataset.isFavorited === 'true';
-					const csrfToken = document.querySelector('input[name="_token"]')?.value || '{{ csrf_token() }}'; // Get CSRF from a form or Blade
-					
+					const csrfToken = document.querySelector('input[name="_token"]')?.value || '{{ csrf_token() }}';
 					const url = isFavorited ? '{{ route("favorites.destroy") }}' : '{{ route("favorites.store") }}';
 					const method = isFavorited ? 'DELETE' : 'POST';
 					
-					// Add loading state
 					this.disabled = true;
 					const originalIconClass = this.querySelector('i').className;
 					this.querySelector('i').className = 'fas fa-spinner fa-spin';
-					
 					
 					fetch(url, {
 						method: method,
@@ -611,10 +693,12 @@
 						})
 					})
 						.then(response => {
-							this.disabled = false; // Re-enable button
-							this.querySelector('i').className = originalIconClass; // Restore icon
+							this.disabled = false;
+							this.querySelector('i').className = originalIconClass;
 							if (!response.ok) {
-								return response.json().then(err => { throw err; });
+								return response.json().then(err => {
+									throw err;
+								});
 							}
 							return response.json();
 						})
@@ -625,7 +709,6 @@
 								this.dataset.isFavorited = isFavorited ? 'true' : 'false';
 								const icon = this.querySelector('i');
 								const text = this.querySelector('.button-text');
-								
 								if (isFavorited) {
 									this.classList.remove('strock_btn');
 									this.classList.add('favorited_btn');
@@ -644,8 +727,8 @@
 							}
 						})
 						.catch(error => {
-							this.disabled = false; // Re-enable button on error
-							this.querySelector('i').className = originalIconClass; // Restore icon
+							this.disabled = false;
+							this.querySelector('i').className = originalIconClass;
 							console.error('Error:', error);
 							showToast('Error', error.message || 'An unexpected error occurred.', 'bg-danger');
 						});
