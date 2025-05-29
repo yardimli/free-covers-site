@@ -39,10 +39,12 @@
 
 			'user_design_previews' => [
 				'disk' => 'public',
-				'originals' => 'user_designs/previews/{year}/{month}/{day}', // Path for original images
-				'thumbnails' => 'user_designs/thumbnails/{year}/{month}/{day}', // Path for original images
-				'thumb_w' => 400,
+				// Base directories; user_id will be appended as a subdirectory by the service
+				'originals_root' => 'user_designs/previews',
+				'thumbnails_root' => 'user_designs/thumbnails',
+				'thumb_w' => 400, // Generate a thumbnail
 				'thumb_h' => 400,
+				'thumb_quality' => 85,
 			],
 
 			// Templates
