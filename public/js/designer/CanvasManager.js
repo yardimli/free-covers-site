@@ -719,7 +719,7 @@ class CanvasManager {
 		
 		const canvasElement = this.$canvas[0];
 		const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
-		const quality = format === 'jpeg' ? 0.92 : undefined;
+		const quality = format === 'jpeg' ? 0.95 : undefined;
 		const filename = `book-cover-export.${format}`;
 		
 		// --- Get the CSS with embedded fonts ---
