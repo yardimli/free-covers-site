@@ -2,15 +2,11 @@
 
 use App\Models\Cover;
 use App\Models\Favorite;
-use App\Models\Template;
-
-// Added
+use App\Models\Template; // Added use
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
-
-// Added for logging
+use Illuminate\Support\Facades\Log; // Added for logging
 
 class CoverController extends Controller
 {
@@ -27,6 +23,7 @@ class CoverController extends Controller
 		$cover->load('templates', 'coverType');
 		$cover->active_template_overlay_url = null;
 		$activeTemplateForView = null;
+		$activeTemplateFullCoverOverlayUrl = null; // New variable for full cover overlay
 
 		// Determine the active template for the main view
 		if ($template) {
@@ -42,8 +39,14 @@ class CoverController extends Controller
 			$activeTemplateForView = $cover->templates->random();
 		}
 
-		if ($activeTemplateForView && $activeTemplateForView->cover_image_path) {
-			$cover->active_template_overlay_url = asset('storage/' . $activeTemplateForView->cover_image_path);
+		if ($activeTemplateForView) {
+			if ($activeTemplateForView->cover_image_path) {
+				$cover->active_template_overlay_url = asset('storage/' . $activeTemplateForView->cover_image_path);
+			}
+			// Check for full_cover_image_path for the active template
+			if ($activeTemplateForView->full_cover_image_path) {
+				$activeTemplateFullCoverOverlayUrl = asset('storage/' . $activeTemplateForView->full_cover_image_path);
+			}
 		}
 
 		// Check if the current cover (with active template) is favorited by the user
@@ -75,11 +78,13 @@ class CoverController extends Controller
 		$relatedCoversQuery = Cover::with('templates')
 			->where('id', '!=', $cover->id)
 			->where('cover_type_id', $cover->cover_type_id ?: 1);
+
 		if ($cover->categories && !empty(array_filter($cover->categories))) {
 			$primaryCategory = Str::lower($cover->categories[0]);
 			$relatedCoversQuery->whereJsonContains('categories', $primaryCategory);
 		}
 		$relatedCovers = $relatedCoversQuery->inRandomOrder()->take(4)->get();
+
 		if ($relatedCovers->count() < 4) {
 			$additionalCoversNeeded = 4 - $relatedCovers->count();
 			$existingIds = $relatedCovers->pluck('id')->push($cover->id)->all();
@@ -91,6 +96,7 @@ class CoverController extends Controller
 				->get();
 			$relatedCovers = $relatedCovers->merge($additionalCovers);
 		}
+
 		foreach ($relatedCovers as $related) {
 			$related->random_template_overlay_url = null;
 			if ($related->templates->isNotEmpty()) {
@@ -132,6 +138,7 @@ class CoverController extends Controller
 			'relatedCovers',
 			'coverVariations',
 			'activeTemplateForView',
+			'activeTemplateFullCoverOverlayUrl', // Pass to view
 			'keywordData',
 			'isFavorited' // Pass to view
 		));
