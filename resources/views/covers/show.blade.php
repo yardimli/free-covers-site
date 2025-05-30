@@ -38,147 +38,130 @@
           object-fit: contain;
           width: auto; /* Ensure aspect ratio is maintained */
       }
-
       .free_kindle_covers_book_img {
           width: 400px;
           text-align: center; /* Center the image if it's smaller than container */
           padding: 15px; /* Padding around the main image and thumbnails block */
           border-radius: 8px;
       }
-
       .free_kindle_covers_book_img .cover-image-container {
           display: inline-block; /* Allows centering of main image */
       }
-
       .free_kindle_covers_book_details .price {
           font-size: 1.8rem;
           font-weight: bold;
           color: var(--bs-primary); /* Or your theme's primary color */
       }
-
       .product_details_section_key {
           font-weight: 600;
           min-width: 120px;
           display: inline-block;
       }
-
       .badge.bg-light {
           border: 1px solid #eee;
       }
-
-      /* Styles for cover variations in description tab */
-      .cover-variations-grid .cover-image-container {
-          padding: 5px;
-      }
-
       .admin-action-button {
           font-size: 0.8rem; /* Smaller font for admin buttons */
           padding: 0.25rem 0.5rem; /* Smaller padding */
       }
-
       /* Styles for additional previews (thumbnails) */
-      .cover-additional-previews {
-          /* The parent .free_kindle_covers_book_img handles overall centering. This div itself is text-align: center to center its inline/inline-block children. */
-      }
-
-      .cover-additional-previews .thumb-img { /* Common class for thumbnail images */
-          /* Bootstrap's img-thumbnail provides base styling (padding, border, bg, radius) */
+      .cover-additional-previews { /* The parent .free_kindle_covers_book_img handles overall centering. This div itself is text-align: center to center its inline/inline-block children. */ }
+      .cover-additional-previews .thumb-img { /* Common class for thumbnail images */ /* Bootstrap's img-thumbnail provides base styling (padding, border, bg, radius) */
           cursor: pointer;
           object-fit: contain; /* Ensures image fits well within specified dimensions */
           vertical-align: middle; /* Aligns images nicely if they are inline or inline-block */
           height: auto; /* Default, will be overridden by aspect ratio from width */
       }
-
       .cover-additional-previews .thumb-img:hover {
           border-color: #0d6efd; /* Bootstrap primary color for hover - !important might be needed if BS specificity is higher */
       }
-
-      .cover-additional-previews .full-cover-thumb-img {
-          width: 180px;
-          /* height: auto; is implicit or inherited */
-      }
-
-      .cover-additional-previews .mockup-3d-thumb-img {
-          width: 160px;
-          /* height: auto; is implicit or inherited */
-      }
-
+      .cover-additional-previews .full-cover-thumb-img { width: 180px; /* height: auto; is implicit or inherited */ }
+      .cover-additional-previews .mockup-3d-thumb-img { width: 160px; /* height: auto; is implicit or inherited */ }
       /* Ensure cover-image-container used for thumbnails behaves correctly */
-      .cover-additional-previews .cover-image-container {
-          vertical-align: middle; /* Align with other potential inline-block elements */
-      }
-
+      .cover-additional-previews .cover-image-container { vertical-align: middle; /* Align with other potential inline-block elements */ }
       .cover-additional-previews .cover-image-container .template-overlay-image {
-          /* Ensure overlay respects thumbnail context if different from main image */
       }
-
-
       /* Styles for the image preview modal */
-      #imagePreviewModal .modal-content {
-          background: transparent;
-          border: none;
-          box-shadow: none;
-      }
-
-      #imagePreviewModal .modal-body {
-          padding: 0;
-          position: relative; /* For positioning the close button AND overlay */
-      }
-
-      #imagePreviewModal #modalImage {
-          max-height: 90vh; /* Max height to fit viewport */
-          max-width: 100%; /* Max width to fit modal dialog */
-          display: block; /* To remove extra space below image */
-          margin: auto; /* Center image if it's smaller than modal-body */
-          position: relative; /* Stacking context for potential direct children overlays */
-          z-index: 0;
-      }
-
-      #imagePreviewModal .btn-close-modal {
-          position: absolute;
-          top: 10px;
-          right: 10px;
-          background-color: rgba(255, 255, 255, 0.8);
-          border-radius: 50%;
-          padding: 0.5rem;
-          z-index: 1056; /* Ensure it's above the image and overlay */
-          border: none;
-      }
-
-      #imagePreviewModal .btn-close-modal:focus {
-          box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.5);
-      }
-
+      #imagePreviewModal .modal-content { background: transparent; border: none; box-shadow: none; }
+      #imagePreviewModal .modal-body { padding: 0; position: relative; /* For positioning the close button AND overlay */ }
+      #imagePreviewModal #modalImage { max-height: 90vh; /* Max height to fit viewport */ max-width: 100%; /* Max width to fit modal dialog */ display: block; /* To remove extra space below image */ margin: auto; /* Center image if it's smaller than modal-body */ position: relative; /* Stacking context for potential direct children overlays */ z-index: 0; }
+      #imagePreviewModal .btn-close-modal { position: absolute; top: 10px; right: 10px; background-color: rgba(255, 255, 255, 0.8); border-radius: 50%; padding: 0.5rem; z-index: 1056; /* Ensure it's above the image and overlay */ border: none; }
+      #imagePreviewModal .btn-close-modal:focus { box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.5); }
       /* Ensure FontAwesome icons are spaced nicely in buttons */
-      .btn i.fab, .btn i.fas {
-          margin-right: 0.35em;
+      .btn i.fab, .btn i.fas { margin-right: 0.35em; }
+      .keyword-badge-link { text-decoration: none; font-weight: 400; }
+      .keyword-badge-link:hover { border-color: #0d6efd !important; /* Ensure hover stands out */ color: #0d6efd !important; }
+      .bj_theme_btn.favorited_btn { background-color: #e74c3c; /* A distinct color for favorited state */ color: white; border-color: #e74c3c; }
+      .bj_theme_btn.favorited_btn:hover { background-color: #c0392b; border-color: #c0392b; }
+      .bj_theme_btn.favorited_btn i, .bj_theme_btn.strock_btn i.fa-heart { margin-right: 0.35em; }
+
+      /* New Styles for Available Styles Section */
+      .available-styles-section .template-list-container {
+          max-height: 600px; /* Adjust as needed */
+          overflow-y: auto;
+          border: 1px solid #eee;
+          padding: 0;
+      }
+      .available-styles-section .template-list-item {
+          padding: 0.75rem 1rem;
+          cursor: pointer;
+          border-bottom: 1px solid #eee;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+      .available-styles-section .template-list-item:last-child {
+          border-bottom: none;
+      }
+      .available-styles-section .template-list-item:hover {
+          background-color: #f8f9fa;
+      }
+      .available-styles-section .template-list-item.active {
+          background-color: #e9ecef; /* Light primary color */
+          color: var(--bs-primary);
+          font-weight: bold;
+      }
+    
+      
+      .available-styles-section .preview-area .cover-mockup-image {
+          max-height: 350px; /* Adjust preview size */
+          object-fit: contain;
       }
 
-      .keyword-badge-link {
-          text-decoration: none;
-          font-weight: 400;
+      .available-styles-section .preview-area .kindle-template-overlay-image {
+		      position: absolute;
+          top: 3% !important; /* Adjust overlay position */
+          left: 3% !important;
+          width : 90% !important; /* Ensure it fits well within the thumbnail container */
+          height: 90% !important; /* Maintain aspect ratio and fit */
+          object-fit: contain; /* Ensure the overlay image fits well */
       }
 
-      .keyword-badge-link:hover {
-          border-color: #0d6efd !important; /* Ensure hover stands out */
-          color: #0d6efd !important;
+      .available-styles-section .preview-area .template-overlay-image {
+		      top: 1% !important; /* Adjust overlay position */
+		      left: 1% !important;
+          width : 98% !important; /* Ensure it fits well within the thumbnail container */
+          height: 98% !important; /* Maintain aspect ratio and fit */
+          object-fit: contain; /* Ensure the overlay image fits well */
       }
-
-      .bj_theme_btn.favorited_btn {
-          background-color: #e74c3c; /* A distinct color for favorited state */
-          color: white;
-          border-color: #e74c3c;
+      .available-styles-section .preview-area h6 {
+          font-size: 0.9rem;
+          color: #6c757d;
+          margin-bottom: 0.25rem;
+          text-align: center;
       }
-
-      .bj_theme_btn.favorited_btn:hover {
-          background-color: #c0392b;
-          border-color: #c0392b;
+      .template-list-item .admin-actions-inline {
+          margin-left: auto; /* Pushes admin buttons to the right */
+          padding-left: 10px; /* Space between name and button */
       }
-
-      .bj_theme_btn.favorited_btn i,
-      .bj_theme_btn.strock_btn i.fa-heart {
-          margin-right: 0.35em;
+      .template-list-item .template-name {
+          flex-grow: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          margin-right: 10px; /* Space before admin button if present */
       }
+	
 	</style>
 @endpush
 
@@ -193,7 +176,8 @@
 						<div class="free_kindle_covers_book_img">
 							{{-- This container is 400px wide and text-align: center --}}
 							<div class="cover-image-container">
-								<img class="img-fluid cover-mockup-image" src="{{ asset('storage/' . $cover->mockup_2d_path ) }}"
+								<img class="img-fluid cover-mockup-image"
+								     src="{{ asset('storage/' . $cover->mockup_2d_path ) }}"
 								     alt="{{ $cover->name ?: 'Cover Image' }}">
 								{{-- Use active_template_overlay_url --}}
 								@if($cover->active_template_overlay_url)
@@ -205,42 +189,41 @@
 							{{-- Additional Previews (Thumbnails) --}}
 							<div class="cover-additional-previews text-center mt-2">
 								@if($cover->full_cover_thumbnail_path && $cover->full_cover_path)
-									<a href="#"
-									   class="cover-image-container me-2"
-									   {{-- Added cover-image-container for relative positioning of overlay --}}
-									   style="display: inline-block;" {{-- Ensure proper layout with other thumbnails --}}
-									   data-bs-toggle="modal"
-									   data-bs-target="#imagePreviewModal"
+									<a href="#" class="cover-image-container me-2"
+									   style="display: inline-block;"
+									   data-bs-toggle="modal" data-bs-target="#imagePreviewModal"
 									   data-image-src="{{ asset('storage/' . $cover->full_cover_path) }}"
-									   @if(isset($activeTemplateFullCoverOverlayUrl)) data-overlay-src="{{ $activeTemplateFullCoverOverlayUrl }}"
-									   @endif
+									   @if(isset($activeTemplateFullCoverOverlayUrl)) data-overlay-src="{{ $activeTemplateFullCoverOverlayUrl }}" @endif
 									   title="View Full Cover">
-										<img src="{{ asset('storage/' . $cover->full_cover_thumbnail_path) }}" alt="Full Cover Thumbnail"
+										<img src="{{ asset('storage/' . $cover->full_cover_thumbnail_path) }}"
+										     alt="Full Cover Thumbnail"
 										     class="img-thumbnail thumb-img full-cover-thumb-img">
 										@if(isset($activeTemplateFullCoverOverlayUrl))
-											<img src="{{ $activeTemplateFullCoverOverlayUrl }}" alt="Template Full Cover Overlay"
-											     class="template-overlay-image"
+											<img src="{{ $activeTemplateFullCoverOverlayUrl }}"
+											     alt="Template Full Cover Overlay" class="template-overlay-image"
 											     style="top:10; left:10; width:93% !important; height:93% !important; object-fit: contain;">
 										@endif
 									</a>
 								@endif
 								@if($cover->mockup_3d_path)
 									<a href="#" data-bs-toggle="modal" data-bs-target="#imagePreviewModal"
-									   data-image-src="{{ asset('storage/' . $cover->mockup_3d_path) }}" title="View 3D Mockup">
-										<img src="{{ asset('storage/' . $cover->mockup_3d_path) }}" alt="3D Mockup Thumbnail"
+									   data-image-src="{{ asset('storage/' . $cover->mockup_3d_path) }}"
+									   title="View 3D Mockup">
+										<img src="{{ asset('storage/' . $cover->mockup_3d_path) }}"
+										     alt="3D Mockup Thumbnail"
 										     class="img-thumbnail thumb-img mockup-3d-thumb-img">
 									</a>
 								@endif
 							</div>
 						</div>
+						
 						<div class="bj_book_details">
 							<h2>{{ $cover->name ?: 'Untitled Cover' }}</h2>
 							<ul class="list-unstyled book_meta">
 								@if($cover->categories && !empty(array_filter($cover->categories)))
 									<li>Category:
 										@foreach(array_filter($cover->categories) as $category)
-											<a
-												href="{{ route('shop.index', ['category' => Str::title($category)]) }}">{{ Str::title($category) }}</a>{{ !$loop->last ? ',' : '' }}
+											<a href="{{ route('shop.index', ['category' => Str::title($category)]) }}">{{ Str::title($category) }}</a>{{ !$loop->last ? ',' : '' }}
 										@endforeach
 									</li>
 								@endif
@@ -257,15 +240,12 @@
 								@if($cover->coverType)
 									<li><span>Type:</span>{{ $cover->coverType->type_name ?? '' }}</li>
 								@endif
-								<li><span>Template:</span>{{ $activeTemplateForView->name ?? '' }}</li>
+								<li><span>Template:</span>{{ $activeTemplateForView->name ?? 'Default' }}</li>
 							</ul>
 							
 							<div class="d-flex flex-wrap mt-4">
-								@php
-									$kindleButtonText = $activeTemplateForView ? 'Kindle: ' . Str::limit($activeTemplateForView->name ?? '', 15) : 'Kindle Cover';
-									$printButtonText = $activeTemplateForView ? 'Print: ' . Str::limit($activeTemplateForView->name ?? '', 15) : 'Print Cover';
-								@endphp
-								<a href="{{ $customizeKindleUrl }}" class="bj_theme_btn {{ !$canCustomize ? 'disabled' : '' }}"
+								<a href="{{ $customizeKindleUrl }}"
+								   class="bj_theme_btn {{ !$canCustomize ? 'disabled' : '' }}"
 								   title="{{ $genericCustomizeButtonTitle ?: 'Customize Kindle Cover'}}" target="_blank">
 									<i class="fab fa-amazon"></i> Customize Kindle
 								</a>
@@ -281,28 +261,27 @@
 									        data-template-id="{{ $activeTemplateForView ? $activeTemplateForView->id : '' }}"
 									        data-is-favorited="{{ $isFavorited ? 'true' : 'false' }}"
 									        title="{{ $isFavorited ? 'Remove from Favorites' : 'Add to Favorites' }}">
-										<i class="fas {{ $isFavorited ? 'fa-heart-broken' : 'fa-heart' }}"></i> <span
-											class="button-text">{{ $isFavorited ? 'Favorited' : 'Favorite' }}</span>
+										<i class="fas {{ $isFavorited ? 'fa-heart-broken' : 'fa-heart' }}"></i>
+										<span class="button-text">{{ $isFavorited ? 'Favorited' : 'Favorite' }}</span>
 									</button>
 								@else
-									<a href="{{ route('login') }}" class="bj_theme_btn strock_btn mt-2" title="Login to add to favorites">
+									<a href="{{ route('login') }}" class="bj_theme_btn strock_btn mt-2"
+									   title="Login to add to favorites">
 										<i class="fas fa-heart"></i> Favorite
 									</a>
 								@endauth
 							</div>
 							@auth
-								@if(Auth::user()->isAdmin() && $activeTemplateForView)
-									<div class="mt-2"
-									     id="main-active-style-remove-form-container-{{ $activeTemplateForView->id }}"> {{-- Added ID --}}
+								@if(Auth::user()->isAdmin() && $activeTemplateForView && $cover->templates->contains($activeTemplateForView->id))
+									<div class="mt-2" id="main-active-style-remove-form-container-{{ $activeTemplateForView->id }}">
 										<form method="POST"
 										      action="{{ route('admin.covers.templates.remove-assignment', ['cover' => $cover->id, 'template' => $activeTemplateForView->id]) }}"
-										      class="remove-template-assignment-form" {{-- Added class --}}
+										      class="remove-template-assignment-form"
 										      data-cover-id="{{ $cover->id }}"
 										      data-template-id="{{ $activeTemplateForView->id }}">
 											@csrf
 											<button type="submit" class="btn btn-sm btn-outline-danger admin-action-button">
-												<i class="fas fa-trash-alt"></i> Remove This Style
-												({{ Str::limit($activeTemplateForView->name ?? '', 20) }})
+												<i class="fas fa-trash-alt"></i> Remove This Assigned Style ({{ Str::limit($activeTemplateForView->name ?? '', 20) }})
 											</button>
 										</form>
 									</div>
@@ -312,70 +291,105 @@
 					</div>
 					
 					<div class="bj_book_single_tab_area me-xl-3 mt-5">
-						{{-- Cover Variations Section --}}
-						@if(!empty($coverVariations))
-							<div class="mt-4 cover-variations-grid">
-								<h5 class="content_header mb-3">Available Styles</h5>
+						{{-- New Available Styles Section --}}
+						@if($allCompatibleTemplates->isNotEmpty())
+							<div class="available-styles-section mt-4">
 								<div class="row">
-									@foreach($coverVariations as $variation)
-										@php
-											$isCurrentActiveStyle = ($activeTemplateForView && $activeTemplateForView->id == $variation['template_id']);
-										@endphp
-										<div class="col-lg-3 col-md-4 col-sm-6 mb-4" id="variation-card-{{ $variation['template_id'] }}">
-											<div class="cover-image-container text-center">
-												<img class="img-fluid cover-mockup-image" src="{{ asset('storage/' . $cover->mockup_2d_path) }}"
-												     alt="{{ $cover->name ?: 'Cover' }} - Style with {{ $variation['template_name'] }}">
-												@if($variation['template_overlay_url'])
-													<img src="{{ $variation['template_overlay_url'] }}"
-													     alt="{{ $variation['template_name'] }} Overlay" class="template-overlay-image"/>
-												@endif
-											</div>
-											<div class="text-center mt-2">
-												@if($isCurrentActiveStyle)
-													<button class="btn btn-sm btn-success mb-1 d-block w-100 disabled"
-													        title="Currently viewing with this style: {{ $variation['template_name'] }}">
-														<i class="fas fa-check-circle"></i> Current Style
-													</button>
-												@else
-													<a
-														href="{{ route('covers.show', ['cover' => $cover->id, 'template' => $variation['template_id']]) }}"
-														class="btn btn-sm btn-outline-primary mb-1 d-block w-100"
-														title="View with style: {{ $variation['template_name'] }}">
-														<i class="fas fa-eye"></i> View with this Style
-													</a>
-												@endif
-												@auth
-													@if(Auth::user()->isAdmin())
-														<form method="POST"
-														      action="{{ route('admin.covers.templates.remove-assignment', ['cover' => $cover->id, 'template' => $variation['template_id']]) }}"
-														      class="d-block mt-1 remove-template-assignment-form" {{-- Added class --}}
-														      data-cover-id="{{ $cover->id }}"
-														      data-template-id="{{ $variation['template_id'] }}">
-															@csrf
-															<button type="submit" class="btn btn-sm btn-outline-danger admin-action-button w-100">
-																<i class="fas fa-trash-alt"></i> Remove Style
-															</button>
-														</form>
-													@endif
-												@endauth
-											</div>
+									{{-- Left Column: Template List --}}
+									<div class="col-md-5">
+										<h5 class="content_header mb-3">Available Styles</h5>
+										<div class="template-list-container">
+											@foreach($allCompatibleTemplates as $templateStyle)
+												@php
+													$isActuallyAssigned = $cover->templates->contains($templateStyle->id);
+												@endphp
+												<div class="template-list-item {{ ($activeTemplateForView && $activeTemplateForView->id == $templateStyle->id) ? 'active' : '' }}"
+												     data-template-id="{{ $templateStyle->id }}"
+												     data-template-name="{{ $templateStyle->name }}"
+												     data-front-overlay-url="{{ $templateStyle->cover_image_path ? asset('storage/' . $templateStyle->cover_image_path) : '' }}"
+												     data-full-overlay-url="{{ $templateStyle->full_cover_image_path ? asset('storage/' . $templateStyle->full_cover_image_path) : '' }}">
+													<span class="template-name">{{ $templateStyle->name }}</span>
+													@auth
+														@if(Auth::user()->isAdmin() && $isActuallyAssigned)
+															<div class="admin-actions-inline">
+																<form method="POST" action="{{ route('admin.covers.templates.remove-assignment', ['cover' => $cover->id, 'template' => $templateStyle->id]) }}"
+																      class="remove-template-assignment-form d-inline"
+																      data-cover-id="{{ $cover->id }}" data-template-id="{{ $templateStyle->id }}">
+																	@csrf
+																	<button type="submit" class="btn btn-sm btn-outline-danger admin-action-button py-0 px-1" title="Remove this assigned style">
+																		<i class="fas fa-trash-alt"></i>
+																	</button>
+																</form>
+															</div>
+														@endif
+													@endauth
+												</div>
+											@endforeach
 										</div>
-									@endforeach
+									</div>
+									
+									{{-- Right Column: Preview Area --}}
+									<div class="col-md-7">
+										<div class="preview-area text-center">
+											<div>
+												<h6>Kindle Preview</h6>
+												<div class="cover-image-container">
+													<img id="stylePreviewKindleBase" src="{{ asset('storage/' . $cover->mockup_2d_path) }}" alt="Kindle Preview Base" class="cover-mockup-image">
+													<img id="stylePreviewKindleOverlay" src="{{ $activeTemplateForView && $activeTemplateForView->cover_image_path ? asset('storage/' . $activeTemplateForView->cover_image_path) : '' }}" alt="Kindle Template Overlay" class="kindle-template-overlay-image" style="{{ !($activeTemplateForView && $activeTemplateForView->cover_image_path) ? 'display:none;' : '' }}">
+												</div>
+											</div>
+											
+											@if($cover->full_cover_path)
+												<div class="mt-3">
+													<h6>Full Cover Preview</h6>
+													<div class="cover-image-container">
+														<img id="stylePreviewFullCoverBase" src="{{ asset('storage/' . $cover->full_cover_path) }}" alt="Full Cover Preview Base" class="cover-mockup-image">
+														<img id="stylePreviewFullCoverOverlay" src="{{ $activeTemplateForView && $activeTemplateForView->full_cover_image_path ? asset('storage/' . $activeTemplateForView->full_cover_image_path) : '' }}" alt="Full Cover Template Overlay" class="template-overlay-image" style="{{ !($activeTemplateForView && $activeTemplateForView->full_cover_image_path) ? 'display:none;' : '' }}">
+													</div>
+												</div>
+											@endif
+											
+											<button id="useThisStyleButton" class="btn btn-primary mt-3" {{ !$activeTemplateForView ? 'disabled' : '' }}>
+												<i class="fas fa-check-circle"></i> Use This Style
+											</button>
+										</div>
+									</div>
 								</div>
+							</div>
+						@else
+							<div class="available-styles-section mt-4">
+								<h5 class="content_header mb-3">Available Styles</h5>
+								<p>No styles (templates) found for this cover type ({{ $cover->coverType->type_name ?? 'Unknown Type' }}).</p>
+								@if ($cover->templates->isNotEmpty() && Auth::user() && Auth::user()->isAdmin())
+									<p class="mt-2 text-muted small">However, this cover has the following templates assigned (possibly of a different type):</p>
+									<ul class="list-unstyled">
+										@foreach($cover->templates as $assignedTemplate)
+											<li class="d-flex justify-content-between align-items-center mb-1">
+												<span>{{ $assignedTemplate->name }} (ID: {{ $assignedTemplate->id }}, Type ID: {{ $assignedTemplate->cover_type_id }})</span>
+												<form method="POST" action="{{ route('admin.covers.templates.remove-assignment', ['cover' => $cover->id, 'template' => $assignedTemplate->id]) }}"
+												      class="remove-template-assignment-form d-inline"
+												      data-cover-id="{{ $cover->id }}" data-template-id="{{ $assignedTemplate->id }}">
+													@csrf
+													<button type="submit" class="btn btn-xs btn-outline-danger admin-action-button py-0 px-1" title="Remove this assigned style">
+														<i class="fas fa-trash-alt"></i>
+													</button>
+												</form>
+											</li>
+										@endforeach
+									</ul>
+								@endif
 							</div>
 						@endif
 						
-						@if(!$cover->caption && (!$cover->text_placements || empty(array_filter($cover->text_placements))) && empty($coverVariations))
+						@if(!$cover->caption && (!$cover->text_placements || empty(array_filter($cover->text_placements))) && $allCompatibleTemplates->isEmpty() && $cover->templates->isEmpty())
 							<p>No specific details available for this cover.</p>
 						@endif
 					</div>
 				</div>
 				
 				<div class="col-xl-3">
-					<div class="product_sidbar p-4"
-					     style="background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-						<div class="price_head">Price: <span class="price"
-						                                     style="font-size: 1.5rem; color: var(--bs-primary);">Free</span></div>
+					<div class="product_sidbar p-4" style="background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+						<div class="price_head">Price: <span class="price" style="font-size: 1.5rem; color: var(--bs-primary);">Free</span></div>
 						<hr>
 						{{-- Keywords Displayed Here --}}
 						@if(!empty($keywordData))
@@ -397,19 +411,15 @@
 								@endforeach
 							</div>
 						@endif
-						
 						<ul class="list-unstyled">
 							<li class="mb-2 d-flex align-items-center">
-								<img src="{{ asset('template/assets/img/arrow.png') }}" alt="" style="width:16px; margin-right: 8px;">
-								Instant Download
+								<img src="{{ asset('template/assets/img/arrow.png') }}" alt="" style="width:16px; margin-right: 8px;"> Instant Download
 							</li>
 							<li class="mb-2 d-flex align-items-center">
-								<img src="{{ asset('template/assets/img/arrow.png') }}" alt="" style="width:16px; margin-right: 8px;">
-								High-Resolution
+								<img src="{{ asset('template/assets/img/arrow.png') }}" alt="" style="width:16px; margin-right: 8px;"> High-Resolution
 							</li>
 							<li class="mb-2 d-flex align-items-center">
-								<img src="{{ asset('template/assets/img/arrow.png') }}" alt="" style="width:16px; margin-right: 8px;">
-								Customizable
+								<img src="{{ asset('template/assets/img/arrow.png') }}" alt="" style="width:16px; margin-right: 8px;"> Customizable
 							</li>
 						</ul>
 						<h3 class="mt-3">Available</h3>
@@ -418,24 +428,21 @@
 								$sidebarKindleButtonText = $activeTemplateForView ? Str::limit($activeTemplateForView->name ?? '', 10) : 'Kindle';
 								$sidebarPrintButtonText = $activeTemplateForView ? Str::limit($activeTemplateForView->name ?? '', 10) : 'Print';
 							@endphp
-							<a href="{{ $customizeKindleUrl }}" class="bj_theme_btn {{ !$canCustomize ? 'disabled' : '' }}"
-							   title="{{ $genericCustomizeButtonTitle ?: 'Customize Kindle: ' . $sidebarKindleButtonText }}"
-							   target="_blank">
+							<a href="{{ $customizeKindleUrl }}"
+							   class="bj_theme_btn {{ !$canCustomize ? 'disabled' : '' }}"
+							   title="{{ $genericCustomizeButtonTitle ?: 'Customize Kindle: ' . $sidebarKindleButtonText }}" target="_blank">
 								<i class="fab fa-amazon"></i> Kindle {{ $sidebarKindleButtonText }}
 							</a>
-							<a href="{{ $customizePrintUrl }}" class="bj_theme_btn strock_btn {{ !$canCustomize ? 'disabled' : '' }}"
-							   title="{{ $genericCustomizeButtonTitle ?: 'Customize Print: ' . $sidebarPrintButtonText }}"
-							   target="_blank"> {{-- Added target="_blank" --}}
+							<a href="{{ $customizePrintUrl }}"
+							   class="bj_theme_btn strock_btn {{ !$canCustomize ? 'disabled' : '' }}"
+							   title="{{ $genericCustomizeButtonTitle ?: 'Customize Print: ' . $sidebarPrintButtonText }}" target="_blank">
 								<i class="fas fa-print"></i> Print {{ $sidebarPrintButtonText }}
 							</a>
 						</div>
 					</div>
 					
-					<div class="product_details_sidebar mt-4 p-4"
-					     style="background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-						<a class="details_header d-flex justify-content-between align-items-center" data-bs-toggle="collapse"
-						   href="#product_details_collapse" role="button" aria-expanded="true"
-						   aria-controls="product_details_collapse">
+					<div class="product_details_sidebar mt-4 p-4" style="background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+						<a class="details_header d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#product_details_collapse" role="button" aria-expanded="true" aria-controls="product_details_collapse">
 							<h6 class="mb-0">More Details</h6>
 							<i class="fa-solid fa-chevron-down"></i>
 						</a>
@@ -460,8 +467,7 @@
 										<span class="product_details_section_key">Categories:</span>
 										<div class="product_details_section_value">
 											@foreach(array_filter($cover->categories) as $category)
-												<a href="{{ route('shop.index', ['category' => Str::title($category)]) }}"
-												   class="fw-normal">{{ Str::title($category) }}</a>
+												<a href="{{ route('shop.index', ['category' => Str::title($category)]) }}" class="fw-normal">{{ Str::title($category) }}</a>
 											@endforeach
 										</div>
 									</div>
@@ -520,19 +526,18 @@
 			}
 			
 			// Display session messages (success, error, info) as toasts
-			@if(session('success')) showToast('Success', '{{ session('success') }}', 'bg-success');
-			@endif
-			@if(session('error')) showToast('Error', '{{ session('error') }}', 'bg-danger');
-			@endif
-			@if(session('info')) showToast('Info', '{{ session('info') }}', 'bg-info');
-			@endif
+			@if(session('success')) showToast('Success', '{{ session('success') }}', 'bg-success'); @endif
+			@if(session('error')) showToast('Error', '{{ session('error') }}', 'bg-danger'); @endif
+			@if(session('info')) showToast('Info', '{{ session('info') }}', 'bg-info'); @endif
 			
+			// Admin: Remove Template Assignment Form
 			document.querySelectorAll('.remove-template-assignment-form').forEach(form => {
 				form.addEventListener('submit', function (event) {
-					event.preventDefault(); // Prevent default form submission
+					event.preventDefault();
 					const actionUrl = this.getAttribute('action');
-					const templateId = this.dataset.templateId;
+					const templateIdToRemove = parseInt(this.dataset.templateId);
 					const csrfToken = this.querySelector('input[name="_token"]').value;
+					const currentForm = this;
 					
 					fetch(actionUrl, {
 						method: 'POST',
@@ -546,21 +551,38 @@
 							if (data.success) {
 								showToast('Success', data.message, 'bg-success');
 								const activeTemplateIdOnPage = {{ $activeTemplateForView ? $activeTemplateForView->id : 'null' }};
-								if (activeTemplateIdOnPage && parseInt(templateId) === activeTemplateIdOnPage) {
-									const mainFormContainer = document.getElementById(`main-active-style-remove-form-container-${templateId}`);
+								
+								// If the removed template was the main active one for the page, redirect
+								if (activeTemplateIdOnPage && templateIdToRemove === activeTemplateIdOnPage) {
+									// Also remove its "remove" button from the main details if it exists
+									const mainFormContainer = document.getElementById(`main-active-style-remove-form-container-${templateIdToRemove}`);
 									if (mainFormContainer) mainFormContainer.remove();
 									window.location.href = "{{ route('covers.show', ['cover' => $cover->id]) }}";
 									return;
 								}
-								const variationCard = document.getElementById(`variation-card-${templateId}`);
-								if (variationCard) {
-									variationCard.remove();
+								
+								// For the list item in "Available Styles"
+								const listItem = document.querySelector(`.template-list-item[data-template-id="${templateIdToRemove}"]`);
+								if (listItem) {
+									// Remove the "remove" button's container from that list item
+									const adminActionsDiv = currentForm.closest('.admin-actions-inline');
+									if (adminActionsDiv) {
+										adminActionsDiv.remove();
+									}
 								}
-								const variationsGridRow = document.querySelector('.cover-variations-grid .row');
-								if (variationsGridRow && variationsGridRow.children.length === 0) {
-									const variationsContainer = document.querySelector('.cover-variations-grid');
-									if (variationsContainer) {
-										variationsContainer.innerHTML = '<h5 class="content_header mb-3">Available Styles</h5><p>No styles currently assigned to this cover.</p>';
+								
+								// If the template just unassigned was the one being PREVIEWED in the "Available Styles" section
+								if (selectedTemplateIdForPreview && templateIdToRemove === selectedTemplateIdForPreview) {
+									// Reset the preview to the main page's active template's style (if any)
+									const mainPageActiveListItem = document.querySelector(`.template-list-item[data-template-id="${activeTemplateIdOnPage}"]`);
+									if (mainPageActiveListItem) {
+										mainPageActiveListItem.click(); // Simulate click to reset selection and preview
+									} else {
+										// If no main page active template, or it's not in the list, clear previews
+										updateStylePreviews('', '');
+										selectedTemplateIdForPreview = null;
+										if (useThisStyleButton) useThisStyleButton.disabled = true;
+										document.querySelectorAll('.available-styles-section .template-list-item').forEach(i => i.classList.remove('active'));
 									}
 								}
 							} else {
@@ -574,10 +596,11 @@
 				});
 			});
 			
+			
 			// Image Preview Modal Logic
 			var imagePreviewModalEl = document.getElementById('imagePreviewModal');
 			var modalImageEl = document.getElementById('modalImage');
-			var currentModalOverlayImage = null; // Keep track of the current overlay in the modal
+			var currentModalOverlayImage = null;
 			
 			if (imagePreviewModalEl && modalImageEl) {
 				imagePreviewModalEl.addEventListener('show.bs.modal', function (event) {
@@ -585,33 +608,21 @@
 					var imageSrc = button.getAttribute('data-image-src');
 					var overlaySrc = button.getAttribute('data-overlay-src');
 					
-					// 1. Clear previous overlay image from DOM
 					if (currentModalOverlayImage) {
 						currentModalOverlayImage.remove();
 						currentModalOverlayImage = null;
 					}
-					
-					// 2. Clear src of modal image and any existing onload handler to prepare for new image
-					//    It's important to clear src before setting onload for a fresh state.
 					modalImageEl.setAttribute('src', '');
 					modalImageEl.onload = null;
 					
 					if (imageSrc) {
-						// 3. Define the onload handler for the main modal image (modalImageEl)
-						//    This will be called AFTER modalImageEl has loaded its image data from imageSrc.
 						modalImageEl.onload = function() {
-							// Use requestAnimationFrame to ensure that the browser has completed
-							// layout calculations and modalImageEl.offsetWidth/Height are accurate.
 							requestAnimationFrame(function() {
-								// Safeguard: Clear any overlay that might have been added if this somehow runs multiple times
 								if (currentModalOverlayImage) {
 									currentModalOverlayImage.remove();
 									currentModalOverlayImage = null;
 								}
-								
 								if (overlaySrc) {
-									// Check if modalImageEl has valid dimensions now
-									// This check is crucial after rAF.
 									if (modalImageEl.offsetWidth > 0 && modalImageEl.offsetHeight > 0) {
 										var overlayImg = document.createElement('img');
 										overlayImg.src = overlaySrc;
@@ -623,42 +634,26 @@
 										overlayImg.style.height = modalImageEl.offsetHeight + 'px';
 										overlayImg.style.objectFit = 'contain';
 										overlayImg.style.pointerEvents = 'none';
-										overlayImg.style.zIndex = '1'; // Above base image, below close button
-										
-										// Append the overlay as a sibling to the modalImageEl, within the modal-body
+										overlayImg.style.zIndex = '1';
 										modalImageEl.parentNode.appendChild(overlayImg);
 										currentModalOverlayImage = overlayImg;
 									} else {
-										// This case should be rare with rAF, but log if it happens
-										console.warn("Modal image dimensions are still zero after load and requestAnimationFrame. Overlay not applied.", {
-											width: modalImageEl.offsetWidth,
-											height: modalImageEl.offsetHeight,
-											src: modalImageEl.src
-										});
+										console.warn("Modal image dimensions are still zero after load and rAF.");
 									}
 								}
 							});
-							// The onload handler for modalImageEl is effectively single-use for this specific load.
-							// It will be cleared and re-assigned at the start of the next 'show.bs.modal'.
 						};
-						
-						// 4. Set the new image source for modalImageEl.
-						//    This action triggers the image loading process, which will eventually call the modalImageEl.onload handler.
 						modalImageEl.setAttribute('src', imageSrc);
-						
 					} else {
-						// If no imageSrc is provided, ensure modalImageEl is empty.
 						modalImageEl.setAttribute('src', '');
 					}
 				});
 				
 				imagePreviewModalEl.addEventListener('hidden.bs.modal', function () {
-					// Clear the main image source to free memory and prepare for next open
 					if (modalImageEl) {
 						modalImageEl.setAttribute('src', '');
-						modalImageEl.onload = null; // Important: Clear the onload handler
+						modalImageEl.onload = null;
 					}
-					// Remove the overlay image from the DOM
 					if (currentModalOverlayImage) {
 						currentModalOverlayImage.remove();
 						currentModalOverlayImage = null;
@@ -666,11 +661,14 @@
 				});
 			}
 			
+			// Favorite Button Logic
 			const favoriteButton = document.getElementById('favoriteButton');
 			if (favoriteButton) {
 				favoriteButton.addEventListener('click', function () {
 					const coverId = this.dataset.coverId;
-					const templateId = this.dataset.templateId || null;
+					// IMPORTANT: For favoriting, we use the template that is *currently active on the main page*,
+					// not necessarily the one selected in the "Available Styles" preview.
+					const templateIdForFavorite = {{ $activeTemplateForView ? $activeTemplateForView->id : 'null' }};
 					let isFavorited = this.dataset.isFavorited === 'true';
 					const csrfToken = document.querySelector('input[name="_token"]')?.value || '{{ csrf_token() }}';
 					const url = isFavorited ? '{{ route("favorites.destroy") }}' : '{{ route("favorites.store") }}';
@@ -689,16 +687,14 @@
 						},
 						body: JSON.stringify({
 							cover_id: coverId,
-							template_id: templateId
+							template_id: templateIdForFavorite // Use the main page's active template
 						})
 					})
 						.then(response => {
 							this.disabled = false;
 							this.querySelector('i').className = originalIconClass;
 							if (!response.ok) {
-								return response.json().then(err => {
-									throw err;
-								});
+								return response.json().then(err => { throw err; });
 							}
 							return response.json();
 						})
@@ -732,6 +728,65 @@
 							console.error('Error:', error);
 							showToast('Error', error.message || 'An unexpected error occurred.', 'bg-danger');
 						});
+				});
+			}
+			
+			// New Available Styles Section Logic
+			const templateListItems = document.querySelectorAll('.available-styles-section .template-list-item');
+			const kindlePreviewOverlay = document.getElementById('stylePreviewKindleOverlay');
+			const fullCoverPreviewOverlay = document.getElementById('stylePreviewFullCoverOverlay');
+			const useThisStyleButton = document.getElementById('useThisStyleButton');
+			let selectedTemplateIdForPreview = {{ $activeTemplateForView ? $activeTemplateForView->id : 'null' }};
+			
+			function updateStylePreviews(frontOverlayUrl, fullOverlayUrl) {
+				if (kindlePreviewOverlay) {
+					if (frontOverlayUrl) {
+						kindlePreviewOverlay.src = frontOverlayUrl;
+						kindlePreviewOverlay.style.display = 'block';
+					} else {
+						kindlePreviewOverlay.src = ''; // Clear src if no overlay
+						kindlePreviewOverlay.style.display = 'none';
+					}
+				}
+				if (fullCoverPreviewOverlay) {
+					if (fullOverlayUrl) {
+						fullCoverPreviewOverlay.src = fullOverlayUrl;
+						fullCoverPreviewOverlay.style.display = 'block';
+					} else {
+						fullCoverPreviewOverlay.src = ''; // Clear src if no overlay
+						fullCoverPreviewOverlay.style.display = 'none';
+					}
+				}
+			}
+			
+			templateListItems.forEach(item => {
+				item.addEventListener('click', function() {
+					templateListItems.forEach(i => i.classList.remove('active'));
+					this.classList.add('active');
+					
+					selectedTemplateIdForPreview = parseInt(this.dataset.templateId); // Ensure it's a number
+					const frontOverlayUrl = this.dataset.frontOverlayUrl;
+					const fullOverlayUrl = this.dataset.fullOverlayUrl;
+					
+					updateStylePreviews(frontOverlayUrl, fullOverlayUrl);
+					
+					if (useThisStyleButton) {
+						useThisStyleButton.disabled = false;
+					}
+				});
+			});
+			
+			if (useThisStyleButton) {
+				// Initial state of the button based on whether a template is active for the page
+				useThisStyleButton.disabled = !selectedTemplateIdForPreview;
+				
+				useThisStyleButton.addEventListener('click', function() {
+					if (selectedTemplateIdForPreview) {
+						const coverId = {{ $cover->id }};
+						const baseUrl = "{{ route('covers.show', ['cover' => $cover->id, 'template' => 'TEMPLATE_ID_PLACEHOLDER']) }}";
+						const finalUrl = baseUrl.replace('TEMPLATE_ID_PLACEHOLDER', selectedTemplateIdForPreview);
+						window.location.href = finalUrl;
+					}
 				});
 			}
 		});
