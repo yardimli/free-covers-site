@@ -22,7 +22,7 @@
 		protected OpenAiService $openAiService;
 
 		// Properties and methods from GenerateFullCoverTemplates command
-		protected $authorNames = ['Morgan', 'Casey', 'Peyton', 'Emerson', 'Jordan', 'Parker', 'Avery', 'Rowan', 'Taylor'];
+		protected $authorNames = ['Morgan', 'Casey', 'Peyton', 'Emerson', 'Jordan', 'Parker', 'Avery', 'Rowan', 'Taylor', 'Alexa'];
 
 		public function __construct(ImageUploadService $imageUploadService, OpenAiService $openAiService)
 		{
@@ -772,7 +772,7 @@
 						$spineAuthor['y'] = 400;
 						$spineAuthor['align'] = 'left';
 						$spineAuthor['rotation'] = 90;
-						$spineAuthor['fontSize'] = max(14, ($authorLayer['fontSize'] ?? 16) * 0.3);
+						$spineAuthor['fontSize'] = max(50, ($authorLayer['fontSize'] ?? 100) * 0.5);
 						$spineAuthor['width'] = 1200;
 						$spineAuthor['height'] = 200;
 						$spineAuthor['content'] = str_replace("\n", " ", $spineAuthor['content'] ?? '');
@@ -785,7 +785,7 @@
 						$spineTitle['y'] = 1400;
 						$spineTitle['align'] = 'left';
 						$spineTitle['rotation'] = 90;
-						$spineTitle['fontSize'] = max(18, ($titleLayer['fontSize'] ?? 24) * 0.3);
+						$spineTitle['fontSize'] = max(50, ($titleLayer['fontSize'] ?? 100) * 0.4);
 						$spineTitle['width'] = 1200;
 						$spineTitle['height'] = 200;
 						$spineTitle['content'] = str_replace("\n", " ", $spineTitle['content'] ?? '');
