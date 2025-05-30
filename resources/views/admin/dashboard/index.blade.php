@@ -42,21 +42,33 @@
 			<h3>Manage Covers</h3>
 			<!-- Search and Filter Form -->
 			<form class="mb-3 search-form row g-3 align-items-center" data-type="covers">
-				<div class="col-md-6 col-lg-7">
+				<div class="col-md-4 col-lg-4">
 					<div class="input-group">
 						<input type="search" class="form-control search-input"
 						       placeholder="Search Covers (Name, Caption, Keywords, Categories)..." aria-label="Search Covers">
 						<button class="btn btn-outline-secondary" type="submit">Search</button>
 					</div>
 				</div>
-				<div class="col-md-3 col-lg-3">
+				<div class="col-md-2 col-lg-2">
 					<select class="form-select cover-type-filter admin-cover-type-dropdown" data-type="covers"
 					        aria-label="Filter by Cover Type">
 						<option value="">All Cover Types</option>
 						<!-- Populated by JS -->
 					</select>
 				</div>
-				<div class="col-md-3 col-lg-2">
+				<div class="col-md-2 col-lg-2">
+					<select class="form-select sort-by-select" aria-label="Sort by">
+						<option value="id" selected>Sort by ID</option>
+						<option value="name">Sort by Name</option>
+					</select>
+				</div>
+				<div class="col-md-2 col-lg-2">
+					<select class="form-select sort-direction-select" aria-label="Sort direction">
+						<option value="desc" selected>Descending</option>
+						<option value="asc">Ascending</option>
+					</select>
+				</div>
+				<div class="col-md-2 col-lg-2">
 					<button class="btn btn-outline-info w-100" type="button" id="filterNoTemplatesBtn"
 					        title="Filter covers with no templates assigned">
 						<i class="fas fa-filter"></i> No Templates
@@ -88,10 +100,10 @@
 			<h3>Manage Templates</h3>
 			<!-- Search and Filter Form -->
 			<form class="mb-3 search-form row g-3 align-items-center" data-type="templates">
-				<div class="col-md-9">
+				<div class="col-md-5">
 					<div class="input-group">
-						<input type="search" class="form-control search-input" placeholder="Search Templates (Name, Keywords)..."
-						       aria-label="Search Templates">
+						<input type="search" class="form-control search-input"
+						       placeholder="Search Templates (Name, Keywords)..." aria-label="Search Templates">
 						<button class="btn btn-outline-secondary" type="submit">Search</button>
 					</div>
 				</div>
@@ -100,6 +112,18 @@
 					        aria-label="Filter by Cover Type">
 						<option value="">All Cover Types</option>
 						<!-- Populated by JS -->
+					</select>
+				</div>
+				<div class="col-md-2">
+					<select class="form-select sort-by-select" aria-label="Sort by">
+						<option value="id" selected>Sort by ID</option>
+						<option value="name">Sort by Name</option>
+					</select>
+				</div>
+				<div class="col-md-2">
+					<select class="form-select sort-direction-select" aria-label="Sort direction">
+						<option value="desc" selected>Descending</option>
+						<option value="asc">Ascending</option>
 					</select>
 				</div>
 			</form>
@@ -148,11 +172,25 @@
 				</form>
 			</div>
 			<h4>Existing Elements</h4>
-			<form class="mb-3 search-form" data-type="elements">
-				<div class="input-group">
-					<input type="search" class="form-control search-input" placeholder="Search Elements (Name, Keywords)..."
-					       aria-label="Search Elements">
-					<button class="btn btn-outline-secondary" type="submit">Search</button>
+			<form class="mb-3 search-form row g-3 align-items-center" data-type="elements">
+				<div class="col-md-8">
+					<div class="input-group">
+						<input type="search" class="form-control search-input"
+						       placeholder="Search Elements (Name, Keywords)..." aria-label="Search Elements">
+						<button class="btn btn-outline-secondary" type="submit">Search</button>
+					</div>
+				</div>
+				<div class="col-md-2">
+					<select class="form-select sort-by-select" aria-label="Sort by">
+						<option value="id" selected>Sort by ID</option>
+						<option value="name">Sort by Name</option>
+					</select>
+				</div>
+				<div class="col-md-2">
+					<select class="form-select sort-direction-select" aria-label="Sort direction">
+						<option value="desc" selected>Descending</option>
+						<option value="asc">Ascending</option>
+					</select>
 				</div>
 			</form>
 			<div class="table-responsive">
@@ -198,11 +236,25 @@
 				</form>
 			</div>
 			<h4>Existing Overlays</h4>
-			<form class="mb-3 search-form" data-type="overlays">
-				<div class="input-group">
-					<input type="search" class="form-control search-input" placeholder="Search Overlays (Name, Keywords)..."
-					       aria-label="Search Overlays">
-					<button class="btn btn-outline-secondary" type="submit">Search</button>
+			<form class="mb-3 search-form row g-3 align-items-center" data-type="overlays">
+				<div class="col-md-8">
+					<div class="input-group">
+						<input type="search" class="form-control search-input"
+						       placeholder="Search Overlays (Name, Keywords)..." aria-label="Search Overlays">
+						<button class="btn btn-outline-secondary" type="submit">Search</button>
+					</div>
+				</div>
+				<div class="col-md-2">
+					<select class="form-select sort-by-select" aria-label="Sort by">
+						<option value="id" selected>Sort by ID</option>
+						<option value="name">Sort by Name</option>
+					</select>
+				</div>
+				<div class="col-md-2">
+					<select class="form-select sort-direction-select" aria-label="Sort direction">
+						<option value="desc" selected>Descending</option>
+						<option value="asc">Ascending</option>
+					</select>
 				</div>
 			</form>
 			<div class="table-responsive">

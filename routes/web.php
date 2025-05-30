@@ -1,6 +1,7 @@
 <?php
 
 	use App\Http\Controllers\Admin\AdminAIController;
+	use App\Http\Controllers\Admin\AdminTemplateCloneController;
 	use App\Http\Controllers\Admin\BlogManagementController;
 	use App\Http\Controllers\Admin\AdminDashboardController;
 	use App\Http\Controllers\BlogController;
@@ -63,8 +64,8 @@
 
 		Route::post('/templates/{template}/generate-full-cover-json', [AdminAIController::class, 'generateFullCoverJsonForTemplate'])->name('templates.generate-full-cover-json');
 
-		Route::post('/templates/{template}/clone', [AdminDashboardController::class, 'cloneTemplate'])->name('templates.clone');
-		Route::post('/templates/{template}/clone-inverse', [AdminDashboardController::class, 'cloneInverseTemplate'])->name('templates.clone-inverse');
+		Route::post('/templates/{template}/clone', [AdminTemplateCloneController::class, 'cloneTemplate'])->name('templates.clone');
+		Route::post('/templates/{template}/clone-inverse', [AdminTemplateCloneController::class, 'cloneInverseTemplate'])->name('templates.clone-inverse');
 
 		Route::prefix('blog')->name('blog.')->group(function () {
 			Route::get('/', [BlogManagementController::class, 'index'])->name('index');
