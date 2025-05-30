@@ -48,14 +48,14 @@ body {
     margin-bottom: 20px; /* Space before pagination */
 }
 .item-table img.thumbnail-preview {
-    max-width: 120px;
+    max-width: 200px;
     max-height: 200px;
     object-fit: contain;
     border: 1px solid #eee;
     background-color: #fff; /* Add background for transparent images */
 }
 .item-table img.thumbnail-preview.square {
-    max-height: 120px;
+    max-height: 200px;
 }
 .table th, .table td {
     vertical-align: middle;
