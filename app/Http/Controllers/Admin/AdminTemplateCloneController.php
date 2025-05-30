@@ -27,6 +27,11 @@
 	{
 		protected ImageUploadService $imageUploadService;
 
+		public function __construct(ImageUploadService $imageUploadService)
+		{
+			$this->imageUploadService = $imageUploadService;
+		}
+
 		public function cloneTemplate(Request $request, Template $template)
 		{
 			return $this->performClone($template, false);
