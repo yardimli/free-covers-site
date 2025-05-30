@@ -107,12 +107,12 @@
 				<table class="table table-striped item-table" id="templatesTable">
 					<thead>
 					<tr>
-						<th>Cover Image</th>
-						<th>Full Cover Preview</th>
+						<th style="width: 150px;">Cover Image</th>
+						<th style="width: 180px;">Full Cover Preview</th>
 						<th style="width: 200px;">Name/Cover Type</th>
 						<th>Keywords</th>
 						<th>Text Placements</th>
-						<th style="width: 135px;">Actions</th>
+						<th style="width: 175px;">Actions</th>
 					</tr>
 					</thead>
 					<tbody></tbody>

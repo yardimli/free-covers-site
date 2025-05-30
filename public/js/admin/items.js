@@ -159,18 +159,24 @@ AppAdmin.Items = (function () {
 								}
 								
 								const editFrontJsonButton = (item.json_content && item.json_content.canvas) ? `<a href="${editFrontJsonUrl}" target="_blank" class="btn btn-outline-primary btn-sm mb-1 w-100" title="Edit Front JSON"><i class="fas fa-palette"></i> Front JSON</a>` : '';
-								const editFullJsonButton = (item.full_cover_json_content && item.full_cover_json_content.canvas) ? `<a href="${editFullJsonUrl}" target="_blank" class="btn btn-outline-primary btn-sm w-100" title="Edit Full JSON"><i class="fas fa-ruler-combined"></i> Full JSON</a>` : '';
 								
-								const generateFullJsonButton = `<button class="btn btn-sm btn-info generate-full-cover-btn" data-id="${item.id}" title="Generate Full Cover JSON"><i class="fas fa-book-open"></i></button>`;
+								const editFullJsonButton = (item.full_cover_json_content && item.full_cover_json_content.canvas) ? `<a href="${editFullJsonUrl}" target="_blank" class="btn btn-outline-primary btn-sm mb-1 w-100" title="Edit Full JSON"><i class="fas fa-ruler-combined"></i> Full JSON</a>` : '';
+								
+								const generateFullJsonButton = ` <button class="btn btn-sm btn-info w-100 mb-1 generate-full-cover-btn" data-id="${item.id}" title="Generate Full Cover JSON"> <i class="fas fa-book-open"></i> Generate Full</button>`;
+								
+								const cloneButton = ` <button class="btn btn-sm btn-outline-secondary w-100 mb-1 clone-template-btn" data-id="${item.id}" title="Clone Template"> <i class="fas fa-clone"></i> Clone </button>`;
+								
+								const inverseCloneButton = ` <button class="btn btn-sm btn-outline-primary w-100 mb-1 clone-inverse-template-btn" data-id="${item.id}" title="Clone Template with Inverted Colors"> <i class="fas fa-palette"></i> Inverse Clone</button>`;
 								
 								rowHtml += `${editFrontJsonButton} ${editFullJsonButton} ${generateFullJsonButton}`;
+								rowHtml += `${cloneButton} ${inverseCloneButton}`;
 							}
 							if (itemType === 'covers' || itemType === 'templates') {
-								rowHtml += ` <button class="btn btn-secondary btn-sm edit-text-placements" data-id="${item.id}" data-type="${itemType}" data-name="${escapeHtml(item.name)}" title="Edit Text Placements"> <i class="fas fa-map-signs"></i> </button>`;
+								rowHtml += ` <button class="btn btn-sm btn-secondary edit-text-placements" data-id="${item.id}" data-type="${itemType}" data-name="${escapeHtml(item.name)}" title="Edit Text Placements"> <i class="fas fa-map-signs"></i> </button>`;
 							}
-							rowHtml += ` <button class="btn btn-info btn-sm generate-ai-metadata" data-id="${item.id}" data-type="${itemType}" title="Generate AI Metadata"> <i class="fas fa-wand-magic-sparkles"></i> </button>`;
-							rowHtml += ` <button class="btn btn-warning btn-sm edit-item" data-id="${item.id}" data-type="${itemType}" title="Edit"> <i class="fas fa-edit"></i> </button>`;
-							rowHtml += ` <button class="btn btn-danger btn-sm delete-item" data-id="${item.id}" data-type="${itemType}" title="Delete"> <i class="fas fa-trash-alt"></i> </button>`;
+							rowHtml += ` <button class="btn btn-sm btn-info generate-ai-metadata" data-id="${item.id}" data-type="${itemType}" title="Generate AI Metadata"> <i class="fas fa-wand-magic-sparkles"></i> </button>`;
+							rowHtml += ` <button class="btn btn-sm btn-warning edit-item" data-id="${item.id}" data-type="${itemType}" title="Edit"> <i class="fas fa-edit"></i> </button>`;
+							rowHtml += ` <button class="btn btn-sm btn-danger delete-item" data-id="${item.id}" data-type="${itemType}" title="Delete"> <i class="fas fa-trash-alt"></i> </button>`;
 							rowHtml += `</td>`;
 							rowHtml += `</tr>`;
 							$tableBody.append(rowHtml);
@@ -276,6 +282,88 @@ AppAdmin.Items = (function () {
 					AppAdmin.Utils.showAlert(`Error: ${errorMsg}`, 'danger');
 					console.error("Generate Full Cover JSON error:", xhr);
 					$button.prop('disabled', false).html('<i class="fas fa-book-open"></i>');
+				}
+			});
+		});
+		
+		// Simple Clone Template
+		$(document).on('click', '.clone-template-btn', function() {
+			const templateId = $(this).data('id');
+			if (!templateId) {
+				AppAdmin.Utils.showAlert('Could not get template ID for cloning.', 'danger');
+				return;
+			}
+			if (!confirm('Are you sure you want to clone this template?')) {
+				return;
+			}
+			
+			const $button = $(this);
+			const originalHtml = $button.html();
+			$button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+			
+			$.ajax({
+				url: `/admin/templates/${templateId}/clone`,
+				type: 'POST',
+				headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+				success: function(response) {
+					if (response.success) {
+						AppAdmin.Utils.showAlert(response.message || 'Template cloned successfully!', 'success');
+						const currentPage = parseInt($('#templatesPagination .active .page-link').data('page'), 10) || 1;
+						const currentSearch = $('#templates-panel .search-input').val() || '';
+						const currentFilter = $('#templates-panel .cover-type-filter').val() || '';
+						AppAdmin.Items.loadItems('templates', currentPage, currentSearch, currentFilter, $(window).scrollTop());
+					} else {
+						AppAdmin.Utils.showAlert(response.message || 'Failed to clone template.', 'danger');
+					}
+				},
+				error: function(xhr) {
+					const errorMsg = xhr.responseJSON?.message || xhr.responseText || 'An unknown error occurred.';
+					AppAdmin.Utils.showAlert(`Error cloning template: ${escapeHtml(errorMsg)}`, 'danger');
+					console.error("Clone template error:", xhr);
+				},
+				complete: function() {
+					$button.prop('disabled', false).html(originalHtml);
+				}
+			});
+		});
+		
+		// Inverse Clone Template
+		$(document).on('click', '.clone-inverse-template-btn', function() {
+			const templateId = $(this).data('id');
+			if (!templateId) {
+				AppAdmin.Utils.showAlert('Could not get template ID for inverse cloning.', 'danger');
+				return;
+			}
+			if (!confirm('Are you sure you want to create an inverse color clone of this template? This will process its JSON data and may take a moment.')) {
+				return;
+			}
+			
+			const $button = $(this);
+			const originalHtml = $button.html();
+			$button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...');
+			
+			$.ajax({
+				url: `/admin/templates/${templateId}/clone-inverse`,
+				type: 'POST',
+				headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+				success: function(response) {
+					if (response.success) {
+						AppAdmin.Utils.showAlert(response.message || 'Inverse template cloned successfully!', 'success');
+						const currentPage = parseInt($('#templatesPagination .active .page-link').data('page'), 10) || 1;
+						const currentSearch = $('#templates-panel .search-input').val() || '';
+						const currentFilter = $('#templates-panel .cover-type-filter').val() || '';
+						AppAdmin.Items.loadItems('templates', currentPage, currentSearch, currentFilter, $(window).scrollTop());
+					} else {
+						AppAdmin.Utils.showAlert(response.message || 'Failed to create inverse clone.', 'danger');
+					}
+				},
+				error: function(xhr) {
+					const errorMsg = xhr.responseJSON?.message || xhr.responseText || 'An unknown error occurred.';
+					AppAdmin.Utils.showAlert(`Error creating inverse clone: ${escapeHtml(errorMsg)}`, 'danger');
+					console.error("Inverse clone template error:", xhr);
+				},
+				complete: function() {
+					$button.prop('disabled', false).html(originalHtml);
 				}
 			});
 		});
