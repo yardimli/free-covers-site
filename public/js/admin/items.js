@@ -46,7 +46,7 @@ AppAdmin.Items = (function () {
 		}
 	}
 	
-	function loadItems(itemType, page = 1, searchQuery = '', coverTypeIdFilter = '', filterNoTemplates = false, sortBy = 'id', sortDirection = 'desc', scrollYToRestore = null) {
+	function loadItems(itemType, page = 1, searchQuery = '', coverTypeIdFilter = '', filterNoTemplates = false, scrollYToRestore = null, sortBy = 'id', sortDirection = 'desc') {
 		const $tableBody = $(`#${itemType}Table tbody`);
 		const $paginationContainer = $(`#${itemType}Pagination`);
 		const $panel = $(`#${itemType}-panel`);

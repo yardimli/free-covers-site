@@ -146,7 +146,7 @@ $(document).ready(function () {
 			$panel.find('.sort-by-select').val(sortBy);
 			$panel.find('.sort-direction-select').val(sortDir);
 			
-			loadItems(itemType, page, search, filter, noTemplatesFilterActive, sortBy, sortDir);
+			loadItems(itemType, page, search, filter, noTemplatesFilterActive, 0, sortBy, sortDir);
 			popStateHandlingActive = false;
 		} else {
 			// Normal user click on a tab
@@ -159,7 +159,7 @@ $(document).ready(function () {
 			if (itemType === 'covers') {
 				noTemplatesFilterActive = $('#filterNoTemplatesBtn').hasClass('active');
 			}
-			loadItems(itemType, page, search, filter, noTemplatesFilterActive, sortBy, sortDir);
+			loadItems(itemType, page, search, filter, noTemplatesFilterActive, 0, sortBy, sortDir);
 		}
 	});
 	
@@ -175,7 +175,7 @@ $(document).ready(function () {
 		if (itemType === 'covers') {
 			noTemplatesFilterActive = $('#filterNoTemplatesBtn').hasClass('active');
 		}
-		loadItems(itemType, 1, searchQuery, coverTypeId, noTemplatesFilterActive, sortBy, sortDir); // Reset to page 1
+		loadItems(itemType, 1, searchQuery, coverTypeId, noTemplatesFilterActive, 0, sortBy, sortDir); // Reset to page 1
 	});
 	
 	// Sort Dropdown Change
@@ -190,7 +190,7 @@ $(document).ready(function () {
 		if (itemType === 'covers') {
 			noTemplatesFilterActive = $('#filterNoTemplatesBtn').hasClass('active');
 		}
-		loadItems(itemType, 1, searchQuery, coverTypeIdFilter, noTemplatesFilterActive, sortBy, sortDir); // Reset to page 1
+		loadItems(itemType, 1, searchQuery, coverTypeIdFilter, noTemplatesFilterActive, 0, sortBy, sortDir); // Reset to page 1
 	});
 	
 	
@@ -204,7 +204,7 @@ $(document).ready(function () {
 		const coverTypeIdFilter = $panel.find('.cover-type-filter').val() || '';
 		const sortBy = $panel.find('.sort-by-select').val() || 'id';
 		const sortDir = $panel.find('.sort-direction-select').val() || 'desc';
-		loadItems(itemType, 1, searchQuery, coverTypeIdFilter, noTemplatesFilterActive, sortBy, sortDir); // Reset to page 1
+		loadItems(itemType, 1, searchQuery, coverTypeIdFilter, noTemplatesFilterActive, 0, sortBy, sortDir); // Reset to page 1
 	});
 	
 	// Pagination Clicks
@@ -225,7 +225,7 @@ $(document).ready(function () {
 		if (itemType === 'covers') {
 			noTemplatesFilterActive = $('#filterNoTemplatesBtn').hasClass('active');
 		}
-		loadItems(itemType, page, searchQuery, coverTypeIdFilter, noTemplatesFilterActive, sortBy, sortDir);
+		loadItems(itemType, page, searchQuery, coverTypeIdFilter, noTemplatesFilterActive, 0, sortBy, sortDir);
 	});
 	
 	// Search Form Submission
@@ -242,6 +242,6 @@ $(document).ready(function () {
 		if (itemType === 'covers') {
 			noTemplatesFilterActive = $('#filterNoTemplatesBtn').hasClass('active');
 		}
-		loadItems(itemType, 1, searchQuery, coverTypeId, noTemplatesFilterActive, sortBy, sortDir); // Reset to page 1
+		loadItems(itemType, 1, searchQuery, coverTypeId, noTemplatesFilterActive, 0, sortBy, sortDir); // Reset to page 1
 	});
 });

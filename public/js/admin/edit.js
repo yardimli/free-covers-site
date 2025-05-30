@@ -109,11 +109,13 @@ AppAdmin.Edit = (function() {
 					showAlert(`${capitalizeFirstLetter(itemType).slice(0,-1)} updated successfully!`, 'success');
 					editModal.hide();
 					const params = new URLSearchParams(window.location.search);
-					const page = parseInt(params.get('page'), 10) || 1;
-					const search = params.get('search') || '';
-					const coverTypeIdFilter = params.get('filter') || '';
+					const currentPage = parseInt(params.get('page'), 10) || 1;
+					const currentSearch = params.get('search') || '';
+					const currentFilter =  params.get('filter') || '';
 					const noTemplatesFilter = itemType === 'covers' && $('#filterNoTemplatesBtn').hasClass('active');
-					loadItems(itemType, page, search, coverTypeIdFilter, noTemplatesFilter, currentScrollY);
+					const currentSortBy = params.get('sort_by') || 'id';
+					const currentSortDir = params.get('sort_dir') || 'desc';
+					loadItems(itemType, currentPage, currentSearch, currentFilter, noTemplatesFilter, currentScrollY, currentSortBy, currentSortDir);
 				} else {
 					let errorMsg = `Error updating ${itemType}: ${escapeHtml(response.message)}`;
 					if (response.errors) {
