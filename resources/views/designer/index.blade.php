@@ -11,6 +11,8 @@
 	<link rel="stylesheet" href="{{ asset('vendors/jquery-ui-1.14.1/jquery-ui.css') }}">
 	<link rel="stylesheet" href="{{ asset('vendors/jsfontpicker/dist/jquery.fontpicker.css') }}">
 	<link rel="stylesheet" href="{{ asset('css/designer-style.css') }}">
+	<link rel="stylesheet" href="{{ asset('css/designer-inspector-style.css') }}">
+	<link rel="stylesheet" href="{{ asset('css/designer-canvas-size-style.css') }}">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">

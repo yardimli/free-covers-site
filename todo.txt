@@ -19,6 +19,20 @@ add blog to admin ..............................................................
 
 allow user to save their work on the covers (json file) to my ebook and print covers ......................OK
 
+the designer add more guides, add safe area guides inside and besides the spine ...........................OK
+add center horizontal and center vertical guides for back cover spine and front cover .....................OK
+
+in the designer on full cover add barcode area, barcode area should not export to png or json
+
+in designer text layers move padding to general area out of background
+in the designer add option to set background color
+
+in the designer in admin mode the covers and templates should not be blank
+in full cover templates add author picture and bio placeholders
+in admin allow add template as long as it has one json
+in admin when uploading covers add function to crop front cover from full cover
+
+
 make signin/up with google work
 make forget password work
 

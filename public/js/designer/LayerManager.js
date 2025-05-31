@@ -788,39 +788,98 @@ class LayerManager {
 	_calculateGuidelines(currentLayerId) {
 		const canvasWidth = this.canvasManager.currentCanvasWidth;
 		const canvasHeight = this.canvasManager.currentCanvasHeight;
-		const safeZoneMargin = 100; // px
+		const backCoverWidth = this.canvasManager.backCoverWidth;
+		const spineWidth = this.canvasManager.spineWidth;
+		const frontCoverWidth = this.canvasManager.frontCoverWidth;
+		
+		// Get margin values from CanvasManager
+		const BLEED_MARGIN_PX = this.canvasManager.BLEED_MARGIN_PX;
+		const SPINE_SAFE_H_MARGIN_PX = this.canvasManager.SPINE_SAFE_H_MARGIN_PX;
+		const SPINE_SAFE_V_MARGIN_PX = this.canvasManager.SPINE_SAFE_V_MARGIN_PX;
+		const COVER_SAFE_MARGIN_PX = BLEED_MARGIN_PX; // Cover safe area uses 0.125"
+		
+		let verticalGuidelines = [];
+		let horizontalGuidelines = [];
 		
 		// Canvas Center Guidelines
-		let verticalGuidelines = [0, canvasWidth / 2, canvasWidth];
-		let horizontalGuidelines = [0, canvasHeight / 2, canvasHeight];
+		verticalGuidelines.push(canvasWidth / 2);
+		horizontalGuidelines.push(canvasHeight / 2);
 		
-		// Spine/Back Cover Guidelines (from CanvasManager properties)
-		// These are only added if CanvasManager created the visual guides,
-		// which happens if spineWidth > 0 and backCoverWidth > 0.
-		if (this.canvasManager.spineWidth > 0 && this.canvasManager.backCoverWidth > 0) {
-			verticalGuidelines.push(this.canvasManager.backCoverWidth);
-			verticalGuidelines.push(this.canvasManager.backCoverWidth + this.canvasManager.spineWidth);
+		// Spine Delineation Guides (if print mode)
+		if (spineWidth > 0 && backCoverWidth > 0) {
+			verticalGuidelines.push(backCoverWidth);
+			verticalGuidelines.push(backCoverWidth + spineWidth);
 		}
-		// console.log("After spine guides, Vertical guidelines:", verticalGuidelines);
 		
-		// Safe Zone Guidelines (100px inset from canvas edges)
-		if (canvasWidth > safeZoneMargin * 2) { // Ensure canvas is wide enough
-			verticalGuidelines.push(safeZoneMargin);
-			verticalGuidelines.push(canvasWidth - safeZoneMargin);
+		// Bleed Lines (Trim Lines)
+		verticalGuidelines.push(BLEED_MARGIN_PX, canvasWidth - BLEED_MARGIN_PX);
+		horizontalGuidelines.push(BLEED_MARGIN_PX, canvasHeight - BLEED_MARGIN_PX);
+		
+		// Spine Safe Area Lines (if spine exists)
+		if (spineWidth > 0) {
+			const spineActualStartX = backCoverWidth; // For print, 0 for Kindle if spine is from edge
+			const spineSafeLeft = spineActualStartX + SPINE_SAFE_H_MARGIN_PX;
+			const spineSafeRight = spineActualStartX + spineWidth - SPINE_SAFE_H_MARGIN_PX;
+			const spineSafeTop = SPINE_SAFE_V_MARGIN_PX;
+			const spineSafeBottom = canvasHeight - (SPINE_SAFE_V_MARGIN_PX*2);
+			
+			if (spineSafeRight > spineSafeLeft) {
+				verticalGuidelines.push(spineSafeLeft, spineSafeRight);
+			}
+			if (spineSafeBottom > spineSafeTop) {
+				horizontalGuidelines.push(spineSafeTop, spineSafeBottom);
+			}
 		}
-		if (canvasHeight > safeZoneMargin * 2) { // Ensure canvas is tall enough
-			horizontalGuidelines.push(safeZoneMargin);
-			horizontalGuidelines.push(canvasHeight - safeZoneMargin);
+		
+		// Cover Safe Area Lines
+		// Front Cover Safe Area
+		let frontCoverVisualStart = backCoverWidth + spineWidth;
+		if (frontCoverVisualStart === 0) {
+			frontCoverVisualStart = BLEED_MARGIN_PX; // For Kindle, start at bleed margin
 		}
-		// console.log("After safe zone, Vertical guidelines:", verticalGuidelines);
+		const frontSafeLeft = frontCoverVisualStart + (COVER_SAFE_MARGIN_PX);
+		let frontSafeRight = frontCoverVisualStart + frontCoverWidth - (COVER_SAFE_MARGIN_PX * 2);
+		if (backCoverWidth===0) {
+			frontSafeRight = frontCoverVisualStart + frontCoverWidth - (COVER_SAFE_MARGIN_PX * 3); // For Kindle, adjust right margin
+		}
+		if (frontSafeRight > frontSafeLeft) {
+			verticalGuidelines.push(frontSafeLeft, frontSafeRight);
+		}
+		// Horizontal safe lines for front cover (top/bottom)
+		horizontalGuidelines.push(COVER_SAFE_MARGIN_PX*2, canvasHeight - (COVER_SAFE_MARGIN_PX*2));
+		
+		
+		// Back Cover Safe Area (if back cover exists)
+		if (backCoverWidth > 0) {
+			const backSafeLeft = COVER_SAFE_MARGIN_PX*2;
+			const backSafeRight = backCoverWidth - COVER_SAFE_MARGIN_PX;
+			if (backSafeRight > backSafeLeft) {
+				verticalGuidelines.push(backSafeLeft, backSafeRight);
+			}
+			// Horizontal safe lines for back cover are same as front, already added
+		}
+		
+		// Center Lines (already added canvas centers, now specific cover centers)
+		// Vertical center of Front Cover
+		let frontMidX = frontCoverVisualStart + (frontCoverWidth / 2) - (BLEED_MARGIN_PX / 2);
+		if (backCoverWidth===0) {
+			frontMidX = frontCoverVisualStart + (frontCoverWidth / 2); // For Kindle, adjust mid X
+		}
+			
+			verticalGuidelines.push(frontMidX);
+		
+		// Vertical center of Back Cover (if back cover exists)
+		if (backCoverWidth > 0) {
+			const backMidX = backCoverWidth / 2 + (BLEED_MARGIN_PX / 2);
+			verticalGuidelines.push(backMidX);
+		}
 		
 		// Element Guidelines (other visible, non-locked layers)
 		const elementGuidelines = this.layers
 			.filter(l => l.id !== currentLayerId && l.visible && !l.locked)
 			.map(l => document.getElementById(l.id))
-			.filter(el => el); // Filter out nulls if element not found
+			.filter(el => el);
 		
-		// Remove duplicates and sort, filter out NaN/undefined
 		const uniqueVertical = [...new Set(verticalGuidelines.filter(v => typeof v === 'number' && !isNaN(v)))].sort((a, b) => a - b);
 		const uniqueHorizontal = [...new Set(horizontalGuidelines.filter(h => typeof h === 'number' && !isNaN(h)))].sort((a, b) => a - b);
 		
