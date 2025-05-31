@@ -767,3 +767,29 @@ body {
 .font-picker {
     min-width: 200px !important;
 }
+
+/* --- Barcode Placeholder --- */
+#canvas-barcode-placeholder {
+    position: absolute;
+    background-color: white;
+    color: black;
+    border: 1px dashed #999; /* Dashed border for placeholder appearance */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-family: Arial, sans-serif; /* Simple, clear font */
+    font-size: 60px; /* Adjust as needed for visibility */
+    font-weight: bold;
+    line-height: 1.2;
+    z-index: 900; /* Above guides, below active UI elements like Moveable */
+    pointer-events: none; /* Should not interfere with layer selection */
+    user-select: none; /* Text not selectable */
+    overflow: hidden; /* Ensure text doesn't spill if too large */
+}
+
+#canvas-barcode-placeholder div {
+    padding: 2px 0; /* Small spacing between lines */
+}

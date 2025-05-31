@@ -22,7 +22,7 @@ allow user to save their work on the covers (json file) to my ebook and print co
 the designer add more guides, add safe area guides inside and besides the spine ...........................OK
 add center horizontal and center vertical guides for back cover spine and front cover .....................OK
 
-in the designer on full cover add barcode area, barcode area should not export to png or json
+in the designer on full cover add barcode area, barcode area should not export to png or json .............OK
 
 in designer text layers move padding to general area out of background
 in the designer add option to set background color

@@ -15,6 +15,7 @@ class CanvasManager {
 		this.$centerHorizontalGuide = null;
 		this.$centerVerticalFrontGuide = null;
 		this.$centerVerticalBackGuide = null;
+		this.$barcodePlaceholder = null;
 		
 		// Dependencies
 		this.layerManager = options.layerManager; // Should be passed in App.js
@@ -188,6 +189,9 @@ class CanvasManager {
 		if (this.$centerVerticalBackGuide) this.$centerVerticalBackGuide.remove();
 		this.$centerVerticalBackGuide = null;
 		
+		if (this.$barcodePlaceholder) this.$barcodePlaceholder.remove(); // New: Remove barcode placeholder
+		this.$barcodePlaceholder = null;
+		
 		// Remove any old guide elements if they had different IDs/classes
 		$('#canvas-safe-zone-guide').remove(); // Old safe zone guide
 	}
@@ -201,6 +205,7 @@ class CanvasManager {
 			this._drawSpineSafeAreaGuide();
 		}
 		this._drawCenterGuides();
+		this._drawBarcodePlaceholder();
 	}
 	
 	_drawSpineGuides() { // Renamed from _updateCanvasGuides and focused
@@ -389,6 +394,70 @@ class CanvasManager {
 		console.log("Center guides updated.");
 	}
 	
+	_drawBarcodePlaceholder() {
+		// Remove existing first (in case of resize or canvas type change)
+		if (this.$barcodePlaceholder) {
+			this.$barcodePlaceholder.remove();
+			this.$barcodePlaceholder = null;
+		}
+		
+		// Only draw for full print covers (when back cover and spine are present)
+		if (!(this.spineWidth > 0 && this.backCoverWidth > 0)) {
+			return;
+		}
+		
+		const BARCODE_OFFSET_FROM_SAFE_AREA_PX = this.INCH_TO_PX(0.25); // 75px
+		const BARCODE_WIDTH_PX = 605;
+		const BARCODE_HEIGHT_PX = 365;
+		
+		// Calculate the bottom-right corner of the *drawn* back cover safe area guide
+		// As per _drawCoverSafeAreaGuides for back cover:
+		// backSafeX_start_coord = this.BLEED_MARGIN_PX * 2
+		// backSafeY_start_coord = this.BLEED_MARGIN_PX * 2
+		// backSafeWidth_dim = this.backCoverWidth - (3 * this.BLEED_MARGIN_PX)
+		// backSafeHeight_dim = this.currentCanvasHeight - (4 * this.BLEED_MARGIN_PX)
+		
+		// Right X-coordinate of the back cover safe area guide
+		const backCoverSafeAreaGuide_RightX = (this.BLEED_MARGIN_PX * 2) + (this.backCoverWidth - (3 * this.BLEED_MARGIN_PX));
+		// Simplifies to: this.backCoverWidth - this.BLEED_MARGIN_PX
+		
+		// Bottom Y-coordinate of the back cover safe area guide
+		const backCoverSafeAreaGuide_BottomY = (this.BLEED_MARGIN_PX * 2) + (this.currentCanvasHeight - (4 * this.BLEED_MARGIN_PX));
+		// Simplifies to: this.currentCanvasHeight - (2 * this.BLEED_MARGIN_PX)
+		
+		// Position the placeholder 0.25 inches INSIDE this safe area guide's bottom-right corner
+		const placeholderRightEdgeAbsolute = backCoverSafeAreaGuide_RightX - BARCODE_OFFSET_FROM_SAFE_AREA_PX;
+		const placeholderBottomEdgeAbsolute = backCoverSafeAreaGuide_BottomY - BARCODE_OFFSET_FROM_SAFE_AREA_PX;
+		
+		const placeholderX_css_left = placeholderRightEdgeAbsolute - BARCODE_WIDTH_PX;
+		const placeholderY_css_top = placeholderBottomEdgeAbsolute - BARCODE_HEIGHT_PX;
+		
+		// Basic validation: ensure placeholder is not off-canvas due to small cover size
+		// or invalid calculations (e.g. if safe area is too small itself)
+		if (placeholderX_css_left < 0 || placeholderY_css_top < 0 ||
+			placeholderRightEdgeAbsolute > this.backCoverWidth || // Should not exceed back cover width
+			placeholderBottomEdgeAbsolute > this.currentCanvasHeight) { // Should not exceed canvas height
+			console.warn("Barcode placeholder cannot be drawn; calculated position is outside valid area or back cover is too small.", {
+				placeholderX_css_left, placeholderY_css_top, BARCODE_WIDTH_PX, BARCODE_HEIGHT_PX,
+				backCoverWidth: this.backCoverWidth, currentCanvasHeight: this.currentCanvasHeight
+			});
+			return;
+		}
+		
+		this.$barcodePlaceholder = $('<div>')
+			.attr('id', 'canvas-barcode-placeholder') // For styling and removal during export
+			.css({
+				position: 'absolute',
+				left: `${placeholderX_css_left}px`,
+				top: `${placeholderY_css_top}px`,
+				width: `${BARCODE_WIDTH_PX}px`,
+				height: `${BARCODE_HEIGHT_PX}px`,
+			})
+			.html('<div>BARCODE</div><div>AREA</div>') // Text content
+			.appendTo(this.$canvas);
+		
+		console.log("Barcode placeholder drawn at:", {x: placeholderX_css_left, y: placeholderY_css_top});
+	}
 	
 	updateWrapperSize() {
 		this.$canvasWrapper.css({
@@ -763,7 +832,16 @@ class CanvasManager {
 				}
 				// Remove all guide elements from the clone
 				clonedNode.querySelectorAll('.canvas-guide, .canvas-guide-rect, .canvas-center-guide-horizontal, .canvas-center-guide-vertical').forEach(el => el.remove());
-				console.log("Removed all guides from cloned node for export.");
+				
+				// --- NEW: Remove barcode placeholder from clone ---
+				const barcodePlaceholderClone = clonedNode.querySelector('#canvas-barcode-placeholder');
+				if (barcodePlaceholderClone) {
+					barcodePlaceholderClone.remove();
+					console.log("Removed barcode placeholder from cloned node for export.");
+				}
+				// --- END NEW ---
+				
+				console.log("Guides and placeholders removed from cloned node for export.");
 				
 				if (transparentBackground) {
 					clonedNode.style.backgroundColor = 'transparent';
