@@ -934,11 +934,9 @@ class CanvasManager {
 								}
 								clonedElement.style.backgroundColor = bgColor;
 								clonedElement.style.borderRadius = (layer.backgroundCornerRadius || 0) + 'px';
-								clonedElement.style.padding = (layer.backgroundPadding || 0) + 'px';
 							} else {
 								clonedElement.style.backgroundColor = 'transparent';
 								clonedElement.style.borderRadius = '0';
-								clonedElement.style.padding = '0';
 							}
 						}
 					}

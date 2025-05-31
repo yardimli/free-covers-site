@@ -177,6 +177,7 @@ class LayerManager {
 			vAlign: 'center',
 			lineHeight: 1.3,
 			letterSpacing: 0,
+			textPadding: 0,
 			shadowEnabled: false,
 			shadowBlur: 5,
 			shadowOffsetX: 2,
@@ -187,7 +188,6 @@ class LayerManager {
 			backgroundEnabled: false,
 			backgroundColor: 'rgba(255,255,255,1)',
 			backgroundOpacity: 1,
-			backgroundPadding: 0,
 			backgroundCornerRadius: 0,
 			// NEW: Image specific defaults
 			filters: {...this.defaultFilters}, // Clone defaults
@@ -219,6 +219,7 @@ class LayerManager {
 			layerData.fontSize = Math.max(1, parseFloat(layerData.fontSize) || defaultProps.fontSize);
 			layerData.lineHeight = Math.max(0.1, parseFloat(layerData.lineHeight) || defaultProps.lineHeight);
 			layerData.letterSpacing = parseFloat(layerData.letterSpacing) || defaultProps.letterSpacing;
+			layerData.textPadding = Math.max(0, parseInt(layerData.textPadding) || 0);
 			// Shadow
 			layerData.shadowBlur = Math.max(0, parseFloat(layerData.shadowBlur) || 0);
 			layerData.shadowOffsetX = parseFloat(layerData.shadowOffsetX) || 0;
@@ -226,7 +227,6 @@ class LayerManager {
 			// Stroke
 			layerData.strokeWidth = Math.max(0, parseFloat(layerData.strokeWidth) || 0);
 			// Background
-			layerData.backgroundPadding = Math.max(0, parseInt(layerData.backgroundPadding) || 0);
 			layerData.backgroundCornerRadius = Math.max(0, parseFloat(layerData.backgroundCornerRadius) || 0);
 			layerData.backgroundOpacity = Math.max(0, Math.min(1, parseFloat(layerData.backgroundOpacity) ?? 1));
 			
@@ -341,13 +341,14 @@ class LayerManager {
 				}
 				
 				// Parse/Validate specific properties
-				if (['x', 'y', 'width', 'height', 'opacity', 'fontSize', 'lineHeight', 'letterSpacing', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'strokeWidth', 'backgroundPadding', 'backgroundCornerRadius', 'backgroundOpacity', 'rotation', 'scale'].includes(key)) {
+				if (['x', 'y', 'width', 'height', 'opacity', 'fontSize', 'lineHeight', 'letterSpacing', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'strokeWidth', 'backgroundCornerRadius', 'backgroundOpacity', 'rotation', 'scale'].includes(key)) {
 					value = value === 'auto' ? 'auto' : parseFloat(value);
 					
 					if (key === 'opacity' || key === 'backgroundOpacity') value = Math.max(0, Math.min(1, isNaN(value) ? 1 : value));
 					if (key === 'fontSize' && isNaN(value)) value = currentLayer.fontSize;
 					if (key === 'scale' && (isNaN(value) || value <= 0)) value = currentLayer.scale || 100;
 					if (key === 'rotation' && isNaN(value)) value = currentLayer.rotation || 0;
+					if (key === 'textPadding' && (isNaN(value) || value < 0)) value = currentLayer.textPadding || 0;
 					
 				} else if (['zIndex'].includes(key)) {
 					value = parseInt(value) || currentLayer.zIndex;
@@ -420,10 +421,10 @@ class LayerManager {
 			// Re-apply styles if *any* relevant property changed
 			const styleProps = [
 				'content', 'fontSize', 'fontFamily', 'fontStyle', 'fontWeight', 'textDecoration',
-				'fill', 'align', 'vAlign', 'lineHeight', 'letterSpacing',
+				'fill', 'align', 'vAlign', 'lineHeight', 'letterSpacing', 'textPadding',
 				'shadowEnabled', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'shadowColor',
 				'strokeWidth', 'stroke',
-				'backgroundEnabled', 'backgroundColor', 'backgroundOpacity', 'backgroundPadding', 'backgroundCornerRadius',
+				'backgroundEnabled', 'backgroundColor', 'backgroundOpacity', 'backgroundCornerRadius',
 				'width' // Width change can affect text wrap
 			];
 			if (Object.keys(newData).some(key => styleProps.includes(key))) {
@@ -1160,6 +1161,7 @@ class LayerManager {
 			
 			lineHeight: layerData.lineHeight || 1.3,
 			letterSpacing: (layerData.letterSpacing || 0) + 'px',
+			padding: (layerData.textPadding || 0) + 'px',
 			border: 'none', // Text content itself shouldn't have border
 			outline: 'none',
 			whiteSpace: 'pre-wrap',
@@ -1221,7 +1223,6 @@ class LayerManager {
 			$parentElement.css({
 				backgroundColor: bgColor,
 				borderRadius: (layerData.backgroundCornerRadius || 0) + 'px',
-				padding: (layerData.backgroundPadding || 0) + 'px',
 			});
 			// Re-evaluate parent height if text content drives it
 			if (layerData.height === 'auto') $parentElement.css('height', 'auto');

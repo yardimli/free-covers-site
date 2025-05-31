@@ -164,6 +164,21 @@
 			</div>
 		</div>
 	</div>
+	
+	<!-- Text Padding -->
+	<div id="inspector-text-padding-section" class="inspector-section" style="display: none;">
+		<div class="section-header">Padding</div>
+		<div class="section-content">
+			<div class="mb-2">
+				<label for="inspector-text-padding" class="form-label">Text Padding</label>
+				<div class="d-flex align-items-center">
+					<input type="range" class="form-range flex-grow-1 me-2" id="inspector-text-padding" min="0" max="100" step="1" value="0">
+					<span class="input-group-text opacity-label" id="inspector-text-padding-value">0</span>
+				</div>
+			</div>
+		</div>
+	</div>
+	
 	<!-- Text Shading (Shadow) -->
 	<div id="inspector-text-shading" class="inspector-section" style="display: none;">
 		<div class="section-header">
@@ -230,13 +245,6 @@
 			<div class="d-flex align-items-center mb-2">
 				<input type="range" class="form-range flex-grow-1 me-2" id="inspector-background-opacity" min="0" max="1" step="0.01" value="1">
 				<span class="input-group-text opacity-label" id="inspector-background-opacity-value">100%</span>
-			</div>
-			<div class="mb-2">
-				<label for="inspector-background-padding" class="form-label">Padding</label>
-				<div class="d-flex align-items-center">
-					<input type="range" class="form-range flex-grow-1 me-2" id="inspector-background-padding" min="0" max="200" step="1" value="0">
-					<span class="input-group-text opacity-label" id="inspector-background-padding-value">0</span>
-				</div>
 			</div>
 			<div class="mb-2">
 				<label for="inspector-background-radius" class="form-label">Corner Radius</label>

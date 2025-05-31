@@ -293,6 +293,9 @@ class InspectorPanel {
 			$(e.currentTarget).addClass('active');
 		});
 		
+		// --- Text Padding ---
+		bindRangeAndNumber('inspector-text-padding', 'inspector-text-padding-value', 'textPadding', 0, 100, 1, '', true);
+		
 		// --- Shading ---
 		this.$panel.find('#inspector-shading-enabled').on('change', (e) => {
 			// ... (shading enabled code remains the same)
@@ -326,8 +329,6 @@ class InspectorPanel {
 			updateLayer('backgroundEnabled', isChecked, true);
 			$(e.target).closest('.inspector-section').find('.section-content').toggle(isChecked);
 		});
-		
-		bindRangeAndNumber('inspector-background-padding', 'inspector-background-padding-value', 'backgroundPadding', 0, 200, 1);
 		
 		bindRangeAndNumber('inspector-background-radius', 'inspector-background-radius-value', 'backgroundCornerRadius', 0, 100, 0.5);
 		
@@ -518,6 +519,7 @@ class InspectorPanel {
 			this.$panel.find('#inspector-alignment').hide();
 			this.$panel.find('#inspector-layer').hide();
 			this.$panel.find('#inspector-text').hide();
+			this.$panel.find('#inspector-text-padding-section').hide();
 			this.$panel.find('#inspector-text-shading').hide();
 			this.$panel.find('#inspector-text-background').hide();
 			this.$panel.find('#inspector-color').hide();
@@ -608,6 +610,7 @@ class InspectorPanel {
 		
 		// --- Enable/Disable Panel Sections ---
 		this.$panel.find('#inspector-text').toggle(isText);
+		this.$panel.find('#inspector-text-padding-section').toggle(isText);
 		this.$panel.find('#inspector-text-shading').toggle(isText);
 		this.$panel.find('#inspector-text-background').toggle(isText);
 		this.$panel.find('#inspector-color').toggle(isText);
@@ -673,6 +676,9 @@ class InspectorPanel {
 			$('#inspector-text-v-align button').removeClass('active');
 			$(`#inspector-text-v-align button[data-align-v="${vAlign}"]`).addClass('active');
 			
+			// Text Padding
+			this._populateRangeAndNumber('inspector-text-padding', 'inspector-text-padding-value', layerData.textPadding, 0);
+			
 			// Shading / Shadow
 			const shadowEnabled = !!layerData.shadowEnabled;
 			$('#inspector-shading-enabled').prop('checked', shadowEnabled);
@@ -699,7 +705,6 @@ class InspectorPanel {
 			if (backgroundEnabled) {
 				// Background color group handles its own opacity slider via backgroundOpacity
 				this._populateColorInputGroup('background', layerData.backgroundColor, layerData.backgroundOpacity);
-				this._populateRangeAndNumber('inspector-background-padding', 'inspector-background-padding-value', layerData.backgroundPadding, 0);
 				this._populateRangeAndNumber('inspector-background-radius', 'inspector-background-radius-value', layerData.backgroundCornerRadius, 0);
 			}
 		} else {

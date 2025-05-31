@@ -24,7 +24,8 @@ add center horizontal and center vertical guides for back cover spine and front 
 
 in the designer on full cover add barcode area, barcode area should not export to png or json .............OK
 
-in designer text layers move padding to general area out of background
+in designer text layers move padding to general area out of background ....................................OK
+in designer inspector allow to input with keyboard on sliders
 in the designer add option to set background color
 
 in the designer in admin mode the covers and templates should not be blank
