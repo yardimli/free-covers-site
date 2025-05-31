@@ -34,6 +34,7 @@ class DesignerController extends Controller
 				];
 			})->toArray();
 
+
 		// Fetch Overlays
 		$overlays_data = Overlay::orderBy('name')
 			->get(['id', 'name', 'thumbnail_path', 'image_path', 'keywords'])

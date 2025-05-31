@@ -25,10 +25,10 @@ add center horizontal and center vertical guides for back cover spine and front 
 in the designer on full cover add barcode area, barcode area should not export to png or json .............OK
 
 in designer text layers move padding to general area out of background ....................................OK
-in designer inspector allow to input with keyboard on sliders
+in designer inspector allow to input with keyboard on sliders .............................................OK
 in the designer add option to set background color
+in the designer in admin mode there is a bug covers and templates dont load on the sidebar ................OK
 
-in the designer in admin mode the covers and templates should not be blank
 in full cover templates add author picture and bio placeholders
 in admin allow add template as long as it has one json
 in admin when uploading covers add function to crop front cover from full cover
@@ -44,3 +44,5 @@ make top search work
 in designer make the spine align correctly with the cover
 update admin ai to auto assign template to covers with better prompt
 create social media accounts for the site update the footer
+
+in the designer in admin for covers and templates when not in kindle mode load the full cover image and full cover json

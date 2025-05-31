@@ -1,5 +1,4 @@
 /* --- Inspector Panel (Right Side) --- */
-
 .inspector-panel {
     position: absolute;
     top: 0;
@@ -14,7 +13,6 @@
     transform: translateX(var(--inspector-panel-width));
     transition: transform 0.3s ease-in-out;
     box-shadow: -3px 0 6px rgba(0, 0, 0, 0.15);
-
     display: flex;
     flex-direction: column;
 }
@@ -22,7 +20,6 @@
 .inspector-panel.open {
     transform: translateX(0);
 }
-
 
 .close-inspector-btn {
     position: absolute;
@@ -74,7 +71,7 @@
     pointer-events: none !important;
 }
 
-.inspector-panel .input-group-text {
+.inspector-panel .input-group-text { /* Keep for # in color hex */
     font-size: 0.75rem;
     padding: 0.25rem 0.5rem;
 }
@@ -112,15 +109,35 @@
     margin-right: 5px;
 }
 
-.inspector-panel .color-input-group .form-control {
+.inspector-panel .color-input-group .form-control { /* For hex input */
     flex-grow: 1;
     min-width: 80px;
 }
 
-.inspector-panel .opacity-label {
-    width: 50px;
+/* REMOVED .inspector-panel .opacity-label as it's replaced by inspector-value-input and inspector-unit-display */
+
+.inspector-panel .inspector-value-input {
+    width: 70px; /* Adjust as needed, e.g., 60px or 75px */
     text-align: right;
+    /* font-size and padding are inherited from .form-control-sm */
+    /*-moz-appearance: textfield; !* Firefox - hide spinners *!*/
 }
+.inspector-panel .inspector-value-input::-webkit-outer-spin-button,
+.inspector-panel .inspector-value-input::-webkit-inner-spin-button {
+    /*-webkit-appearance: none; !* Chrome, Safari, Edge, Opera - hide spinners *!*/
+    /*margin: 0;*/
+}
+
+
+.inspector-panel .inspector-unit-display {
+    font-size: 0.75rem; /* Slightly smaller like input-group-text */
+    color: #6c757d;
+    padding-left: 0.2rem; /* Small spacing from input */
+    white-space: nowrap;
+    min-width: 15px; /* Ensure space for units like '%' or '°' */
+    text-align: left;
+}
+
 
 .inspector-text-style-btn.active {
     background-color: #0d6efd;
@@ -146,6 +163,7 @@
     max-width: 100%;
     display: block;
 }
+
 
 #inspector-layer-info-actions .section-header {
     border-bottom: none;
