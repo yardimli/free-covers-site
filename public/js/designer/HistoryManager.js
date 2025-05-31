@@ -1,80 +1,94 @@
+// free-cover-designer/js/HistoryManager.js
 class HistoryManager {
-	constructor(layerManager, options = {}) {
-		this.layerManager = layerManager; // Reference to manage layer state
-		this.history = [];
-		this.historyIndex = -1;
+	constructor(layerManager, canvasManager, options = {}) { // Added canvasManager
+		this.layerManager = layerManager;
+		this.canvasManager = canvasManager; // Store canvasManager instance
+		this.historyStack = [];
+		this.redoStack = [];
 		this.maxHistory = options.maxHistory || 50;
-		this.onUpdate = options.onUpdate || (() => {}); // Callback for UI updates (e.g., button states)
+		this.onUpdate = options.onUpdate || (() => {});
+		this.isRestoring = false; // Flag to prevent re-saving during undo/redo
 	}
 	
 	saveState() {
-		// Clear redo history if we make a new change after undoing
-		if (this.historyIndex < this.history.length - 1) {
-			this.history = this.history.slice(0, this.historyIndex + 1);
+		if (this.isRestoring) return; // Don't save state if we are currently restoring one
+		
+		// --- MODIFIED: Include canvas settings in state ---
+		const currentState = {
+			layers: this.layerManager.getLayers(), // Get a deep copy of layers
+			canvasSettings: this.canvasManager.getCanvasBackgroundSettings() // Get canvas background settings
+		};
+		// --- END MODIFIED ---
+		
+		// Avoid saving identical consecutive states
+		if (this.historyStack.length > 0) {
+			const lastState = this.historyStack[this.historyStack.length - 1];
+			// Simple stringify for comparison. For complex states, a more robust deep equal might be needed.
+			if (JSON.stringify(lastState) === JSON.stringify(currentState)) {
+				// console.log("History: State unchanged, not saving.");
+				return;
+			}
 		}
 		
-		// Get current state from LayerManager (needs deep clone)
-		const currentState = JSON.parse(JSON.stringify(this.layerManager.getLayers()));
-		
-		// Avoid saving identical consecutive states (optional but good)
-		if (this.history.length > 0 && JSON.stringify(currentState) === JSON.stringify(this.history[this.historyIndex])) {
-			// console.log("State unchanged, not saving.");
-			return;
+		this.historyStack.push(currentState);
+		if (this.historyStack.length > this.maxHistory) {
+			this.historyStack.shift(); // Remove oldest state
 		}
-		
-		
-		this.history.push(currentState);
-		this.historyIndex++;
-		
-		// Limit history size
-		if (this.history.length > this.maxHistory) {
-			this.history.shift();
-			this.historyIndex--;
-		}
-		
-		// console.log("State Saved. Index:", this.historyIndex, "History Length:", this.history.length);
-		this.onUpdate(); // Notify UI to update buttons
-	}
-	
-	restoreState(stateIndex) {
-		if (stateIndex < 0 || stateIndex >= this.history.length) {
-			console.error("Invalid history index:", stateIndex);
-			return;
-		}
-		this.historyIndex = stateIndex;
-		// Get state from history (needs deep clone before passing)
-		const stateToRestore = JSON.parse(JSON.stringify(this.history[this.historyIndex]));
-		
-		// Restore state using LayerManager
-		this.layerManager.setLayers(stateToRestore); // LayerManager handles re-rendering
-		
-		// console.log("State Restored. Index:", this.historyIndex);
-		this.onUpdate(); // Notify UI to update buttons
+		this.redoStack = []; // Clear redo stack on new action
+		this.onUpdate(); // Notify App.js to update button states
+		// console.log("History: State saved. Stack size:", this.historyStack.length);
 	}
 	
 	undo() {
-		if (this.canUndo()) {
-			this.restoreState(this.historyIndex - 1);
-		}
+		if (this.historyStack.length <= 1) return; // Keep the initial state
+		
+		this.isRestoring = true;
+		const currentState = this.historyStack.pop();
+		this.redoStack.push(currentState);
+		
+		const prevState = this.historyStack[this.historyStack.length - 1];
+		this._applyState(prevState);
+		
+		this.isRestoring = false;
+		this.onUpdate();
+		// console.log("History: Undo. Stack size:", this.historyStack.length, "Redo stack:", this.redoStack.length);
 	}
 	
 	redo() {
-		if (this.canRedo()) {
-			this.restoreState(this.historyIndex + 1);
+		if (this.redoStack.length === 0) return;
+		
+		this.isRestoring = true;
+		const nextState = this.redoStack.pop();
+		this.historyStack.push(nextState);
+		this._applyState(nextState);
+		
+		this.isRestoring = false;
+		this.onUpdate();
+		// console.log("History: Redo. Stack size:", this.historyStack.length, "Redo stack:", this.redoStack.length);
+	}
+	
+	_applyState(state) {
+		if (!state) return;
+		// --- MODIFIED: Apply canvas settings ---
+		this.layerManager.setLayers(state.layers, false); // false to indicate it's not a template merge
+		if (state.canvasSettings) {
+			this.canvasManager.setCanvasBackgroundSettings(state.canvasSettings, false); // false to prevent re-saving history
 		}
+		// --- END MODIFIED ---
 	}
 	
 	canUndo() {
-		return this.historyIndex > 0;
+		return this.historyStack.length > 1; // Can undo if more than the initial state
 	}
 	
 	canRedo() {
-		return this.historyIndex < this.history.length - 1;
+		return this.redoStack.length > 0;
 	}
 	
 	clear() {
-		this.history = [];
-		this.historyIndex = -1;
+		this.historyStack = [];
+		this.redoStack = [];
+		// Consider saving an initial blank state here if needed, or let App.js handle initial save
 		this.onUpdate();
 	}
 }

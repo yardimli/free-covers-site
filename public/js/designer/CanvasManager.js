@@ -57,6 +57,11 @@ class CanvasManager {
 		this.SPINE_SAFE_H_MARGIN_PX = this.INCH_TO_PX(0.062); // 18.6px
 		this.SPINE_SAFE_V_MARGIN_PX = this.INCH_TO_PX(0.062 + 0.125); // 56.1px
 		// COVER_SAFE_MARGIN_PX is the same as BLEED_MARGIN_PX for front/back covers
+		
+		this.DEFAULT_CANVAS_BACKGROUND_COLOR = '#FFFFFF'; // This can remain as a fallback if transparency is toggled off
+		this.DEFAULT_CANVAS_IS_TRANSPARENT = true; // Set default to transparent
+		this.canvasBackgroundColor = this.DEFAULT_CANVAS_BACKGROUND_COLOR;
+		this.canvasIsTransparentBackground = this.DEFAULT_CANVAS_IS_TRANSPARENT;
 	}
 	
 	initialize() {
@@ -67,6 +72,9 @@ class CanvasManager {
 			spineWidth: 0,
 			backWidth: 0
 		});
+		
+		this._applyCanvasBackgroundStyle();
+		
 		if (this.$canvasArea && this.$canvasArea.length) {
 			this.inverseZoomMultiplier = 1 / this.currentZoom;
 		} else {
@@ -78,6 +86,34 @@ class CanvasManager {
 		this.setZoom(this.currentZoom, false);
 		this.centerCanvas();
 		this.onZoomChange(this.currentZoom, this.MIN_ZOOM, this.MAX_ZOOM);
+	}
+	
+	setCanvasBackgroundSettings(settings, triggerHistorySave = true) {
+		this.canvasBackgroundColor = settings.color || this.DEFAULT_CANVAS_BACKGROUND_COLOR;
+		this.canvasIsTransparentBackground = !!settings.isTransparent; // Ensure boolean
+		
+		this._applyCanvasBackgroundStyle();
+		
+		if (triggerHistorySave && this.historyManager) {
+			this.historyManager.saveState();
+		}
+	}
+	
+	_applyCanvasBackgroundStyle() {
+		if (this.canvasIsTransparentBackground) {
+			this.$canvas.addClass('checkered-bg');
+			this.$canvas.css('background-color', 'transparent');
+		} else {
+			this.$canvas.removeClass('checkered-bg');
+			this.$canvas.css('background-color', this.canvasBackgroundColor);
+		}
+	}
+	
+	getCanvasBackgroundSettings() {
+		return {
+			color: this.canvasBackgroundColor,
+			isTransparent: this.canvasIsTransparentBackground
+		};
 	}
 	
 	async addInitialImage(imageUrl) {
@@ -640,7 +676,9 @@ class CanvasManager {
 				height: this.currentCanvasHeight,
 				frontWidth: this.frontCoverWidth,
 				spineWidth: this.spineWidth,
-				backWidth: this.backCoverWidth
+				backWidth: this.backCoverWidth,
+				backgroundColor: this.canvasBackgroundColor,
+				isTransparentBackground: this.canvasIsTransparentBackground
 			},
 			layers: sortedLayers.map(layer => {
 				const {shadowOffsetInternal, shadowAngleInternal, ...layerToSave} = layer;
@@ -793,7 +831,7 @@ class CanvasManager {
 		});
 	}
 	
-	async exportCanvas(format = 'png', transparentBackground = false) {
+	async exportCanvas(format = 'png') {
 		this.showLoadingOverlay(`Exporting as ${format.toUpperCase()}...`);
 		this.layerManager.selectLayer(null);
 		const originalTransform = this.$canvas.css('transform');
@@ -802,6 +840,12 @@ class CanvasManager {
 		const originalScrollLeft = this.$canvasArea.scrollLeft();
 		const originalScrollTop = this.$canvasArea.scrollTop();
 		this.$canvas.css('transform', 'scale(1.0)');
+
+		this.$canvas.removeClass('checkered-bg');
+		if (!this.canvasIsTransparentBackground) {
+			this.$canvas.css('background-color',this.canvasBackgroundColor);
+		}
+		
 		this.$canvasWrapper.css({
 			width: this.currentCanvasWidth + 'px',
 			height: this.currentCanvasHeight + 'px'
@@ -842,10 +886,11 @@ class CanvasManager {
 				// --- END NEW ---
 				
 				console.log("Guides and placeholders removed from cloned node for export.");
-				
-				if (transparentBackground) {
+
+				if (this.canvasIsTransparentBackground) {
 					clonedNode.style.backgroundColor = 'transparent';
 				}
+				
 				if (embeddedFontCss) {
 					const style = document.createElement('style');
 					style.textContent = embeddedFontCss;
@@ -964,6 +1009,9 @@ class CanvasManager {
 				}
 			});
 			this.$canvas.css('transform', originalTransform);
+			if (this.canvasIsTransparentBackground) {
+				this.$canvas.addClass('checkered-bg');
+			}
 			this.$canvasWrapper.css({width: originalWrapperWidth, height: originalWrapperHeight});
 			this.$canvasArea.scrollLeft(originalScrollLeft);
 			this.$canvasArea.scrollTop(originalScrollTop);
@@ -977,21 +1025,7 @@ class CanvasManager {
 	}
 	
 	saveDesign() {
-		const sortedLayers = [...this.layerManager.getLayers()].sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
-		const designData = {
-			version: "1.3",
-			canvas: {
-				width: this.currentCanvasWidth,
-				height: this.currentCanvasHeight,
-				frontWidth: this.frontCoverWidth,
-				spineWidth: this.spineWidth,
-				backWidth: this.backCoverWidth
-			},
-			layers: sortedLayers.map(layer => {
-				const {shadowOffsetInternal, shadowAngleInternal, ...layerToSave} = layer;
-				return layerToSave;
-			})
-		};
+		const designData = this.getDesignDataAsObject();
 		const jsonData = JSON.stringify(designData, null, 2);
 		const blob = new Blob([jsonData], {type: 'application/json'});
 		const url = URL.createObjectURL(blob);
@@ -1027,6 +1061,13 @@ class CanvasManager {
 							backWidth: 0
 						};
 					}
+					
+					const bgColor = designData.canvas.backgroundColor || this.DEFAULT_CANVAS_BACKGROUND_COLOR;
+					const isTransparent = designData.canvas.isTransparentBackground !== undefined
+						? designData.canvas.isTransparentBackground
+						: this.DEFAULT_CANVAS_IS_TRANSPARENT;
+					this.setCanvasBackgroundSettings({ color: bgColor, isTransparent: isTransparent }, false);
+					
 					if (isTemplate && !IS_ADMIN_MODE) {
 						console.log("Applying template: Calculating centering offset.");
 						if (designData.layers.length > 0) {

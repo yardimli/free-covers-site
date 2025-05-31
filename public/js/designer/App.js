@@ -19,6 +19,15 @@ $(document).ready(function () {
 	const $sidebarPanels = $('.sidebar-panel');
 	const $sidebarNavLinks = $('.sidebar-nav .nav-link[data-panel-target]');
 	
+	const $backgroundSettingsModal = $('#backgroundSettingsModal');
+	const $canvasBackgroundColorPicker = $('#canvasBackgroundColorPicker');
+	const $canvasTransparentBackgroundCheckbox = $('#canvasTransparentBackgroundCheckbox');
+	const $applyBackgroundSettingsBtn = $('#applyBackgroundSettingsBtn');
+	let bsBackgroundSettingsModal = null;
+	if ($backgroundSettingsModal.length) {
+		bsBackgroundSettingsModal = new bootstrap.Modal($backgroundSettingsModal[0]);
+	}
+	
 	// --- Configuration ---
 	// IMPORTANT: Set this ID to an existing cover_type ID from your database
 	// This will be the default selected type in "Covers" and "Templates" panels.
@@ -46,7 +55,7 @@ $(document).ready(function () {
 		canvasManager: canvasManager
 	});
 	
-	const historyManager = new HistoryManager(layerManager, {
+	const historyManager = new HistoryManager(layerManager, canvasManager, { // Added canvasManager
 		onUpdate: updateActionButtons
 	});
 	
@@ -96,6 +105,7 @@ $(document).ready(function () {
 	// Set cross-dependencies
 	canvasManager.layerManager = layerManager;
 	canvasManager.historyManager = historyManager;
+	layerManager.saveState = () => historyManager.saveState();
 	
 	// --- Initialization ---
 	sidebarManager.loadAll(); // This will now use the defaultCoverTypeId
@@ -104,6 +114,26 @@ $(document).ready(function () {
 	initializeGlobalActions();
 	initializeSidebarPanelControls();
 	inspectorPanel.hide(); // Hide initially
+	
+	if ($backgroundSettingsModal.length) {
+		$backgroundSettingsModal.on('show.bs.modal', function () {
+			const currentSettings = canvasManager.getCanvasBackgroundSettings();
+			$canvasBackgroundColorPicker.val(currentSettings.color);
+			$canvasTransparentBackgroundCheckbox.prop('checked', currentSettings.isTransparent);
+		});
+		
+		$applyBackgroundSettingsBtn.on('click', function () {
+			const newColor = $canvasBackgroundColorPicker.val();
+			const newIsTransparent = $canvasTransparentBackgroundCheckbox.prop('checked');
+			canvasManager.setCanvasBackgroundSettings({
+				color: newColor,
+				isTransparent: newIsTransparent
+			}); // This will trigger history save
+			if (bsBackgroundSettingsModal) {
+				bsBackgroundSettingsModal.hide();
+			}
+		});
+	}
 	
 	// --- Initial State & Query Param Handling ---
 	hideGlobalLoadingOverlay(); // Ensure it's hidden before we start any custom loading
@@ -447,7 +477,7 @@ $(document).ready(function () {
 					let imageBlob;
 					let dataUrl;
 					try {
-						dataUrl = await canvasManager.exportCanvas('png', true);
+						dataUrl = await canvasManager.exportCanvas('png');
 						
 						if (!dataUrl) { // <<< --- ADD THIS CHECK
 							throw new Error("Canvas export did not return a valid data URL.");
@@ -529,7 +559,7 @@ $(document).ready(function () {
 		// Export Actions
 		$('#downloadBtn').on('click', (e) => preventDisabled(e, async () => { // Make it async if not already
 			try {
-				const dataUrl = await canvasManager.exportCanvas('png', true); // Default to PNG, transparent
+				const dataUrl = await canvasManager.exportCanvas('png'); // Default to PNG, transparent
 				if (dataUrl) {
 					const filename = `book-cover-export.png`; // Or derive from format
 					const a = document.createElement('a');
@@ -586,7 +616,7 @@ $(document).ready(function () {
 			
 			let imageBlob;
 			try {
-				const dataUrl = await canvasManager.exportCanvas('jpeg', false);
+				const dataUrl = await canvasManager.exportCanvas('jpeg');
 				if (!dataUrl) {
 					throw new Error("Canvas export did not return a valid data URL.");
 				}

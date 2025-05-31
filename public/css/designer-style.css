@@ -290,7 +290,7 @@ body {
     border: none;
     margin: 0;
     display: block;
-    background-color: #fff;
+    /*background-color: #fff;*/
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     -webkit-user-select: none; /* Safari */
     -ms-user-select: none; /* IE 10 and IE 11 */
@@ -792,4 +792,11 @@ body {
 
 #canvas-barcode-placeholder div {
     padding: 2px 0; /* Small spacing between lines */
+}
+
+#canvas.checkered-bg {
+    background-color: #f9f2ec;
+    background-image: repeating-conic-gradient(#f5f5f5 0 25%,
+    #fff 0 50%);
+    background-size: 50px 50px;
 }

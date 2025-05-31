@@ -51,10 +51,10 @@
 		<!-- Icon Bar (Fixed Width) -->
 		<ul class="nav nav-pills flex-column text-center sidebar-nav flex-shrink-0">
 			@if($from_admin_mode)
-			<li class="nav-item" id="coversPanelLink"><a class="nav-link" href="#" data-panel-target="#coversPanel"
-			                                             title="Covers"><i class="fas fa-image fa-lg"></i></a></li>
-			<li class="nav-item" id="templatesPanelLink"><a class="nav-link" href="#" data-panel-target="#templatesPanel"
-			                                                title="Templates"><i class="fas fa-th-large fa-lg"></i></a></li>
+				<li class="nav-item" id="coversPanelLink"><a class="nav-link" href="#" data-panel-target="#coversPanel"
+				                                             title="Covers"><i class="fas fa-image fa-lg"></i></a></li>
+				<li class="nav-item" id="templatesPanelLink"><a class="nav-link" href="#" data-panel-target="#templatesPanel"
+				                                                title="Templates"><i class="fas fa-th-large fa-lg"></i></a></li>
 			@endif
 			<li class="nav-item"><a class="nav-link" href="#" data-panel-target="#elementsPanel" title="Elements"><i
 						class="fas fa-shapes fa-lg"></i></a></li>
@@ -64,6 +64,8 @@
 						class="fas fa-upload fa-lg"></i></a></li>
 			<li class="nav-item"><a class="nav-link" href="#" data-panel-target="#layersPanel" title="Layers"><i
 						class="fas fa-layer-group fa-lg"></i></a></li>
+			<li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#backgroundSettingsModal"
+			                        title="Canvas Background"><i class="fas fa-palette fa-lg"></i></a></li>
 			<hr class="mx-2" style="border-top: 1px solid #495057;">
 			@if($from_admin_mode)
 				<li class="nav-item" id="loadDesignPanelLink"><a class="nav-link" href="#" id="loadDesignIconBtn"
@@ -77,13 +79,15 @@
 					                                                    title="Update Template in Database"><i
 								class="fas fa-database fa-lg text-warning"></i></a></li>
 				@endif
-				@else
-					{{-- Regular user save design button --}}
-					@auth
-						<li class="nav-item" id="saveUserDesignLink"><a class="nav-link" href="#" id="saveUserDesignBtn" title="Save My Design"><i class="fas fa-cloud-upload-alt fa-lg"></i></a></li>
-					@endauth
-				@endif
-				<li class="nav-item"><a class="nav-link" href="#" id="undoBtn" title="Undo"><i class="fas fa-undo fa-lg"></i></a>
+			@else
+				{{-- Regular user save design button --}}
+				@auth
+					<li class="nav-item" id="saveUserDesignLink"><a class="nav-link" href="#" id="saveUserDesignBtn"
+					                                                title="Save My Design"><i
+								class="fas fa-cloud-upload-alt fa-lg"></i></a></li>
+				@endauth
+			@endif
+			<li class="nav-item"><a class="nav-link" href="#" id="undoBtn" title="Undo"><i class="fas fa-undo fa-lg"></i></a>
 			</li>
 			<li class="nav-item"><a class="nav-link" href="#" id="redoBtn" title="Redo"><i class="fas fa-redo fa-lg"></i></a>
 			</li>
@@ -160,7 +164,7 @@
 		<!-- Canvas Area (Takes remaining space) -->
 		<div id="canvas-area" class="bg-secondary overflow-auto position-relative flex-grow-1">
 			<div id="canvas-wrapper" class="position-relative">
-				<div id="canvas" class="bg-white shadow position-relative">
+				<div id="canvas" class="shadow position-relative">
 					<!-- Canvas elements added here by JS -->
 				</div>
 			</div>
@@ -209,6 +213,7 @@
 
 <!-- Canvas Size Modal -->
 @include('designer.partials.canvasSizeModal')
+@include('designer.partials.backgroundSettingsModal')
 
 <!-- Overlay Confirmation Modal -->
 <div class="modal fade" id="overlayConfirmModal" tabindex="-1" aria-labelledby="overlayConfirmModalLabel"
