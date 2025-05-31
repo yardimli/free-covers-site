@@ -114,6 +114,69 @@ class InspectorPanel {
 			updateLayer('definition', definition, true);
 		});
 		
+		// Helper for direct number inputs (X, Y, Width, Height)
+		const bindDirectNumberInput = (inputId, layerProp, unit = 'px', allowAuto = false) => {
+			const $input = this.$panel.find(`#${inputId}`);
+			if (!$input.length) {
+				console.warn(`InspectorPanel: Input not found #${inputId}`);
+				return;
+			}
+			
+			$input.on('input', (e) => {
+				if (this.currentLayer) {
+					let value = $(e.target).val();
+					let processedValue;
+					
+					if (allowAuto && value.toLowerCase() === 'auto') {
+						processedValue = 'auto';
+					} else {
+						processedValue = parseFloat(value);
+						if (isNaN(processedValue)) {
+							// If NaN during input, don't update layer yet, let 'change' handle it or user correct it
+							return;
+						}
+					}
+					updateLayer(layerProp, processedValue, false, true); // Debounced save
+				}
+			});
+			
+			$input.on('change', (e) => { // Handles blur or Enter
+				if (this.currentLayer) {
+					let value = $(e.target).val();
+					const originalValue = this.currentLayer[layerProp];
+					let processedValue;
+					
+					if (allowAuto && value.toLowerCase() === 'auto') {
+						processedValue = 'auto';
+					} else {
+						processedValue = parseFloat(value);
+						if (isNaN(processedValue)) {
+							$(e.target).val(originalValue === 'auto' ? 'auto' : (parseFloat(originalValue) || 0));
+							return;
+						}
+						const min = parseFloat($input.attr('min'));
+						const max = parseFloat($input.attr('max'));
+						if (!isNaN(min) && processedValue < min) processedValue = min;
+						if (!isNaN(max) && processedValue > max) processedValue = max;
+						$(e.target).val(processedValue);
+					}
+					
+					if (processedValue !== originalValue) {
+						updateLayer(layerProp, processedValue, true);
+					} else if ($(e.target).val() !== (originalValue === 'auto' ? 'auto' : String(parseFloat(originalValue) || 0))) {
+						$(e.target).val(originalValue === 'auto' ? 'auto' : (parseFloat(originalValue) || 0));
+					}
+				}
+			});
+		};
+		
+		// Bind X, Y, Width, Height inputs
+		bindDirectNumberInput('inspector-pos-x', 'x');
+		bindDirectNumberInput('inspector-pos-y', 'y');
+		bindDirectNumberInput('inspector-size-width', 'width', 'px', true); // Allow 'auto' for width
+		bindDirectNumberInput('inspector-size-height', 'height', 'px', true); // Allow 'auto' for height
+		
+		
 		const bindColorInputGroup = (groupId, layerPropPrefix) => {
 			const $picker = $(`#inspector-${groupId}-color`);
 			const $hex = $(`#inspector-${groupId}-hex`);
@@ -522,6 +585,20 @@ class InspectorPanel {
 		this.$cloneLayerBtn.show(); // Show clone button when a layer is selected
 	}
 	
+	_populateDirectNumberInput(inputId, value, allowAuto = false) {
+		const $input = this.$panel.find(`#${inputId}`);
+		if ($input.length) {
+			if (allowAuto && typeof value === 'string' && value.toLowerCase() === 'auto') {
+				$input.val('auto');
+			} else {
+				const numValue = parseFloat(value);
+				// Display the number, or empty string if it's not a valid number (e.g. if 'auto' was passed but allowAuto=false)
+				// For 'auto' capable fields, this path is taken if value is numeric.
+				$input.val(isNaN(numValue) ? '' : numValue);
+			}
+		}
+	}
+	
 	hide() {
 		if (this.$panel.hasClass('open')) {
 			this.currentLayer = null;
@@ -622,6 +699,12 @@ class InspectorPanel {
 		this.$panel.find('#inspector-border').toggle(isText);
 		this.$panel.find('#inspector-image-filters').toggle(isImage);
 		this.$panel.find('#inspector-image-blend-mode').toggle(isImage);
+		
+		// Populate X, Y, Width, Height
+		this._populateDirectNumberInput('inspector-pos-x', layerData.x);
+		this._populateDirectNumberInput('inspector-pos-y', layerData.y);
+		this._populateDirectNumberInput('inspector-size-width', layerData.width, true); // allowAuto = true
+		this._populateDirectNumberInput('inspector-size-height', layerData.height, true); // allowAuto = true
 		
 		// Common Controls
 		this._populateRangeAndNumber('inspector-opacity-slider', 'inspector-opacity-input', 'inspector-opacity-unit', layerData.opacity ?? 1, 1, '%', 100, 1, 0);

@@ -28,8 +28,9 @@ in designer text layers move padding to general area out of background .........
 in designer inspector allow to input with keyboard on sliders .............................................OK
 in the designer add option to set background color ........................................................OK
 in the designer in admin mode there is a bug covers and templates dont load on the sidebar ................OK
+in designer add x,y,width,height to layers ................................................................OK
+in full cover templates add author picture and bio placeholders ...........................................OK
 
-in full cover templates add author picture and bio placeholders
 in admin allow add template as long as it has one json
 in admin when uploading covers add function to crop front cover from full cover
 

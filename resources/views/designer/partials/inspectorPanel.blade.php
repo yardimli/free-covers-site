@@ -52,6 +52,45 @@
 			</button>
 		</div>
 		<div class="section-content">
+			
+			<!-- Position & Size -->
+			<div class="row g-2 mb-2">
+				<div class="col-6">
+					<label for="inspector-pos-x" class="form-label">X</label>
+					<div class="d-flex align-items-center">
+						<input type="number" class="form-control form-control-sm inspector-value-input" id="inspector-pos-x"
+						       step="1">
+						<span class="ms-1 inspector-unit-display">px</span>
+					</div>
+				</div>
+				<div class="col-6">
+					<label for="inspector-pos-y" class="form-label">Y</label>
+					<div class="d-flex align-items-center">
+						<input type="number" class="form-control form-control-sm inspector-value-input" id="inspector-pos-y"
+						       step="1">
+						<span class="ms-1 inspector-unit-display">px</span>
+					</div>
+				</div>
+			</div>
+			<div class="row g-2 mb-3"> {{-- Increased mb for spacing before opacity --}}
+				<div class="col-6">
+					<label for="inspector-size-width" class="form-label">Width</label>
+					<div class="d-flex align-items-center">
+						<input type="number" class="form-control form-control-sm inspector-value-input" id="inspector-size-width"
+						       step="1" min="1">
+						<span class="ms-1 inspector-unit-display">px</span>
+					</div>
+				</div>
+				<div class="col-6">
+					<label for="inspector-size-height" class="form-label">Height</label>
+					<div class="d-flex align-items-center">
+						<input type="number" class="form-control form-control-sm inspector-value-input" id="inspector-size-height"
+						       step="1" min="1">
+						<span class="ms-1 inspector-unit-display">px</span>
+					</div>
+				</div>
+			</div>
+			
 			<!-- Opacity -->
 			<div class="mb-2">
 				<label for="inspector-opacity-slider" class="form-label">Opacity</label>
