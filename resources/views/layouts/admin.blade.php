@@ -138,6 +138,7 @@
 <script src="{{ asset('js/admin/batchAiMetadata.js') }}"></script>
 <script src="{{ asset('js/admin/uploadZip.js') }}"></script>
 <script src="{{ asset('js/admin/blogManagement.js') }}"></script>
+<script src="{{ asset('js/admin/updateAllTemplateImages.js') }}"></script>
 
 <!-- Main Admin Orchestrator -->
 <script src="{{ asset('js/admin.js') }}"></script>

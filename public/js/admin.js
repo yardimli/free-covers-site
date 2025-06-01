@@ -244,4 +244,7 @@ $(document).ready(function () {
 		}
 		loadItems(itemType, 1, searchQuery, coverTypeId, noTemplatesFilterActive, 0, sortBy, sortDir); // Reset to page 1
 	});
+	
+	
+	
 });

@@ -30,13 +30,18 @@ in the designer add option to set background color .............................
 in the designer in admin mode there is a bug covers and templates dont load on the sidebar ................OK
 in designer add x,y,width,height to layers ................................................................OK
 in full cover templates add author picture and bio placeholders ...........................................OK
-
-in admin allow add template as long as it has one json
-in admin when uploading covers add function to crop front cover from full cover
-
+when saving cover in frontend show spinner for uploading json after png
 
 make signin/up with google work
 make forget password work
+create a medium article
+create a reddit group
+add how it works page
+add changelog page
+add user voice page
+
+in admin allow add template as long as it has one json
+in admin when uploading covers add function to crop front cover from full cover
 
 add list of members with summary of their work to admin
 add login as user to admin
@@ -45,5 +50,6 @@ make top search work
 in designer make the spine align correctly with the cover
 update admin ai to auto assign template to covers with better prompt
 create social media accounts for the site update the footer
-
+in designer add option to set gradient background color for back, spine and front separately
 in the designer in admin for covers and templates when not in kindle mode load the full cover image and full cover json
+allow user to select multiple items to drag together in the designer

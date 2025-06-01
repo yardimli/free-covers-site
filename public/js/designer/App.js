@@ -2,6 +2,7 @@
 const IS_ADMIN_MODE = window.IS_ADMIN_DESIGNER_MODE || false;
 const TEMPLATE_ID_TO_UPDATE = window.TEMPLATE_ID_TO_UPDATE || null;
 const JSON_TYPE_TO_UPDATE = window.JSON_TYPE_TO_UPDATE || null;
+const AUTO_UPDATE_PREVIEW = new URLSearchParams(window.location.search).get('auto_update_preview') === 'true';
 
 $(document).ready(function () {
 	// --- DOM References ---
@@ -166,6 +167,36 @@ $(document).ready(function () {
 		historyManager.saveState(); // Save the true initial state after any loads/resizes
 		updateActionButtons(); // Update buttons based on the final initial state
 		hideGlobalLoadingOverlay(); // Ensure it's hidden if it was shown by file loading
+		
+		if (IS_ADMIN_DESIGNER_MODE && TEMPLATE_ID_TO_UPDATE && JSON_TYPE_TO_UPDATE && AUTO_UPDATE_PREVIEW) {
+			console.log("Designer: Auto-update mode detected for Template ID:", TEMPLATE_ID_TO_UPDATE, "Type:", JSON_TYPE_TO_UPDATE);
+			
+			const $updateBtn = $('#updateTemplateInDbBtn');
+			if ($updateBtn.length > 0) {
+				// Wait a bit for canvas to fully render, especially if complex.
+				// A more robust way would be to listen to a 'canvasReady' or 'designLoaded' event.
+				showGlobalLoadingOverlay(`Auto-updating preview for ${JSON_TYPE_TO_UPDATE}...`); // Show overlay in designer
+				setTimeout(() => {
+					if (!$updateBtn.prop('disabled')) {
+						console.log("Designer: Triggering click on 'Update Template in DB' button.");
+						$updateBtn.trigger('click');
+						// The AJAX complete handler for this button will call window.opener and close.
+					} else {
+						console.error("Designer: Auto-update failed. Update button is disabled.");
+						if (window.opener && typeof window.opener.handleDesignerUpdateComplete === 'function') {
+							window.opener.handleDesignerUpdateComplete(TEMPLATE_ID_TO_UPDATE, JSON_TYPE_TO_UPDATE, false, "Update button was disabled in designer.");
+						}
+						setTimeout(() => window.close(), 1000); // Close after a delay
+					}
+				}, 2000); // 2-second delay. Adjust if designs load slower.
+			} else {
+				console.error("Designer: Auto-update failed. 'Update Template in DB' button not found.");
+				if (window.opener && typeof window.opener.handleDesignerUpdateComplete === 'function') {
+					window.opener.handleDesignerUpdateComplete(TEMPLATE_ID_TO_UPDATE, JSON_TYPE_TO_UPDATE, false, "Update button not found in designer.");
+				}
+				setTimeout(() => window.close(), 1000);
+			}
+		}
 	}
 	
 	if (queryFileUrl && IS_ADMIN_MODE && queryFileUrl.includes('/api/templates/')) { // Check if it's an admin template edit
@@ -472,59 +503,79 @@ $(document).ready(function () {
 					return;
 				}
 				
-				if (confirm(`Are you sure you want to update Template ID ${TEMPLATE_ID_TO_UPDATE} (${JSON_TYPE_TO_UPDATE} JSON) in the database with the current design and a new preview image?`)) {
-					showGlobalLoadingOverlay("Generating preview image...");
-					let imageBlob;
-					let dataUrl;
-					try {
-						dataUrl = await canvasManager.exportCanvas('png');
-						
-						if (!dataUrl) { // <<< --- ADD THIS CHECK
-							throw new Error("Canvas export did not return a valid data URL.");
-						}
-						
-						imageBlob = dataURLtoBlob(dataUrl);
-					} catch (exportError) {
-						hideGlobalLoadingOverlay();
-						console.error("Error exporting canvas for template update:", exportError);
-						alert("Failed to generate preview image for the template. Update aborted.");
-						return;
+				
+				showGlobalLoadingOverlay("Generating preview image...");
+				let imageBlob;
+				let dataUrl;
+				try {
+					dataUrl = await canvasManager.exportCanvas('png');
+					
+					if (!dataUrl) { // <<< --- ADD THIS CHECK
+						throw new Error("Canvas export did not return a valid data URL.");
 					}
 					
-					showGlobalLoadingOverlay("Updating template in database...");
-					
-					const formData = new FormData();
-					formData.append('json_type', JSON_TYPE_TO_UPDATE);
-					formData.append('json_data', JSON.stringify(designData)); // Server will json_decode
-					formData.append('updated_image_file', imageBlob, `template_preview_${TEMPLATE_ID_TO_UPDATE}_${JSON_TYPE_TO_UPDATE}.png`);
-					
-					$.ajax({
-						url: `/admin/templates/${TEMPLATE_ID_TO_UPDATE}/update-json`,
-						type: 'POST',
-						data: formData,
-						contentType: false, // Important for FormData
-						processData: false, // Important for FormData
-						headers: {
-							'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-						},
-						success: function (response) {
-							hideGlobalLoadingOverlay();
-							if (response.success) {
-								alert('Template updated successfully in the database!');
-								// Optionally, refresh the admin view or redirect
-							} else {
-								alert('Failed to update template: ' + (response.message || 'Unknown error'));
-								console.error("Update template error response:", response);
-							}
-						},
-						error: function (xhr) {
-							hideGlobalLoadingOverlay();
-							const errorMsg = xhr.responseJSON?.message || (xhr.responseJSON?.errors ? JSON.stringify(xhr.responseJSON.errors) : xhr.statusText) || 'Server error';
-							alert('Error updating template: ' + errorMsg);
-							console.error("Update template AJAX error:", xhr);
-						}
-					});
+					imageBlob = dataURLtoBlob(dataUrl);
+				} catch (exportError) {
+					hideGlobalLoadingOverlay();
+					console.error("Error exporting canvas for template update:", exportError);
+					alert("Failed to generate preview image for the template. Update aborted.");
+					return;
 				}
+				
+				showGlobalLoadingOverlay("Updating template in database...");
+				
+				const formData = new FormData();
+				formData.append('json_type', JSON_TYPE_TO_UPDATE);
+				formData.append('json_data', JSON.stringify(designData)); // Server will json_decode
+				formData.append('updated_image_file', imageBlob, `template_preview_${TEMPLATE_ID_TO_UPDATE}_${JSON_TYPE_TO_UPDATE}.png`);
+				
+				$.ajax({
+					url: `/admin/templates/${TEMPLATE_ID_TO_UPDATE}/update-json`,
+					type: 'POST',
+					data: formData,
+					contentType: false, // Important for FormData
+					processData: false, // Important for FormData
+					headers: {
+						'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+					},
+					success: function (response) {
+						hideGlobalLoadingOverlay();
+						if (response.success) {
+							if (!AUTO_UPDATE_PREVIEW) alert('Template updated successfully in the database!');
+							
+							if (AUTO_UPDATE_PREVIEW && window.opener && typeof window.opener.handleDesignerUpdateComplete === 'function') {
+								window.opener.handleDesignerUpdateComplete(TEMPLATE_ID_TO_UPDATE, JSON_TYPE_TO_UPDATE, true, response.message || "Update successful.");
+							}
+						} else {
+							if (!AUTO_UPDATE_PREVIEW) alert('Failed to update template: ' + (response.message || 'Unknown error'));
+							console.error("Update template error response:", response);
+							
+							if (AUTO_UPDATE_PREVIEW && window.opener && typeof window.opener.handleDesignerUpdateComplete === 'function') {
+								window.opener.handleDesignerUpdateComplete(TEMPLATE_ID_TO_UPDATE, JSON_TYPE_TO_UPDATE, false, response.message || 'Unknown error from server during update.');
+							}
+						}
+					},
+					error: function (xhr) {
+						// hideGlobalLoadingOverlay(); // Moved to complete
+						const errorMsg = xhr.responseJSON?.message || (xhr.responseJSON?.errors ? JSON.stringify(xhr.responseJSON.errors) : xhr.statusText) || 'Server error';
+						if (!AUTO_UPDATE_PREVIEW) alert('Error updating template: ' + errorMsg);
+						console.error("Update template AJAX error:", xhr);
+						if (AUTO_UPDATE_PREVIEW && window.opener && typeof window.opener.handleDesignerUpdateComplete === 'function') {
+							window.opener.handleDesignerUpdateComplete(TEMPLATE_ID_TO_UPDATE, JSON_TYPE_TO_UPDATE, false, `AJAX Error: ${errorMsg}`);
+						}
+					},
+					complete: function() {
+						hideGlobalLoadingOverlay(); // Hide overlay once AJAX is fully complete
+						if (AUTO_UPDATE_PREVIEW) {
+							// Delay closing to ensure message is sent, especially if opener is slow or console logs are pending
+							setTimeout(() => {
+								console.log("Designer: Auto-update process complete. Closing window.");
+								window.close();
+							}, 500); // Small delay
+						}
+					}
+				});
+				
 			});
 		} else {
 			$('#updateTemplateInDbLink').hide(); // Ensure it's hidden if params are missing
