@@ -29,6 +29,14 @@ $(document).ready(function () {
 		bsBackgroundSettingsModal = new bootstrap.Modal($backgroundSettingsModal[0]);
 	}
 	
+	let bsSaveDesignNameModal = null;
+	let bsSaveDesignResultModal = null;
+	let currentDesignName = "My Awesome Book"; // Default, will be updated by URL param if present
+	const $designNameInput = $('#designNameInput');
+	const $saveDesignNameForm = $('#saveDesignNameForm');
+	const $saveDesignResultModalLabel = $('#saveDesignResultModalLabel');
+	const $saveDesignResultMessage = $('#saveDesignResultMessage');
+	
 	// --- Configuration ---
 	// IMPORTANT: Set this ID to an existing cover_type ID from your database
 	// This will be the default selected type in "Covers" and "Templates" panels.
@@ -136,12 +144,27 @@ $(document).ready(function () {
 		});
 	}
 	
+	if ($('#saveDesignNameModal').length) {
+		bsSaveDesignNameModal = new bootstrap.Modal($('#saveDesignNameModal')[0]);
+	}
+	if ($('#saveDesignResultModal').length) {
+		bsSaveDesignResultModal = new bootstrap.Modal($('#saveDesignResultModal')[0]);
+	}
+	
 	// --- Initial State & Query Param Handling ---
 	hideGlobalLoadingOverlay(); // Ensure it's hidden before we start any custom loading
 	const urlParams = new URLSearchParams(window.location.search);
 	const queryCanvasWidth = urlParams.get('w');
 	const queryCanvasHeight = urlParams.get('h');
 	const queryFileUrl = urlParams.get('f');
+	const queryDesignName = urlParams.get('design_name');
+	if (queryDesignName) {
+		currentDesignName = decodeURIComponent(queryDesignName);
+		$("#project-name").text(currentDesignName); // Update the project name in the UI
+	} else
+	{
+		$("#project-name").text('New Project'); // Default project name
+	}
 	
 	// New params from setup page
 	const queryImagePath = urlParams.get('image_path');
@@ -637,21 +660,38 @@ $(document).ready(function () {
 			canvasSizeModal.show();
 		});
 		
-		$('#saveUserDesignBtn').on('click', async (e) => {
+		$('#saveUserDesignBtn').on('click', (e) => { // Removed async as it's not needed here
 			e.preventDefault();
 			if (!canvasManager) {
-				alert("CanvasManager is not available.");
+				$saveDesignResultModalLabel.text('Error');
+				$saveDesignResultMessage.text("CanvasManager is not available.");
+				if(bsSaveDesignResultModal) bsSaveDesignResultModal.show(); else alert("CanvasManager is not available.");
 				return;
 			}
 			
-			const designName = prompt("Enter a name for your design (e.g., My Sci-Fi Cover):", "My Awesome Design");
-			if (!designName || designName.trim() === "") {
-				alert("Design name cannot be empty.");
+			// Pre-fill and show the name modal
+			$designNameInput.val(currentDesignName);
+			$saveDesignNameForm.removeClass('was-validated');
+			$designNameInput.removeClass('is-invalid');
+			if (bsSaveDesignNameModal) bsSaveDesignNameModal.show();
+			// The actual save logic will be triggered by the modal's save button
+		});
+		
+		$('#confirmSaveDesignBtn').on('click', async () => {
+			const designName = $designNameInput.val().trim();
+			
+			$saveDesignNameForm.addClass('was-validated'); // Add class to show validation messages
+			
+			if (!designName || designName.length === 0 || designName.length > 255) {
+				$designNameInput.addClass('is-invalid');
+				// Feedback is already in HTML, Bootstrap handles showing it with was-validated and is-invalid
 				return;
 			}
+			$designNameInput.removeClass('is-invalid');
 			
-			showGlobalLoadingOverlay("Saving your design...");
+			if (bsSaveDesignNameModal) bsSaveDesignNameModal.hide();
 			
+			showGlobalLoadingOverlay("Preparing design data...");
 			let designData;
 			try {
 				designData = canvasManager.getDesignDataAsObject();
@@ -661,66 +701,90 @@ $(document).ready(function () {
 			} catch (err) {
 				hideGlobalLoadingOverlay();
 				console.error("Error getting design data:", err);
-				alert("Error preparing design data: " + err.message);
+				$saveDesignResultModalLabel.text('Error Preparing Data');
+				$saveDesignResultMessage.text("Error preparing design data: " + err.message);
+				if(bsSaveDesignResultModal) bsSaveDesignResultModal.show(); else alert("Error preparing design data: " + err.message);
 				return;
 			}
 			
+			showGlobalLoadingOverlay("Generating preview image...");
 			let imageBlob;
 			try {
-				const dataUrl = await canvasManager.exportCanvas('jpeg');
+				const dataUrl = await canvasManager.exportCanvas('jpeg'); // Save preview as JPEG
 				if (!dataUrl) {
 					throw new Error("Canvas export did not return a valid data URL.");
 				}
-				imageBlob = dataURLtoBlob(dataUrl); // Assumes dataURLtoBlob function exists
+				imageBlob = dataURLtoBlob(dataUrl);
 			} catch (exportError) {
 				hideGlobalLoadingOverlay();
 				console.error("Error exporting canvas for user design save:", exportError);
-				alert("Failed to generate preview image for saving. Save aborted.");
+				$saveDesignResultModalLabel.text('Error Generating Preview');
+				$saveDesignResultMessage.text("Failed to generate preview image for saving. Save aborted.");
+				if(bsSaveDesignResultModal) bsSaveDesignResultModal.show(); else alert("Failed to generate preview image for saving. Save aborted.");
 				return;
 			}
 			
+			showGlobalLoadingOverlay("Saving your design...");
 			const formData = new FormData();
-			formData.append('name', designName.trim());
+			formData.append('name', designName);
 			formData.append('json_data', JSON.stringify(designData));
-			// Sanitize filename a bit for the blob
-			const safeFilename = designName.trim().replace(/[^a-z0-9_.-]/gi, '_').substring(0, 50) || 'design_preview';
-			formData.append('preview_image_file', imageBlob, `${safeFilename}.png`);
+			const safeFilename = designName.replace(/[^a-z0-9_.-]/gi, '_').substring(0, 50) || 'design_preview';
+			formData.append('preview_image_file', imageBlob, `${safeFilename}.jpg`); // Changed to .jpg
 			
 			$.ajax({
-				url: '/user-designs', // Route: user-designs.store
+				url: '/user-designs',
 				type: 'POST',
 				data: formData,
 				contentType: false,
 				processData: false,
-				headers: {
-					'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-				},
+				headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
 				success: function (response) {
-					hideGlobalLoadingOverlay();
 					if (response.success) {
-						alert('Design saved successfully!');
-						// Optionally, you could update a list of saved designs if displayed in designer
-						// or provide a link to the dashboard.
+						currentDesignName = designName; // Update current name on successful save
+						$("#project-name").text(currentDesignName); // Default project name
+						$saveDesignResultModalLabel.text('Design Saved');
+						$saveDesignResultMessage.text(response.message || 'Design saved successfully!');
+						if(bsSaveDesignResultModal) bsSaveDesignResultModal.show();
 					} else {
-						let errorMessages = response.message || 'Unknown error';
+						let errorMessages = response.message || 'Unknown error during save.';
 						if (response.errors) {
-							errorMessages += "\nDetails:\n";
+							errorMessages += "<br><small>Details:</small><ul class='list-unstyled mt-2 mb-0'>";
 							for (const field in response.errors) {
-								errorMessages += `- ${response.errors[field].join(', ')}\n`;
+								response.errors[field].forEach(errMsg => {
+									errorMessages += `<li>- ${errMsg}</li>`;
+								});
 							}
+							errorMessages += "</ul>";
 						}
-						alert('Failed to save design: ' + errorMessages);
+						$saveDesignResultModalLabel.text('Save Failed');
+						$saveDesignResultMessage.html(errorMessages); // Use .html() for formatted errors
+						if(bsSaveDesignResultModal) bsSaveDesignResultModal.show();
 						console.error("Save user design error response:", response);
 					}
 				},
 				error: function (xhr) {
-					hideGlobalLoadingOverlay();
-					const errorMsg = xhr.responseJSON?.message || (xhr.responseJSON?.errors ? JSON.stringify(xhr.responseJSON.errors) : xhr.statusText) || 'Server error';
-					alert('Error saving design: ' + errorMsg);
+					let errorMsg = xhr.responseJSON?.message || xhr.statusText || 'Server error';
+					if (xhr.responseJSON?.errors) {
+						errorMsg += "<br><small>Details:</small><ul class='list-unstyled mt-2 mb-0'>";
+						for (const field in xhr.responseJSON.errors) {
+							xhr.responseJSON.errors[field].forEach(errMsg => {
+								errorMsg += `<li>- ${errMsg}</li>`;
+							});
+						}
+						errorMsg += "</ul>";
+					}
+					$saveDesignResultModalLabel.text('Save Error');
+					$saveDesignResultMessage.html(errorMsg); // Use .html() for formatted errors
+					if(bsSaveDesignResultModal) bsSaveDesignResultModal.show();
 					console.error("Save user design AJAX error:", xhr);
+				},
+				complete: function() {
+					hideGlobalLoadingOverlay();
 				}
 			});
 		});
+		
+		
 	}
 	
 	function updateActionButtons() {

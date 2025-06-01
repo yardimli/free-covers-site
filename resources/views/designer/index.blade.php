@@ -38,8 +38,8 @@
 	<!-- Top Toolbar (Simplified) -->
 	<nav class="navbar navbar-expand-sm navbar-dark bg-dark top-toolbar" style="padding: 0px 0px;">
 		<div class="container-fluid">
-			<span class="navbar-brand mb-0 h1"><img src="{{ asset('template/assets/img/home/logo-dark.png') }}"
-			                                        style="height: 34px;"> Free Kindle Covers Designer</span>
+			<div class="navbar-brand mb-0 h2"><img src="{{ asset('template/assets/img/home/logo-dark.png') }}"
+			                                        style="height: 34px;"> <span class="navbar-brand mb-0 h2" id="project-name"></span></div>
 		</div>
 	</nav>
 	
@@ -236,6 +236,51 @@
 		</div>
 	</div>
 </div>
+
+<div class="modal fade" id="saveDesignNameModal" tabindex="-1" aria-labelledby="saveDesignNameModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="saveDesignNameModalLabel">Save Your Design</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<form id="saveDesignNameForm" novalidate>
+					<div class="mb-3">
+						<label for="designNameInput" class="form-label">Design Name</label>
+						<input type="text" class="form-control" id="designNameInput" required minlength="1" maxlength="255">
+						<div class="invalid-feedback">
+							Please enter a name for your design (1-255 characters).
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+				<button type="button" class="btn btn-primary" id="confirmSaveDesignBtn">Save Design</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Save Design Result Modal -->
+<div class="modal fade" id="saveDesignResultModal" tabindex="-1" aria-labelledby="saveDesignResultModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="saveDesignResultModalLabel">Save Result</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<p id="saveDesignResultMessage"></p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 
 <!-- Embed data -->
 <script id="coverTypesData" type="application/json">{!! $cover_types_json !!}</script>
