@@ -175,7 +175,7 @@
 			$itemType = $request->input('item_type');
 			$rules = [
 				'item_type' => ['required', Rule::in(['covers', 'templates', 'elements', 'overlays'])],
-				'name' => 'required|string|max:255', // Name is now required as per single upload
+				'name' => 'required|string|max:255',
 				'keywords' => 'nullable|string|max:1000',
 			];
 
@@ -186,23 +186,34 @@
 			if ($itemType === 'covers') {
 				$rules['caption'] = 'nullable|string|max:500';
 				$rules['categories'] = 'nullable|string|max:1000';
-				$rules['main_image_file'] = 'required|image|mimes:jpg,jpeg,png,gif|max:5120'; // Renamed from image_file
+				// Main image is now nullable, will be derived from full_cover if not provided
+				$rules['main_image_file'] = 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120';
 				$rules['mockup_2d_file'] = 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120';
 				$rules['mockup_3d_file'] = 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120';
+				// Full cover is nullable, but one of main_image_file or full_cover_file will be required by custom logic
 				$rules['full_cover_file'] = 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120';
 			} elseif ($itemType === 'elements' || $itemType === 'overlays') {
-				// Assuming elements/overlays still use 'image_file' for their primary image
 				$rules['image_file'] = 'required|image|mimes:jpg,jpeg,png,gif|max:5120';
 			} elseif ($itemType === 'templates') {
-				$rules['cover_image_file'] = 'required|image|mimes:jpg,jpeg,png,gif|max:5120'; // Renamed from thumbnail_file
+				$rules['cover_image_file'] = 'required|image|mimes:jpg,jpeg,png,gif|max:5120';
 				$rules['json_file'] = 'required|file|mimes:json|max:2048';
 				$rules['full_cover_image_file'] = 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120';
 				$rules['full_cover_json_file'] = 'nullable|file|mimes:json|max:2048';
 			}
 
 			$validator = Validator::make($request->all(), $rules);
+
 			if ($validator->fails()) {
 				return response()->json(['success' => false, 'message' => 'Validation failed.', 'errors' => $validator->errors()], 422);
+			}
+
+			// Custom validation for covers: at least one image (main or full) must be provided
+			if ($itemType === 'covers' && !$request->hasFile('main_image_file') && !$request->hasFile('full_cover_file')) {
+				return response()->json([
+					'success' => false,
+					'message' => 'Validation failed.',
+					'errors' => ['main_image_file' => ['Either a Main Cover Image or a Full Cover Image is required.']]
+				], 422);
 			}
 
 			$model = $this->getModelInstance($itemType);
@@ -217,66 +228,124 @@
 				$data['cover_type_id'] = $request->input('cover_type_id');
 			}
 
+			$tempCroppedFilePathForCleanup = null;
+
 			try {
 				if ($itemType === 'covers') {
-					if ($request->hasFile('main_image_file')) {
-						$paths = $this->imageUploadService->uploadImageWithThumbnail($request->file('main_image_file'), 'covers_main');
+					$mainImageFile = $request->file('main_image_file');
+					$fullCoverFileFromRequest = $request->file('full_cover_file');
+
+					if ($mainImageFile) {
+						$paths = $this->imageUploadService->uploadImageWithThumbnail($mainImageFile, 'covers_main');
 						$data['cover_path'] = $paths['original_path'];
 						$data['cover_thumbnail_path'] = $paths['thumbnail_path'];
+					} elseif ($fullCoverFileFromRequest) {
+						// Main image not provided, derive from full_cover_file
+						try {
+							$image = InterventionImageFacade::read($fullCoverFileFromRequest->getRealPath());
+
+							$cropWidth = 2100;
+							$cropHeight = 3360;
+
+							if ($image->width() < $cropWidth || $image->height() < $cropHeight) {
+								Log::warning("Full cover image for '{$request->input('name')}' is smaller than {$cropWidth}x{$cropHeight}. Cropping may not be as expected. Image dimensions: {$image->width()}x{$image->height()}");
+							}
+
+							// Crop to 2100x3360 from top-right
+							$offsetX = max(0, $image->width() - $cropWidth); // Position from right edge
+							$offsetY = 0; // Position from top edge
+							$image->crop($cropWidth, $cropHeight, $offsetX, $offsetY);
+
+							$tempFilename = 'cropped_main_' . Str::random(10) . '.' . $fullCoverFileFromRequest->getClientOriginalExtension();
+							$tempStorageDir = storage_path('app/temp');
+							File::ensureDirectoryExists($tempStorageDir);
+							$tempCroppedFilePathForCleanup = $tempStorageDir . '/' . $tempFilename;
+
+							$image->save($tempCroppedFilePathForCleanup);
+
+							$tempCroppedSymfonyFile = new SymfonyUploadedFile(
+								$tempCroppedFilePathForCleanup,
+								$tempFilename,
+								mime_content_type($tempCroppedFilePathForCleanup),
+								null,
+								true // Mark as test file
+							);
+
+							$paths = $this->imageUploadService->uploadImageWithThumbnail($tempCroppedSymfonyFile, 'covers_main');
+							$data['cover_path'] = $paths['original_path'];
+							$data['cover_thumbnail_path'] = $paths['thumbnail_path'];
+
+						} catch (\Exception $cropException) {
+							Log::error("Error cropping full cover '{$fullCoverFileFromRequest->getClientOriginalName()}' for main image: " . $cropException->getMessage());
+							return response()->json(['success' => false, 'message' => 'Error processing full cover image to create main cover: ' . $cropException->getMessage()], 500);
+						}
 					}
+					// If we are here, $data['cover_path'] and $data['cover_thumbnail_path'] should be set.
+
 					if ($request->hasFile('mockup_2d_file')) {
 						$paths = $this->imageUploadService->uploadImageWithThumbnail($request->file('mockup_2d_file'), 'covers_mockup_2d');
-						$data['mockup_2d_path'] = $paths['original_path']; // Assuming no thumb for mockup
+						$data['mockup_2d_path'] = $paths['original_path'];
+					} else
+					{
+						//use cover_path for mockup_2d if not provided
+						if (isset($data['cover_path'])) {
+							$data['mockup_2d_path'] = $data['cover_path'];
+						}
 					}
+
 					if ($request->hasFile('mockup_3d_file')) {
 						$paths = $this->imageUploadService->uploadImageWithThumbnail($request->file('mockup_3d_file'), 'covers_mockup_3d');
-						$data['mockup_3d_path'] = $paths['original_path']; // Assuming no thumb for mockup
+						$data['mockup_3d_path'] = $paths['original_path'];
+					} else
+					{
+						//use cover_path for mockup_3d if not provided
+						if (isset($data['cover_path'])) {
+							$data['mockup_3d_path'] = $data['cover_path'];
+						}
 					}
-					if ($request->hasFile('full_cover_file')) {
-						$paths = $this->imageUploadService->uploadImageWithThumbnail($request->file('full_cover_file'), 'covers_full_cover');
+
+					if ($fullCoverFileFromRequest) { // Process the original full cover file
+						$paths = $this->imageUploadService->uploadImageWithThumbnail($fullCoverFileFromRequest, 'covers_full_cover');
 						$data['full_cover_path'] = $paths['original_path'];
 						$data['full_cover_thumbnail_path'] = $paths['thumbnail_path'];
 					}
+
 					$data['caption'] = $request->input('caption');
 					$data['categories'] = $request->input('categories') ? array_map('trim', explode(',', $request->input('categories'))) : [];
-					$data['text_placements'] = [];
+					$data['text_placements'] = []; // Default empty, can be set via other UI
 
 				} elseif ($itemType === 'elements' || $itemType === 'overlays') {
 					if ($request->hasFile('image_file')) {
-						$uploadConfigKey = $itemType . '_main'; // e.g. 'elements_main'
+						$uploadConfigKey = $itemType . '_main';
 						$paths = $this->imageUploadService->uploadImageWithThumbnail($request->file('image_file'), $uploadConfigKey);
 						$data['image_path'] = $paths['original_path'];
 						$data['thumbnail_path'] = $paths['thumbnail_path'];
 					}
-
 				} elseif ($itemType === 'templates') {
 					if ($request->hasFile('cover_image_file')) {
 						$paths = $this->imageUploadService->uploadImageWithThumbnail($request->file('cover_image_file'), 'templates_cover_image');
-						$data['cover_image_path'] = $paths['original_path']; // Assuming templates_cover_image config might not generate a separate thumb
+						$data['cover_image_path'] = $paths['original_path'];
 					}
-
 					if ($request->hasFile('json_file')) {
 						$jsonContentString = file_get_contents($request->file('json_file')->getRealPath());
-						$decodedJson = json_decode($jsonContentString, true); // Decode to associative array
+						$decodedJson = json_decode($jsonContentString, true);
 						if ($decodedJson === null && json_last_error() !== JSON_ERROR_NONE) {
 							return response()->json(['success' => false, 'message' => 'Invalid JSON content in json_file: ' . json_last_error_msg()], 400);
 						}
-						$data['json_content'] = $decodedJson; // Assign the PHP array
+						$data['json_content'] = $decodedJson;
 					}
-
 					if ($request->hasFile('full_cover_image_file')) {
 						$paths = $this->imageUploadService->uploadImageWithThumbnail($request->file('full_cover_image_file'), 'templates_full_cover_image');
 						$data['full_cover_image_path'] = $paths['original_path'];
 						$data['full_cover_image_thumbnail_path'] = $paths['thumbnail_path'];
 					}
-
 					if ($request->hasFile('full_cover_json_file')) {
 						$jsonContentString = file_get_contents($request->file('full_cover_json_file')->getRealPath());
-						$decodedJson = json_decode($jsonContentString, true); // Decode to associative array
+						$decodedJson = json_decode($jsonContentString, true);
 						if ($decodedJson === null && json_last_error() !== JSON_ERROR_NONE) {
 							return response()->json(['success' => false, 'message' => 'Invalid JSON content in full_cover_json_file: ' . json_last_error_msg()], 400);
 						}
-						$data['full_cover_json_content'] = $decodedJson; // Assign the PHP array
+						$data['full_cover_json_content'] = $decodedJson;
 					}
 					if (!isset($data['text_placements'])) {
 						$data['text_placements'] = [];
@@ -284,9 +353,17 @@
 				}
 
 				$item = $model->create($data);
+
+				if ($tempCroppedFilePathForCleanup && File::exists($tempCroppedFilePathForCleanup)) {
+					File::delete($tempCroppedFilePathForCleanup);
+				}
+
 				return response()->json(['success' => true, 'message' => ucfirst(Str::singular($itemType)) . ' uploaded successfully.', 'data' => ['id' => $item->id]]);
 
 			} catch (\Exception $e) {
+				if ($tempCroppedFilePathForCleanup && File::exists($tempCroppedFilePathForCleanup)) {
+					File::delete($tempCroppedFilePathForCleanup);
+				}
 				Log::error("Upload item error ({$itemType}): " . $e->getMessage() . "\n" . $e->getTraceAsString());
 				return response()->json(['success' => false, 'message' => 'Upload failed: ' . $e->getMessage()], 500);
 			}

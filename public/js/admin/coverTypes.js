@@ -29,18 +29,22 @@ AppAdmin.CoverTypes = (function() {
 			const firstOptionValue = $dropdown.find('option:first-child').val();
 			const firstOptionText = $dropdown.find('option:first-child').text();
 			const currentValue = $dropdown.val(); // Preserve current selection if any
+			let defautlOptionValue = firstOptionValue; // Default to first option value
 			
 			$dropdown.empty();
 			$dropdown.append(`<option value="${escapeHtml(firstOptionValue)}">${escapeHtml(firstOptionText)}</option>`);
 			allCoverTypes.forEach(function(type) {
 				$dropdown.append(`<option value="${escapeHtml(type.id)}">${escapeHtml(type.type_name)}</option>`);
+				if (type.type_name === 'Book Cover') {
+					defautlOptionValue = type.id; // Update default option if it matches
+				}
 			});
 			
 			// Re-apply selection if it's still valid
-			if ($dropdown.find(`option[value="${currentValue}"]`).length > 0) {
+			if ($dropdown.find(`option[value="${currentValue}"]`).length > 0 && currentValue !== '') {
 				$dropdown.val(currentValue);
 			} else {
-				$dropdown.val(firstOptionValue); // Reset to default if old value is gone
+				$dropdown.val(defautlOptionValue); // Reset to default if old value is gone
 			}
 		});
 	}

@@ -16,7 +16,7 @@
 					<div class="mb-3">
 						<label for="coverMainImage" class="form-label">Main Cover Image (PNG, JPG, GIF)</label>
 						<input type="file" class="form-control" id="coverMainImage" name="main_image_file"
-						       accept="image/png, image/jpeg, image/gif" required>
+						       accept="image/png, image/jpeg, image/gif">
 					</div>
 					<div class="row">
 						<div class="col-md-6 mb-3">

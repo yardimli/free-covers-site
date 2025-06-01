@@ -4,6 +4,8 @@
 
 	use App\Http\Controllers\Controller;
 	use App\Models\Cover;
+	use App\Models\Element;
+	use App\Models\Overlay;
 	use App\Models\Template;
 	use App\Services\ImageUploadService;
 	use App\Services\OpenAiService;
@@ -28,6 +30,17 @@
 		{
 			$this->imageUploadService = $imageUploadService;
 			$this->openAiService = $openAiService;
+		}
+
+		private function getModelInstance(string $itemType)
+		{
+			return match ($itemType) {
+				'covers' => new Cover(),
+				'templates' => new Template(),
+				'elements' => new Element(), // Assuming Element and Overlay models also have getAllImagePaths() or similar if they have multiple images
+				'overlays' => new Overlay(),
+				default => null,
+			};
 		}
 
 		public function getCoversNeedingMetadata(Request $request)
