@@ -21,6 +21,11 @@ AppAdmin.Items = (function () {
 			newParams.set('no_templates', 'true');
 		}
 		// Add sort parameters only if they are not the default (id, desc)
+		if (sortBy !== 'id' && sortBy !== 'created_at' && sortBy !== 'updated_at' && sortBy !== 'name') {
+			console.warn(`Invalid sort_by parameter: ${sortBy}. Defaulting to 'id'.`);
+			sortBy = 'id'; // Fallback to a valid default
+		}
+		
 		if (sortBy && sortBy !== 'id') {
 			newParams.set('sort_by', sortBy);
 		}
@@ -61,6 +66,12 @@ AppAdmin.Items = (function () {
 					$filterDropdown.val('');
 				}
 			}
+			
+			if (sortBy !== 'id' && sortBy !== 'created_at' && sortBy !== 'updated_at' && sortBy !== 'name') {
+				console.warn(`Invalid sort_by parameter: ${sortBy}. Defaulting to 'id'.`);
+				sortBy = 'id'; // Fallback to a valid default
+			}
+			
 			$panel.find('.sort-by-select').val(sortBy);
 			$panel.find('.sort-direction-select').val(sortDirection);
 			

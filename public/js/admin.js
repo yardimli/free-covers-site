@@ -47,6 +47,10 @@ $(document).ready(function () {
 		let search = params.get('search') || '';
 		let filter = params.get('filter') || '';
 		let sortBy = params.get('sort_by') || 'id';
+		if (sortBy !== 'id' && sortBy !== 'created_at' && sortBy !== 'updated_at' && sortBy !== 'name') {
+			console.warn(`Invalid sort_by parameter: ${sortBy}. Defaulting to 'id'.`);
+			sortBy = 'id'; // Fallback to a valid default
+		}
 		let sortDir = params.get('sort_dir') || 'desc';
 		let noTemplatesFilterActive = (itemType === 'covers') && (params.get('no_templates') === 'true');
 		
@@ -139,6 +143,10 @@ $(document).ready(function () {
 			const search = params.get('search') || '';
 			const filter = params.get('filter') || '';
 			const sortBy = params.get('sort_by') || 'id';
+			if (sortBy !== 'id' && sortBy !== 'created_at' && sortBy !== 'updated_at' && sortBy !== 'name') {
+				console.warn(`Invalid sort_by parameter: ${sortBy}. Defaulting to 'id'.`);
+				sortBy = 'id'; // Fallback to a valid default
+			}
 			const sortDir = params.get('sort_dir') || 'desc';
 			const noTemplatesFilterActive = (itemType === 'covers') && (params.get('no_templates') === 'true');
 			

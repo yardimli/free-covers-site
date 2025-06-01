@@ -2,14 +2,14 @@
 
 	namespace App\Models;
 
-	// use Illuminate\Contracts\Auth\MustVerifyEmail;
+	use Illuminate\Contracts\Auth\MustVerifyEmail; // Import this
 	use Illuminate\Database\Eloquent\Factories\HasFactory;
 	use Illuminate\Database\Eloquent\Relations\HasMany;
 	use Illuminate\Foundation\Auth\User as Authenticatable;
 	use Illuminate\Notifications\Notifiable;
 	use Laravel\Sanctum\HasApiTokens;
 
-	class User extends Authenticatable // implements MustVerifyEmail // If you implement email verification
+	class User extends Authenticatable implements MustVerifyEmail // Implement this
 	{
 		use HasApiTokens, HasFactory, Notifiable;
 
@@ -25,7 +25,11 @@
 			'name',
 			'email',
 			'password',
-			'user_type', // Add this
+			'user_type',
+			'provider_name', // Add this
+			'provider_id',   // Add this
+			'avatar',        // Add this
+			'email_verified_at', // Ensure this is fillable
 		];
 
 		/**
@@ -46,7 +50,7 @@
 		protected $casts = [
 			'email_verified_at' => 'datetime',
 			'password' => 'hashed',
-			'user_type' => 'integer', // Add this cast
+			'user_type' => 'integer',
 		];
 
 		/**

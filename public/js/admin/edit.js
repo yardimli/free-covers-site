@@ -114,6 +114,11 @@ AppAdmin.Edit = (function() {
 					const currentFilter =  params.get('filter') || '';
 					const noTemplatesFilter = itemType === 'covers' && $('#filterNoTemplatesBtn').hasClass('active');
 					const currentSortBy = params.get('sort_by') || 'id';
+					if (currentSortBy !== 'id' && currentSortBy !== 'name' && currentSortBy !== 'created_at' && currentSortBy !== 'updated_at') {
+						console.warn(`Invalid sort_by parameter: ${currentSortBy}. Defaulting to 'id'.`);
+						currentSortBy = 'id'; // Fallback to a valid default
+					}
+					
 					const currentSortDir = params.get('sort_dir') || 'desc';
 					loadItems(itemType, currentPage, currentSearch, currentFilter, noTemplatesFilter, currentScrollY, currentSortBy, currentSortDir);
 				} else {

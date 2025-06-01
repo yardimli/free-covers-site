@@ -4,6 +4,7 @@
 	use App\Http\Controllers\Admin\AdminTemplateCloneController;
 	use App\Http\Controllers\Admin\BlogManagementController;
 	use App\Http\Controllers\Admin\AdminDashboardController;
+	use App\Http\Controllers\Auth\SocialLoginController;
 	use App\Http\Controllers\BlogController;
 	use App\Http\Controllers\CoverController;
 	use App\Http\Controllers\DesignerController;
@@ -112,6 +113,10 @@
 	Route::get('/covers/{cover}/{template?}', [CoverController::class, 'show'])->name('covers.show');
 
 	Route::get('/api/templates/{template}/json', [DesignerController::class, 'getTemplateJsonData'])->name('api.templates.json_data');
+
+	// Socialite Login Routes
+	Route::get('/login/{provider}', [SocialLoginController::class, 'redirectToProvider'])->name('social.login');
+	Route::get('/login/{provider}/callback', [SocialLoginController::class, 'handleProviderCallback'])->name('social.callback');
 
 
 	Route::middleware('auth')->group(function () {

@@ -1,19 +1,21 @@
 @extends('layouts.app')
-
 @section('title', 'Register - Free Kindle Covers')
-
 @section('content')
     <div class="login-area registration-area">
         <div class="login-wrapper">
             <div class="login-left">
                 <a href="{{ route('home') }}" class="logo"><img src="{{ asset('template/assets/img/home/logo-dark.png') }}" alt="Image" style="max-width: 300px; height: 136px;"></a>
-                <h3 class=  "title">Sign Up to Free Kindle Covers</h3>
+                <h3 class= "title">Sign Up to Free Kindle Covers</h3>
                 <div class="sibtitle">Create Your Account with Just Few Steps</div>
                 
-                <div class="social-links">
-                    <a href="#"><img src="{{ asset('template/assets/img/login/google-icon.svg') }}" alt="Image"></a>
+                {{-- Google Sign Up Button --}}
+                <div class="social-links text-center my-3">
+                    <a href="{{ route('social.login', 'google') }}" class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center" style="padding: 10px;">
+                        <img src="{{ asset('template/assets/img/login/google-icon.svg') }}" alt="Google" style="height: 20px; margin-right: 10px;"> Sign up with Google
+                    </a>
                 </div>
-                <div class="divider"><span>or</span></div>
+                
+                <div class="divider"><span>or sign up with email</span></div>
                 
                 <form method="POST" action="{{ route('register') }}">
                     @csrf
@@ -50,7 +52,7 @@
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" required>
                             <label class="form-check-label" for="flexCheckChecked">
-                                I Agreed with the <a href="#">Privacy policy</a>
+                                I Agreed with the <a href="{{ route('terms') }}" target="_blank">Privacy policy & Terms</a>
                             </label>
                         </div>
                     </div>

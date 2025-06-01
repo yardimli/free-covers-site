@@ -145,9 +145,17 @@
 				<div class="col-md-12">
 					<div class="d-flex justify-content-between align-items-center">
 						<h2>Welcome, {{ $user->name }}!</h2>
-						<a href="{{ route('profile.edit') }}" class="bj_theme_btn">
-							<i class="fas fa-user me-2"></i>Profile Settings
-						</a>
+						<div class="btn-group">
+							@auth
+								<form method="POST" action="{{ route('logout') }}">
+									@csrf
+									<button type="submit" class="bj_theme_btn me-2">Logout</button>
+								</form>
+							@endauth
+							<a href="{{ route('profile.edit') }}" class="bj_theme_btn">
+								<i class="fas fa-user me-2"></i>Profile Settings
+							</a>
+						</div>
 					</div>
 					<p class="text-muted">Manage your covers, images, and preferences.</p>
 				</div>
@@ -165,7 +173,9 @@
 							<div class="col-lg-3 col-md-4 col-sm-6 mb-4 saved-design-item-card"
 							     id="saved-design-item-{{ $design->id }}">
 								<div class="dashboard-item-card">
-									<a href="{{ route('designer.index', ['ud_id' => $design->id, 'design_name' => rawurlencode($design->name)]) }}" target="_blank" class="cover-image-container">
+									<a
+										href="{{ route('designer.index', ['ud_id' => $design->id, 'design_name' => rawurlencode($design->name)]) }}"
+										target="_blank" class="cover-image-container">
 										<img src="{{ $design->preview_image_url }}" alt="{{ $design->name }}" class="cover-mockup-image"
 										     style="object-fit: contain; width: 100%; height: 100%;">
 									</a>
@@ -177,7 +187,9 @@
 											</p>
 										</div>
 										<div class="dashboard-item-actions">
-											<a href="{{ route('designer.index', ['ud_id' => $design->id, 'design_name' => rawurlencode($design->name)]) }}" target="_blank" class="btn btn-sm btn-info"><i
+											<a
+												href="{{ route('designer.index', ['ud_id' => $design->id, 'design_name' => rawurlencode($design->name)]) }}"
+												target="_blank" class="btn btn-sm btn-info"><i
 													class="fas fa-edit"></i> Edit</a>
 											<a href="{{ $design->preview_image_url }}"
 											   download="{{ Str::slug($design->name ?: 'design') . '.jpg' }}"

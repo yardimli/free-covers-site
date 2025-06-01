@@ -1,7 +1,5 @@
 @extends('layouts.app')
-
 @section('title', 'Login - Free Kindle Covers')
-
 @section('content')
     <div class="login-area">
         <div class="bg-shapes">
@@ -16,10 +14,14 @@
                 <h2 class="title">Login to Your Account</h2>
                 <div class="sibtitle">Welcome Back! Select Method to login:</div>
                 
-                <div class="social-links">
-                    <a href="#"><img src="{{ asset('template/assets/img/login/google-icon.svg') }}" alt="Image"></a>
+                {{-- Google Login Button --}}
+                <div class="social-links text-center my-3">
+                    <a href="{{ route('social.login', 'google') }}" class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center" style="padding: 10px;">
+                        <img src="{{ asset('template/assets/img/login/google-icon.svg') }}" alt="Google" style="height: 20px; margin-right: 10px;"> Sign in with Google
+                    </a>
                 </div>
-                <div class="divider"><span>or</span></div>
+                
+                <div class="divider"><span>or use your email</span></div>
                 
                 <form method="POST" action="{{ route('login') }}">
                     @csrf
