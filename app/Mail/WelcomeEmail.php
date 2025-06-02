@@ -47,7 +47,7 @@
 		public function content(): Content
 		{
 			return new Content(
-				view: 'emails.welcome_html', // Changed from markdown to view
+				view: 'emails.welcome', // Changed from markdown to view
 				with: [
 					'userName' => $this->user->name,
 					'appName' => $this->appName,
