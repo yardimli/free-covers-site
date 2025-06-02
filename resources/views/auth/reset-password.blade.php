@@ -22,6 +22,7 @@
                     
                     <!-- Password Reset Token -->
                     <input type="hidden" name="token" value="{{ $request->route('token') }}">
+                    <input type="hidden" name="email" value="{{ old('email', $request->email) }}">
                     
                     <!-- New Password -->
                     <div class="input-field pass-field-with-icon">
