@@ -31,10 +31,10 @@
 										<h5 class="mb-1 mb-sm-0">
 											<span class="badge bg-primary me-2">{{ $entry->commit_date->format('Y-m-d') }}</span>
 										</h5>
-										<small class="text-muted">
-											By {{ $entry->author_name }}
-											(Commit: <a href="#" onclick="return false;" title="Full Hash: {{ $entry->commit_hash }}" data-bs-toggle="tooltip" data-bs-placement="top">{{ Str::limit($entry->commit_hash, 7, '') }}</a>)
-										</small>
+{{--										<small class="text-muted">--}}
+{{--											By {{ $entry->author_name }}--}}
+{{--											(Commit: <a href="#" onclick="return false;" title="Full Hash: {{ $entry->commit_hash }}" data-bs-toggle="tooltip" data-bs-placement="top">{{ Str::limit($entry->commit_hash, 7, '') }}</a>)--}}
+{{--										</small>--}}
 									</div>
 									<div class="card-body">
 										<p class="card-text mb-0">{{ $entry->message }}</p>
