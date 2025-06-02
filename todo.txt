@@ -36,9 +36,9 @@ in admin when uploading covers add function to crop front cover from full cover 
 
 make signin/up with google work ...........................................................................OK
 make forget password work .................................................................................OK
-make top search work
+make top search work ......................................................................................OK
 add changelog page ........................................................................................OK
-add static faq page
+add static faq page .......................................................................................OK
 
 add list of members with summary of their work to admin
 add login as user to admin
