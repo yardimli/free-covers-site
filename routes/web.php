@@ -10,6 +10,7 @@
 	use App\Http\Controllers\CoverController;
 	use App\Http\Controllers\DesignerController;
 	use App\Http\Controllers\FavoriteController;
+	use App\Http\Controllers\FontController;
 	use App\Http\Controllers\HomeController;
 	use App\Http\Controllers\ProfileController;
 	use App\Http\Controllers\ShopController;
@@ -116,6 +117,8 @@
 	Route::get('/covers/{cover}/{template?}', [CoverController::class, 'show'])->name('covers.show');
 
 	Route::get('/api/templates/{template}/json', [DesignerController::class, 'getTemplateJsonData'])->name('api.templates.json_data');
+
+	Route::get('/fonts/google-fonts-css', [FontController::class, 'serveGoogleFontsCss'])->name('fonts.google.css');
 
 	// Socialite Login Routes
 	Route::get('/login/{provider}', [SocialLoginController::class, 'redirectToProvider'])->name('social.login');

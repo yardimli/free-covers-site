@@ -49,43 +49,57 @@ class LayerManager {
 	
 	_ensureGoogleFontLoaded(fontFamily) {
 		const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
-
-		const cleanedFontFamily = (fontFamily || '').replace(/^['"]|['"]$/g, ''); // Remove quotes for checks/URL
+		const cleanedFontFamily = (fontFamily || '').replace(/^['"]|['"]$/g, ''); // Remove quotes
 		
-		// Check if it looks like a Google font and hasn't been attempted yet
 		if (!cleanedFontFamily || !this._isGoogleFont(cleanedFontFamily) || this.loadedGoogleFonts.has(cleanedFontFamily)) {
 			return; // Don't load if already attempted, empty, or likely not a Google Font
 		}
 		
-		console.log(`Dynamically ensuring Google Font: ${cleanedFontFamily}`);
-		this.loadedGoogleFonts.add(cleanedFontFamily); // Add optimistically to prevent multiple attempts
+		this.loadedGoogleFonts.add(cleanedFontFamily); // Add optimistically
 		
-		// Check if a link tag for this specific font already exists in head
-		const encodedFont = encodeURIComponent(cleanedFontFamily);
-		if (document.querySelector(`link[href*="family=${encodedFont}"]`)) {
-			console.log(`Font link for ${cleanedFontFamily} already exists.`);
-			return; // Already present, no need to add another
+		const encodedFontName = encodeURIComponent(cleanedFontFamily.replace(/ /g, '+'));
+		// Construct the font family parameter for Google Fonts API v2
+		// e.g., "family=Open+Sans:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900"
+		const fontQueryParam = `family=${encodedFontName}:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900`;
+		
+		let fontCssUrl;
+		let viaServer = false;
+		
+		if (isFirefox) {
+			// For Firefox, use the server-side proxy
+			fontCssUrl = `/fonts/google-fonts-css?${fontQueryParam}`;
+			viaServer = true;
+			console.log(`Dynamically ensuring Google Font for Firefox via server: ${cleanedFontFamily}`);
+		} else {
+			// For other browsers, fetch directly from Google
+			fontCssUrl = `https://fonts.googleapis.com/css2?${fontQueryParam}&display=swap`;
+			console.log(`Dynamically ensuring Google Font directly: ${cleanedFontFamily}`);
 		}
 		
-		// Create and append the link tag dynamically
-		const fontUrlParam = encodedFont + ':ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900'; // Load common weights/styles
-		let fontUrl = `https://fonts.googleapis.com/css?family=${fontUrlParam}&display=swap`;
-		if (isFirefox) {
-			fontUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(fontUrl)}`;
+		// Check if a link tag for this specific font (via the chosen URL) already exists
+		// We need to match the href attribute exactly or by its start if it's the server proxy
+		let existingLinkSelector;
+		if (viaServer) {
+			existingLinkSelector = `link[href^="/fonts/google-fonts-css?family=${encodedFontName}"]`;
+		} else {
+			existingLinkSelector = `link[href="${fontCssUrl}"]`;
+		}
+		
+		if (document.querySelector(existingLinkSelector)) {
+			console.log(`Font link for ${cleanedFontFamily} (via ${viaServer ? 'server' : 'direct'}) already exists.`);
+			return;
 		}
 		
 		const link = document.createElement('link');
 		link.rel = 'stylesheet';
-		link.href = fontUrl;
+		link.href = fontCssUrl;
 		link.onload = () => {
-			console.log(`Dynamically loaded Google Font: ${cleanedFontFamily}`);
-			// Optional: Trigger reflow if needed, usually not necessary
+			console.log(`Dynamically loaded Google Font CSS ${viaServer ? 'via server' : 'directly'}: ${cleanedFontFamily}`);
 		};
 		link.onerror = () => {
-			console.warn(`Failed to dynamically load Google Font: ${cleanedFontFamily}`);
+			console.warn(`Failed to dynamically load Google Font CSS ${viaServer ? 'via server' : 'directly'}: ${cleanedFontFamily}`);
 			this.loadedGoogleFonts.delete(cleanedFontFamily); // Remove from set if failed
 		};
-		
 		document.head.appendChild(link);
 	}
 	
