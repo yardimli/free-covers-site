@@ -12,7 +12,7 @@
 				$table->id();
 				$table->foreignId('user_id')->constrained()->onDelete('cascade');
 				$table->string('name')->default('Untitled Design');
-				$table->text('json_data');
+				$table->json('json_data');
 				$table->string('preview_image_path')->nullable(); // Path to the preview image file
 				$table->timestamps();
 			});
