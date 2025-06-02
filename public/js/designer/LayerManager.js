@@ -67,8 +67,7 @@ class LayerManager {
 		
 		if (isFirefox) {
 			// For Firefox, use the server-side proxy
-			const fontQueryParamPlus = fontQueryParam.trim().replace(/ /g, '+');
-			fontCssUrl = `/fonts/google-fonts-css?${fontQueryParamPlus}`;
+			fontCssUrl = `/fonts/google-fonts-css?${fontQueryParam}`;
 			viaServer = true;
 			console.log(`Dynamically ensuring Google Font for Firefox via server: ${cleanedFontFamily}`);
 		} else {
