@@ -755,90 +755,72 @@ class CanvasManager {
 	
 	async _getEmbeddedFontsCss(layersData) {
 		const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
-		const uniqueGoogleFontParams = new Set();
+		const uniqueGoogleFonts = new Set();
+		
 		layersData.forEach(layer => {
 			if (layer.type === 'text' && layer.fontFamily && this._isGoogleFont(layer.fontFamily)) {
-				const cleanedFontFamily = layer.fontFamily.trim().replace(/ /g, '+'); // Replace spaces with +
-				uniqueGoogleFontParams.add(`family=${cleanedFontFamily}:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900`);
+				uniqueGoogleFonts.add(`family=${encodeURIComponent(layer.fontFamily.trim())}:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900`);
 			}
 		});
-		
-		if (uniqueGoogleFontParams.size === 0) {
+		if (uniqueGoogleFonts.size === 0) {
 			return '';
 		}
-		
-		const fontFamiliesQueryString = Array.from(uniqueGoogleFontParams).join('&');
-		
-		let cssFetchUrl;
-		let fetchOptions = {};
-		let viaServer = false;
-		
+		const fontFamiliesParam = Array.from(uniqueGoogleFonts).join('&');
+		let fontUrl = `https://fonts.googleapis.com/css2?${fontFamiliesParam}&display=swap`;
 		if (isFirefox) {
-			cssFetchUrl = `/fonts/google-fonts-css?${fontFamiliesQueryString}`;
-			// When fetching via server, pass the client's User-Agent so the server can use it
-			fetchOptions.headers = { 'User-Agent': navigator.userAgent };
-			viaServer = true;
-			console.log("Fetching Google Fonts CSS for embedding (Firefox via server):", cssFetchUrl);
-		} else {
-			cssFetchUrl = `https://fonts.googleapis.com/css2?${fontFamiliesQueryString}&display=swap`;
-			// For direct fetch, Google sees the User-Agent automatically.
-			// We can still set it explicitly if desired, though often not strictly necessary for direct calls.
-			fetchOptions.headers = { 'User-Agent': navigator.userAgent };
-			console.log("Fetching Google Fonts CSS for embedding (direct):", cssFetchUrl);
+			fontUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(fontUrl)}`;
 		}
 		
 		let originalCss = '';
 		try {
-			const cssResponse = await fetch(cssFetchUrl, fetchOptions);
-			
+			console.log("Fetching Google Fonts CSS:", fontUrl);
+			const cssResponse = await fetch(fontUrl, {
+				headers: {
+					'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+				}
+			});
 			if (!cssResponse.ok) {
-				throw new Error(`CSS fetch ${viaServer ? 'via server' : 'directly'} failed! status: ${cssResponse.status} for ${cssFetchUrl}`);
+				throw new Error(`CSS fetch failed! status: ${cssResponse.status}`);
 			}
 			originalCss = await cssResponse.text();
-			console.log(`Successfully fetched Google Fonts CSS definitions ${viaServer ? 'via server' : 'directly'}.`);
-			
-			// The rest of this method (fetching actual .woff2 files and base64 encoding) remains the same.
+			console.log("Successfully fetched Google Fonts CSS definitions.");
 			const fontUrls = originalCss.match(/url\((https:\/\/fonts\.gstatic\.com\/[^)]+)\)/g);
 			if (!fontUrls || fontUrls.length === 0) {
-				console.warn(`No font file URLs found in the fetched CSS (${viaServer ? 'via server' : 'direct'}).`);
+				console.warn("No font file URLs found in the fetched CSS.");
 				return originalCss;
 			}
-			
 			const urlsToFetch = fontUrls.map(match => match.substring(4, match.length - 1));
-			console.log(`Found ${urlsToFetch.length} font files to fetch and embed (from ${viaServer ? 'server-proxied' : 'direct'} CSS).`);
-			
+			console.log(`Found ${urlsToFetch.length} font files to fetch and embed.`);
 			const fontFetchPromises = urlsToFetch.map(async (url) => {
 				try {
 					const fontResponse = await fetch(url);
 					if (!fontResponse.ok) {
-						throw new Error(`Font file fetch failed! status: ${fontResponse.status} for ${url}`);
+						throw new Error(`Font fetch failed! status: ${fontResponse.status} for ${url}`);
 					}
 					const blob = await fontResponse.blob();
 					const base64 = await this._blobToBase64(blob);
 					const mimeType = blob.type || 'font/woff2';
 					return {url, base64, mimeType};
 				} catch (fontError) {
-					console.error(`Failed to fetch or encode font file: ${url}`, fontError);
+					console.error(`Failed to fetch or encode font: ${url}`, fontError);
 					return {url, error: true};
 				}
 			});
-			
 			const embeddedFontsData = await Promise.all(fontFetchPromises);
 			let embeddedCss = originalCss;
 			embeddedFontsData.forEach(fontData => {
 				if (!fontData.error) {
 					const dataUri = `data:${fontData.mimeType};base64,${fontData.base64}`;
-					const escapedUrl = fontData.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+					const escapedUrl = fontData.url.replace(/\(/g, '\\(').replace(/\)/g, '\\)');
 					const regex = new RegExp(`url\\(${escapedUrl}\\)`, 'g');
 					embeddedCss = embeddedCss.replace(regex, `url(${dataUri})`);
 				}
 			});
-			console.log(`Finished embedding font data into CSS (from ${viaServer ? 'server-proxied' : 'direct'} CSS).`);
+			console.log("Finished embedding font data into CSS.");
 			return embeddedCss;
-			
 		} catch (error) {
-			console.error(`Error processing Google Fonts for embedding (${viaServer ? 'via server' : 'direct'}):`, error);
-			alert(`Warning: Could not process Google Font definitions for export. Export might use fallback fonts.`);
+			console.error("Error processing Google Fonts for embedding:", error);
+			alert("Warning: Could not process Google Font definitions for export. Export might use fallback fonts.");
 			return '';
 		}
 	}
