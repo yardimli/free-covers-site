@@ -754,7 +754,9 @@ class CanvasManager {
 	}
 	
 	async _getEmbeddedFontsCss(layersData) {
+		const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
 		const uniqueGoogleFonts = new Set();
+		
 		layersData.forEach(layer => {
 			if (layer.type === 'text' && layer.fontFamily && this._isGoogleFont(layer.fontFamily)) {
 				uniqueGoogleFonts.add(`family=${encodeURIComponent(layer.fontFamily.trim())}:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900`);
@@ -764,7 +766,11 @@ class CanvasManager {
 			return '';
 		}
 		const fontFamiliesParam = Array.from(uniqueGoogleFonts).join('&');
-		const fontUrl = `https://fonts.googleapis.com/css2?${fontFamiliesParam}&display=swap`;
+		let fontUrl = `https://fonts.googleapis.com/css2?${fontFamiliesParam}&display=swap`;
+		if (isFirefox) {
+			fontUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(fontUrl)}`;
+		}
+		
 		let originalCss = '';
 		try {
 			console.log("Fetching Google Fonts CSS:", fontUrl);
@@ -840,10 +846,10 @@ class CanvasManager {
 		const originalScrollLeft = this.$canvasArea.scrollLeft();
 		const originalScrollTop = this.$canvasArea.scrollTop();
 		this.$canvas.css('transform', 'scale(1.0)');
-
+		
 		this.$canvas.removeClass('checkered-bg');
 		if (!this.canvasIsTransparentBackground) {
-			this.$canvas.css('background-color',this.canvasBackgroundColor);
+			this.$canvas.css('background-color', this.canvasBackgroundColor);
 		}
 		
 		this.$canvasWrapper.css({
@@ -886,7 +892,7 @@ class CanvasManager {
 				// --- END NEW ---
 				
 				console.log("Guides and placeholders removed from cloned node for export.");
-
+				
 				if (this.canvasIsTransparentBackground) {
 					clonedNode.style.backgroundColor = 'transparent';
 				}
@@ -1066,7 +1072,7 @@ class CanvasManager {
 					const isTransparent = designData.canvas.isTransparentBackground !== undefined
 						? designData.canvas.isTransparentBackground
 						: this.DEFAULT_CANVAS_IS_TRANSPARENT;
-					this.setCanvasBackgroundSettings({ color: bgColor, isTransparent: isTransparent }, false);
+					this.setCanvasBackgroundSettings({color: bgColor, isTransparent: isTransparent}, false);
 					
 					if (isTemplate && !IS_ADMIN_MODE) {
 						console.log("Applying template: Calculating centering offset.");

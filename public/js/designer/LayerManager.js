@@ -48,6 +48,8 @@ class LayerManager {
 	}
 	
 	_ensureGoogleFontLoaded(fontFamily) {
+		const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
+
 		const cleanedFontFamily = (fontFamily || '').replace(/^['"]|['"]$/g, ''); // Remove quotes for checks/URL
 		
 		// Check if it looks like a Google font and hasn't been attempted yet
@@ -67,7 +69,10 @@ class LayerManager {
 		
 		// Create and append the link tag dynamically
 		const fontUrlParam = encodedFont + ':ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900'; // Load common weights/styles
-		const fontUrl = `https://fonts.googleapis.com/css?family=${fontUrlParam}&display=swap`;
+		let fontUrl = `https://fonts.googleapis.com/css?family=${fontUrlParam}&display=swap`;
+		if (isFirefox) {
+			fontUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(fontUrl)}`;
+		}
 		
 		const link = document.createElement('link');
 		link.rel = 'stylesheet';
