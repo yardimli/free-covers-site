@@ -720,11 +720,14 @@ class InspectorPanel {
 			this._populateColorInputGroup('border', layerData.stroke);
 			this._populateRangeAndNumber('inspector-border-weight-slider', 'inspector-border-weight-input', 'inspector-border-weight-unit', strokeWidth, 0, '', 1, null, 1);
 			
+			// Font
 			const font = layerData.fontFamily || 'Arial';
-			$('#inspector-font-family').val(font); // Basic val set
+			$('#inspector-font-family').val(font).trigger('change');
+			console.log("Font family set to:", font);
 			try {
 				$('#inspector-font-family').data('fontpicker')?.set(font);
-			} catch (e) { /* ignore */
+			} catch (e) {
+				console.warn("Couldn't update fontpicker selection visually", e)
 			}
 			
 			$('#inspector-font-size').val(layerData.fontSize || 24);
