@@ -774,7 +774,8 @@ class CanvasManager {
 		let viaServer = false;
 		
 		if (isFirefox) {
-			cssFetchUrl = `/fonts/google-fonts-css?${fontFamiliesQueryString}`;
+			const fontFamiliesQueryStringPlus = fontFamiliesQueryString.trim().replace(/ /g, '+');
+			cssFetchUrl = `/fonts/google-fonts-css?${fontFamiliesQueryStringPlus}`;
 			// When fetching via server, pass the client's User-Agent so the server can use it
 			fetchOptions.headers = { 'User-Agent': navigator.userAgent };
 			viaServer = true;
