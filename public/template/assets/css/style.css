@@ -4948,7 +4948,7 @@ ul.ordered-list li::before {
   color: #fff;
   background: #4285F4;
   border-radius: 5px;
-  padding: 11px 15px;
+  /*padding: 11px 15px;*/
 }
 .page-item.active .page-link:hover {
   color: #fff;
@@ -5302,7 +5302,7 @@ ppppppppppppppppppppp .bj_home_blog_area {
   color: #fff;
   background: #4285F4;
   border-radius: 5px;
-  padding: 11px 15px;
+  /*padding: 11px 15px;*/
 }
 
 .blog-right-content {
