@@ -34,8 +34,8 @@ when saving cover in frontend show spinner for uploading json after png ........
 
 in admin when uploading covers add function to crop front cover from full cover ...........................OK
 
-make signin/up with google work
-make forget password work
+make signin/up with google work ...........................................................................OK
+make forget password work .................................................................................OK
 make top search work
 
 add list of members with summary of their work to admin
