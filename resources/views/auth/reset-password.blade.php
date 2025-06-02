@@ -22,7 +22,16 @@
                     
                     <!-- Password Reset Token -->
                     <input type="hidden" name="token" value="{{ $request->route('token') }}">
-                    <input type="hidden" name="email" value="{{ old('email', $request->email) }}">
+                    
+                    <!-- Email Address -->
+                    <div class="input-field">
+                        <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email', $request->email) }}" required autofocus autocomplete="username" placeholder="Email">
+                        @error('email')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                        @enderror
+                    </div>
                     
                     <!-- New Password -->
                     <div class="input-field pass-field-with-icon">
