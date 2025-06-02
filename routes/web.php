@@ -97,6 +97,7 @@
 
 	Route::get('/browse-covers', [ShopController::class, 'index'])->name('shop.index');
 	Route::get('/about-us', [HomeController::class, 'about'])->name('about');
+	Route::get('/faq', [HomeController::class, 'faq'])->name('faq');
 	Route::get('/terms-and-conditions', function () {
 		return view('terms');
 	})->name('terms');

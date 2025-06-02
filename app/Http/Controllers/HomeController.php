@@ -8,7 +8,10 @@
 	use Illuminate\Support\Str;
 	use Illuminate\Support\Facades\Log; // Import Log facade
 	use App\Models\ContactMessage; // Added for contact form
-	use Illuminate\Support\Facades\Validator; // Added for validation
+	use Illuminate\Support\Facades\Validator;
+	use Illuminate\View\View;
+
+	// Added for validation
 
 	class HomeController extends Controller
 	{
@@ -182,5 +185,10 @@
 			]);
 
 			return redirect()->route('contact.show')->with('success', 'Thank you for your message! We will get back to you soon.');
+		}
+
+		public function faq(): View
+		{
+			return view('faq');
 		}
 	}

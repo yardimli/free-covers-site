@@ -34,6 +34,11 @@
 							Blog
 						</a>
 					</li>
+					<li class="nav-item {{ request()->routeIs('faq') ? 'active' : '' }}"> {{-- <-- ADD THIS BLOCK --}}
+						<a class="nav-link" href="{{ route('faq') }}" role="button" aria-haspopup="true" aria-expanded="false">
+							FAQ
+						</a>
+					</li>
 				</ul>
 				<div class="alter_nav">
 					<ul class="navbar-nav search_cart menu">
