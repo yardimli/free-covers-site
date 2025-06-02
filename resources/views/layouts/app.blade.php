@@ -25,6 +25,16 @@
 	
 	<title>@yield('title', 'Free Kindle Covers')</title>
 	
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-VKZZWX2FN4"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		
+		gtag('config', 'G-VKZZWX2FN4');
+	</script>
+	
 	@stack('styles')
 </head>
 <body data-scroll-animation="true">

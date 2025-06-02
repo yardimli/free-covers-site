@@ -19,6 +19,17 @@
 	<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32x32.png') }}">
 	<link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon-16x16.png') }}">
 	<link rel="manifest" href="{{ asset('images/site.webmanifest') }}">
+	
+	
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-VKZZWX2FN4"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		
+		gtag('config', 'G-VKZZWX2FN4');
+	</script>
 </head>
 <script>
 	window.IS_ADMIN_DESIGNER_MODE = {{ $from_admin_mode ? 'true' : 'false' }};
