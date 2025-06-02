@@ -8,6 +8,8 @@
 	use Illuminate\Foundation\Auth\User as Authenticatable;
 	use Illuminate\Notifications\Notifiable;
 	use Laravel\Sanctum\HasApiTokens;
+	use App\Mail\PasswordResetEmail; // Add this
+	use Illuminate\Support\Facades\Mail; // Add this
 
 	class User extends Authenticatable implements MustVerifyEmail // Implement this
 	{
@@ -27,8 +29,8 @@
 			'password',
 			'user_type',
 			'provider_name', // Add this
-			'provider_id',   // Add this
-			'avatar',        // Add this
+			'provider_id', // Add this
+			'avatar', // Add this
 			'email_verified_at', // Ensure this is fillable
 		];
 
@@ -71,5 +73,16 @@
 		public function userDesigns(): HasMany
 		{
 			return $this->hasMany(UserDesign::class);
+		}
+
+		/**
+		 * Send the password reset notification.
+		 *
+		 * @param  string  $token
+		 * @return void
+		 */
+		public function sendPasswordResetNotification($token)
+		{
+			Mail::to($this->getEmailForPasswordReset())->send(new PasswordResetEmail($this, $token));
 		}
 	}
