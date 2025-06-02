@@ -37,6 +37,8 @@ in admin when uploading covers add function to crop front cover from full cover 
 make signin/up with google work ...........................................................................OK
 make forget password work .................................................................................OK
 make top search work
+add changelog page ........................................................................................OK
+add static faq page
 
 add list of members with summary of their work to admin
 add login as user to admin
@@ -44,7 +46,6 @@ add login as user to admin
 create a medium article
 create a reddit group
 add how it works page
-add changelog page
 add user voice page
 
 in designer make the spine align correctly with the cover

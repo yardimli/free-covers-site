@@ -6,6 +6,7 @@
 	use App\Http\Controllers\Admin\AdminDashboardController;
 	use App\Http\Controllers\Auth\SocialLoginController;
 	use App\Http\Controllers\BlogController;
+	use App\Http\Controllers\ChangelogController;
 	use App\Http\Controllers\CoverController;
 	use App\Http\Controllers\DesignerController;
 	use App\Http\Controllers\FavoriteController;
@@ -106,6 +107,7 @@
 
 	Route::get('/contact-us', [HomeController::class, 'showContactForm'])->name('contact.show');
 	Route::post('/contact-us', [HomeController::class, 'submitContactForm'])->name('contact.submit');
+	Route::get('/changelog', [ChangelogController::class, 'index'])->name('changelog.index');
 
 	Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 	Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
