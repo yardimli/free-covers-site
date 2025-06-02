@@ -754,6 +754,8 @@ class CanvasManager {
 	}
 	
 	async _getEmbeddedFontsCss(layersData) {
+		// const isFireFox = navigator.userAgent.toLowerCase().includes('firefox');
+
 		const uniqueGoogleFonts = new Set();
 		layersData.forEach(layer => {
 			if (layer.type === 'text' && layer.fontFamily && this._isGoogleFont(layer.fontFamily)) {
@@ -764,14 +766,18 @@ class CanvasManager {
 			return '';
 		}
 		const fontFamiliesParam = Array.from(uniqueGoogleFonts).join('&');
-		const fontUrl = `https://fonts.googleapis.com/css2?${fontFamiliesParam}&display=swap`;
+		let fontUrl = `https://fonts.googleapis.com/css2?${fontFamiliesParam}&display=swap`;
 		let originalCss = '';
 		try {
+			// if (isFireFox) {
+				// fontUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(fontUrl)}`;
+			// }
+			
 			console.log("Fetching Google Fonts CSS:", fontUrl);
 			const cssResponse = await fetch(fontUrl, {
-				headers: {
-					'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-				}
+				// headers: {
+				// 	'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+				// }
 			});
 			if (!cssResponse.ok) {
 				throw new Error(`CSS fetch failed! status: ${cssResponse.status}`);
