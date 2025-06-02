@@ -245,7 +245,6 @@
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
 			<div class="modal-body">
-				<form id="saveDesignNameForm" novalidate>
 					<div class="mb-3">
 						<label for="designNameInput" class="form-label">Design Name</label>
 						<input type="text" class="form-control" id="designNameInput" required minlength="1" maxlength="255">
@@ -253,7 +252,6 @@
 							Please enter a name for your design (1-255 characters).
 						</div>
 					</div>
-				</form>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

@@ -33,7 +33,6 @@ $(document).ready(function () {
 	let bsSaveDesignResultModal = null;
 	let currentDesignName = "My Awesome Book"; // Default, will be updated by URL param if present
 	const $designNameInput = $('#designNameInput');
-	const $saveDesignNameForm = $('#saveDesignNameForm');
 	const $saveDesignResultModalLabel = $('#saveDesignResultModalLabel');
 	const $saveDesignResultMessage = $('#saveDesignResultMessage');
 	
@@ -671,7 +670,6 @@ $(document).ready(function () {
 			
 			// Pre-fill and show the name modal
 			$designNameInput.val(currentDesignName);
-			$saveDesignNameForm.removeClass('was-validated');
 			$designNameInput.removeClass('is-invalid');
 			if (bsSaveDesignNameModal) bsSaveDesignNameModal.show();
 			// The actual save logic will be triggered by the modal's save button
@@ -679,8 +677,6 @@ $(document).ready(function () {
 		
 		$('#confirmSaveDesignBtn').on('click', async () => {
 			const designName = $designNameInput.val().trim();
-			
-			$saveDesignNameForm.addClass('was-validated'); // Add class to show validation messages
 			
 			if (!designName || designName.length === 0 || designName.length > 255) {
 				$designNameInput.addClass('is-invalid');
