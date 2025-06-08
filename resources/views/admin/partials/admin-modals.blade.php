@@ -11,7 +11,7 @@
 					<input type="hidden" name="item_type" value="covers">
 					<div class="mb-3">
 						<label for="coverName" class="form-label">Name</label>
-						<input type="text" class="form-control" id="coverName" name="name" required>
+						<input type="text" class="form-control" id="coverName" name="name">
 					</div>
 					<div class="mb-3">
 						<label for="coverMainImage" class="form-label">Main Cover Image (PNG, JPG, GIF)</label>

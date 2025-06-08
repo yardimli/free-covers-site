@@ -311,6 +311,11 @@
 					}
 
 					$data['caption'] = $request->input('caption');
+					// if caption is null or empty, set it to the file name without extension
+					if (empty($data['caption'])) {
+						$data['caption'] = pathinfo($fullCoverFileFromRequest->getClientOriginalName(), PATHINFO_FILENAME);
+						$data['caption'] = str_replace(['-', '_'], ' ', $data['caption']);
+					}
 					$data['categories'] = $request->input('categories') ? array_map('trim', explode(',', $request->input('categories'))) : [];
 					$data['text_placements'] = []; // Default empty, can be set via other UI
 
