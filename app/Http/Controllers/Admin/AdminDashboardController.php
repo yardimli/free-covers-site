@@ -175,7 +175,7 @@
 			$itemType = $request->input('item_type');
 			$rules = [
 				'item_type' => ['required', Rule::in(['covers', 'templates', 'elements', 'overlays'])],
-				'name' => 'required|string|max:255',
+				//'name' => 'required|string|max:255',
 				'keywords' => 'nullable|string|max:1000',
 			];
 
@@ -220,9 +220,10 @@
 			if (!$model) return response()->json(['success' => false, 'message' => 'Invalid item type.'], 400);
 
 			$data = [
-				'name' => $request->input('name'),
+				'name' => $request->input('name') ?? '',
 				'keywords' => $request->input('keywords') ? array_map('trim', explode(',', $request->input('keywords'))) : [],
 			];
+
 
 			if ($itemType === 'covers' || $itemType === 'templates') {
 				$data['cover_type_id'] = $request->input('cover_type_id');
@@ -239,8 +240,22 @@
 						$paths = $this->imageUploadService->uploadImageWithThumbnail($mainImageFile, 'covers_main');
 						$data['cover_path'] = $paths['original_path'];
 						$data['cover_thumbnail_path'] = $paths['thumbnail_path'];
+
+						// if name is null or empty, set it to the file name without extension
+						if (empty($data['name'])) {
+							$data['name'] = pathinfo($mainImageFile->getClientOriginalName(), PATHINFO_FILENAME);
+							$data['name'] = str_replace(['-', '_'], ' ', $data['name']);
+						}
+
 					} elseif ($fullCoverFileFromRequest) {
 						// Main image not provided, derive from full_cover_file
+
+						// if name is null or empty, set it to the file name without extension
+						if (empty($data['name'])) {
+							$data['name'] = pathinfo($fullCoverFileFromRequest->getClientOriginalName(), PATHINFO_FILENAME);
+							$data['name'] = str_replace(['-', '_'], ' ', $data['name']);
+						}
+
 						try {
 							$image = InterventionImageFacade::read($fullCoverFileFromRequest->getRealPath());
 
@@ -311,22 +326,31 @@
 					}
 
 					$data['caption'] = $request->input('caption');
-					// if caption is null or empty, set it to the file name without extension
-					if (empty($data['caption'])) {
-						$data['caption'] = pathinfo($fullCoverFileFromRequest->getClientOriginalName(), PATHINFO_FILENAME);
-						$data['caption'] = str_replace(['-', '_'], ' ', $data['caption']);
-					}
 					$data['categories'] = $request->input('categories') ? array_map('trim', explode(',', $request->input('categories'))) : [];
 					$data['text_placements'] = []; // Default empty, can be set via other UI
 
 				} elseif ($itemType === 'elements' || $itemType === 'overlays') {
+					// if name is null or empty, set it to the file name without extension
+
 					if ($request->hasFile('image_file')) {
+						$imageFile = $request->file('image_file');
 						$uploadConfigKey = $itemType . '_main';
-						$paths = $this->imageUploadService->uploadImageWithThumbnail($request->file('image_file'), $uploadConfigKey);
+						$paths = $this->imageUploadService->uploadImageWithThumbnail($imageFile, $uploadConfigKey);
 						$data['image_path'] = $paths['original_path'];
 						$data['thumbnail_path'] = $paths['thumbnail_path'];
+
+						if (empty($data['name'])) {
+							$data['name'] = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+							$data['name'] = str_replace(['-', '_'], ' ', $data['name']);
+						}
+
 					}
 				} elseif ($itemType === 'templates') {
+					// if name is null or empty, set it to the file name without extension
+					if (empty($data['name'])) {
+						$data['name'] = 'tempalte_' . Str::random(10);
+					}
+
 					if ($request->hasFile('cover_image_file')) {
 						$paths = $this->imageUploadService->uploadImageWithThumbnail($request->file('cover_image_file'), 'templates_cover_image');
 						$data['cover_image_path'] = $paths['original_path'];
