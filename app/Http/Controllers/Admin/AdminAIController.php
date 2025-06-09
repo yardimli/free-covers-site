@@ -46,42 +46,57 @@
 		public function getCoversNeedingMetadata(Request $request)
 		{
 			try {
-				// Broadly fetch covers that *might* need updates.
-				$potentialCovers = Cover::query()
-					->where(function ($query) {
-						$query->whereNull('caption')
-							->orWhere('caption', '=', '')
-							->orWhereNull('keywords')
-							->orWhere('keywords', '=', '[]') // Check for empty JSON array string
-							->orWhereNull('categories')
-							->orWhere('categories', '=', '[]'); // Check for empty JSON array string
-					})
-					// Or names that are very short (less likely to be 3 words)
-					// This is a loose pre-filter; precise check is in PHP.
-					->orWhereRaw('LENGTH(name) < 15') // Example: names shorter than 15 chars
+				// Fetch all covers to ensure every name can be checked for the 3-word rule.
+				// This is the most reliable way to catch all covers needing an update.
+				$allCovers = Cover::query()
 					->orderBy('id')
 					->get(['id', 'name', 'caption', 'keywords', 'categories']);
 
-				$coversNeedingUpdate = $potentialCovers->filter(function ($cover) {
-					$nameWordCount = str_word_count(trim($cover->name ?? ''));
-					$needsNameUpdate = $nameWordCount < 3;
-					$needsCaptionUpdate = empty(trim($cover->caption ?? ''));
-					// Model casts 'keywords' and 'categories' to arrays.
-					$needsKeywordsUpdate = empty($cover->keywords); // Checks if the array is empty
-					$needsCategoriesUpdate = empty($cover->categories); // Checks if the array is empty
-					return $needsNameUpdate || $needsCaptionUpdate || $needsKeywordsUpdate || $needsCategoriesUpdate;
-				})->map(function ($cover) {
+				$coversNeedingUpdate = $allCovers->map(function ($cover) {
 					$fields_to_generate = [];
-					if (str_word_count(trim($cover->name ?? '')) < 3) $fields_to_generate[] = 'name';
-					if (empty(trim($cover->caption ?? ''))) $fields_to_generate[] = 'caption';
-					if (empty($cover->keywords)) $fields_to_generate[] = 'keywords';
-					if (empty($cover->categories)) $fields_to_generate[] = 'categories';
-					return [
-						'id' => $cover->id,
-						'current_name' => $cover->name, // For logging/display by JS
-						'fields_to_generate' => $fields_to_generate
-					];
-				})->values(); // Reset keys for JSON array
+
+					// Check name: must be exactly 3 words.
+					// We trim the name, explode by space, and filter empty values
+					// to correctly handle multiple spaces between words or leading/trailing spaces.
+					$trimmedName = trim($cover->name ?? '');
+					$words = $trimmedName === '' ? [] : array_filter(explode(' ', $trimmedName));
+					$nameWordCount = count($words);
+
+					if ($nameWordCount !== 3) {
+						$fields_to_generate[] = 'name';
+					}
+
+					// Check caption: generate only if it's empty.
+					if (empty(trim($cover->caption ?? ''))) {
+						$fields_to_generate[] = 'caption';
+					}
+
+					// Check keywords: generate only if the array is empty.
+					// The Cover model casts the 'keywords' JSON column to an array.
+					if (empty($cover->keywords)) {
+						$fields_to_generate[] = 'keywords';
+					}
+
+					// Check categories: generate only if the array is empty.
+					// The Cover model casts the 'categories' JSON column to an array.
+					if (empty($cover->categories)) {
+						$fields_to_generate[] = 'categories';
+					}
+
+					// If any fields were identified for generation, return the cover info.
+					// Otherwise, return null, and it will be filtered out.
+					if (!empty($fields_to_generate)) {
+						return [
+							'id' => $cover->id,
+							'current_name' => $cover->name, // For logging/display by JS
+							'fields_to_generate' => $fields_to_generate
+						];
+					}
+
+					return null;
+				})
+					->filter() // Removes any null entries where no updates were needed.
+					->values(); // Reset collection keys for a clean JSON array.
 
 				return response()->json(['success' => true, 'data' => ['covers' => $coversNeedingUpdate]]);
 			} catch (\Exception $e) {
