@@ -1,8 +1,8 @@
 // public/js/admin/batchAutoAssignTemplates.js
 window.AppAdmin = window.AppAdmin || {};
-AppAdmin.BatchAutoAssignTemplates = (function() {
-	const { showAlert, escapeHtml } = AppAdmin.Utils;
-	const { loadItems } = AppAdmin.Items;
+AppAdmin.BatchAutoAssignTemplates = (function () {
+	const {showAlert, escapeHtml} = AppAdmin.Utils;
+	const {loadItems} = AppAdmin.Items;
 	const AssignTemplatesProgrammatic = AppAdmin.AssignTemplates.programmatic;
 	
 	let $batchButton, $progressArea, $progressBar, $progressText, $progressSummary;
@@ -23,7 +23,7 @@ AppAdmin.BatchAutoAssignTemplates = (function() {
 			showAlert('A batch process is already running.', 'warning');
 			return;
 		}
-		if (!confirm('This will attempt to automatically assign up to 2 suitable random templates to all covers that currently have none, using AI. This may take a while and consume API credits. Continue?')) {
+		if (!confirm('This will attempt to automatically assign up to 2 suitable random templates to all covers that currently have none, using AI. It will try a maximum of 10 templates per cover. This may take a while and consume API credits. Continue?')) {
 			return;
 		}
 		
@@ -56,6 +56,7 @@ AppAdmin.BatchAutoAssignTemplates = (function() {
 			
 			let successCount = 0;
 			let failCount = 0;
+			const MAX_ATTEMPTS_PER_COVER = 10;
 			
 			for (let i = 0; i < coversToProcess.length; i++) {
 				const cover = coversToProcess[i];
@@ -73,7 +74,7 @@ AppAdmin.BatchAutoAssignTemplates = (function() {
 						addToSummary(`Cover ID: ${cover.id} - No assignable templates found or cover type not set. Skipping.`, 'warning');
 						successCount++; // Count as processed, just nothing to do
 					} else {
-						addToSummary(`Cover ID: ${cover.id} - Modal loaded, ${modalLoadResult.templates.length} templates available. Shuffling and evaluating...`, 'info');
+						addToSummary(`Cover ID: ${cover.id} - Modal loaded, ${modalLoadResult.templates.length} templates available. Shuffling and evaluating (max ${MAX_ATTEMPTS_PER_COVER} attempts)...`, 'info');
 						
 						// Shuffle templates
 						let availableTemplates = [...modalLoadResult.templates]; // Create a mutable copy
@@ -83,11 +84,12 @@ AppAdmin.BatchAutoAssignTemplates = (function() {
 						}
 						
 						let assignedCountForThisCover = 0;
+						let attemptsForThisCover = 0;
+						
 						// Clear all checkboxes in the modal first
 						$assignableTemplatesList.find('input[type="checkbox"]').prop('checked', false);
 						
-						const totalTemplatesToTry = availableTemplates.length;
-						let triedTemplatesCount = 0;
+						const totalTemplatesAvailableForThisCover = availableTemplates.length;
 						
 						for (const templateToTry of availableTemplates) {
 							if (assignedCountForThisCover >= 2) {
@@ -95,11 +97,16 @@ AppAdmin.BatchAutoAssignTemplates = (function() {
 								break; // Stop trying more templates for this cover
 							}
 							
-							triedTemplatesCount++;
+							if (attemptsForThisCover >= MAX_ATTEMPTS_PER_COVER) {
+								addToSummary(`Cover ID: ${cover.id} - Reached max ${MAX_ATTEMPTS_PER_COVER} attempts. Moving on. Found ${assignedCountForThisCover} good fit(s).`, 'info');
+								break; // Stop trying more templates for this cover
+							}
+							
+							attemptsForThisCover++;
 							const templateId = templateToTry.id;
 							const templateName = templateToTry.name || `Template ID ${templateId}`;
 							
-							$progressText.text(`Cover ${i + 1}/${coversToProcess.length}: ID ${cover.id}. Evaluating template ${triedTemplatesCount}/${totalTemplatesToTry} ("${escapeHtml(templateName)}")...`);
+							$progressText.text(`Cover ${i + 1}/${coversToProcess.length}: ID ${cover.id}. Attempt ${attemptsForThisCover}/${Math.min(MAX_ATTEMPTS_PER_COVER, totalTemplatesAvailableForThisCover)} ("${escapeHtml(templateName)}")...`);
 							
 							try {
 								const evalResponse = await $.ajax({
@@ -127,15 +134,15 @@ AppAdmin.BatchAutoAssignTemplates = (function() {
 								addToSummary(`Cover ID: ${cover.id} - AJAX error evaluating template "${escapeHtml(templateName)}" (ID: ${templateId}): ${escapeHtml(errorDetail)}`, 'danger');
 							}
 							
-							// API rate limit consideration, only if more templates to try and haven't found 2 yet
-							if (triedTemplatesCount < totalTemplatesToTry && assignedCountForThisCover < 2) {
+							// API rate limit consideration, only if more templates to try and haven't found 2 yet AND haven't reached max attempts
+							if (attemptsForThisCover < Math.min(MAX_ATTEMPTS_PER_COVER, totalTemplatesAvailableForThisCover) && assignedCountForThisCover < 2) {
 								await new Promise(resolve => setTimeout(resolve, 500)); // 0.5 second delay
 							}
 						} // End loop for templates of current cover
 						
 						if (assignedCountForThisCover > 0) {
 							$progressText.text(`Saving ${assignedCountForThisCover} assignment(s) for Cover ID: ${cover.id}...`);
-							const saveResult = await AssignTemplatesProgrammatic.saveAssignments({ skipUiUpdates: true });
+							const saveResult = await AssignTemplatesProgrammatic.saveAssignments({skipUiUpdates: true});
 							if (saveResult.success) {
 								addToSummary(`Cover ID: ${cover.id} - ${assignedCountForThisCover} assignments saved successfully.`, 'success');
 								successCount++;
@@ -143,7 +150,7 @@ AppAdmin.BatchAutoAssignTemplates = (function() {
 								throw new Error(saveResult.message || `Save failed for Cover ID ${cover.id}.`);
 							}
 						} else {
-							addToSummary(`Cover ID: ${cover.id} - No suitable templates found after trying ${triedTemplatesCount} options. Nothing to save.`, 'info');
+							addToSummary(`Cover ID: ${cover.id} - No suitable templates found after ${attemptsForThisCover} attempt(s). Nothing to save.`, 'info');
 							successCount++; // Processed, even if no assignments
 						}
 					}

@@ -76,9 +76,9 @@ function main() {
 		var baseName = jpgFileName.replace(/\.[^\.]+$/, '');
 		
 		// Construct expected output JPG filenames
-		var outputJpgFileName1 = baseName + "-full-1.jpg";
-		var outputJpgFileName2 = baseName + "-full-2.jpg";
-		var outputJpgFileName3 = baseName + "-full-3.jpg";
+		var outputJpgFileName1 = baseName + "-1-full-cover.jpg";
+		var outputJpgFileName2 = baseName + "-2-full-cover.jpg";
+		var outputJpgFileName3 = baseName + "-3-full-cover.jpg";
 		
 		var outputJpgFile1 = File(outputFolder.fsName + "/" + outputJpgFileName1);
 		var outputJpgFile2 = File(outputFolder.fsName + "/" + outputJpgFileName2);
