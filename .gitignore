@@ -21,3 +21,5 @@ composer.lock
 *.psd
 /public/template/assets/img
 /public/template/assets/fonts
+/actions/InputImages
+/actions/OutputImages
