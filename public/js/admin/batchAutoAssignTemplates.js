@@ -23,7 +23,7 @@ AppAdmin.BatchAutoAssignTemplates = (function() {
 			showAlert('A batch process is already running.', 'warning');
 			return;
 		}
-		if (!confirm('This will attempt to automatically assign templates to all covers that currently have none, using AI. This may take a while and consume API credits. Continue?')) {
+		if (!confirm('This will attempt to automatically assign up to 2 suitable random templates to all covers that currently have none, using AI. This may take a while and consume API credits. Continue?')) {
 			return;
 		}
 		
@@ -33,7 +33,6 @@ AppAdmin.BatchAutoAssignTemplates = (function() {
 		$progressBar.width('0%').removeClass('bg-success bg-danger bg-warning').addClass('progress-bar-animated');
 		$progressText.text('Fetching covers...');
 		$progressSummary.empty().append('<h6>Batch Log:</h6><ul class="list-unstyled" style="max-height: 200px; overflow-y: auto;"></ul>');
-		
 		
 		try {
 			const response = await $.ajax({
@@ -65,41 +64,91 @@ AppAdmin.BatchAutoAssignTemplates = (function() {
 				$progressText.text(`Processing ${i + 1}/${coversToProcess.length}: Cover "${escapeHtml(cover.name)}" (ID: ${cover.id})`);
 				addToSummary(`Starting Cover ID: ${cover.id} ("${escapeHtml(cover.name)}")`, 'info');
 				
-				let aiResultForLog = { goodFitCount: 0 }; // For logging if AI step is skipped
-				
 				try {
 					// Step 1: Open modal and load data
 					const modalLoadResult = await AssignTemplatesProgrammatic.loadDataAndShowModal(cover.id);
+					const $assignableTemplatesList = $('#assignableTemplatesList'); // Get this reference after modal is populated
 					
-					if (!modalLoadResult.hasTemplates) {
+					if (!modalLoadResult.hasTemplates || !modalLoadResult.templates || modalLoadResult.templates.length === 0) {
 						addToSummary(`Cover ID: ${cover.id} - No assignable templates found or cover type not set. Skipping.`, 'warning');
 						successCount++; // Count as processed, just nothing to do
 					} else {
-						addToSummary(`Cover ID: ${cover.id} - Modal loaded, ${modalLoadResult.templates.length} templates available.`, 'info');
+						addToSummary(`Cover ID: ${cover.id} - Modal loaded, ${modalLoadResult.templates.length} templates available. Shuffling and evaluating...`, 'info');
 						
-						// Step 2: Perform AI choice
-						$progressText.text(`AI Evaluating for Cover ID: ${cover.id}...`);
-						const aiResult = await AssignTemplatesProgrammatic.performAiChoice();
-						aiResultForLog = aiResult; // Store for logging
-						addToSummary(`Cover ID: ${cover.id} - AI Choice: ${aiResult.goodFitCount} good, ${aiResult.badFitCount} bad, ${aiResult.errorCount} errors.`, 'info');
+						// Shuffle templates
+						let availableTemplates = [...modalLoadResult.templates]; // Create a mutable copy
+						for (let k = availableTemplates.length - 1; k > 0; k--) {
+							const j = Math.floor(Math.random() * (k + 1));
+							[availableTemplates[k], availableTemplates[j]] = [availableTemplates[j], availableTemplates[k]];
+						}
 						
-						if (aiResult.errorCount === 0) { // If AI ran successfully, save the resulting checkbox states
-							$progressText.text(`Saving for Cover ID: ${cover.id}...`);
+						let assignedCountForThisCover = 0;
+						// Clear all checkboxes in the modal first
+						$assignableTemplatesList.find('input[type="checkbox"]').prop('checked', false);
+						
+						const totalTemplatesToTry = availableTemplates.length;
+						let triedTemplatesCount = 0;
+						
+						for (const templateToTry of availableTemplates) {
+							if (assignedCountForThisCover >= 2) {
+								addToSummary(`Cover ID: ${cover.id} - Reached 2 good fit templates. Moving to save.`, 'info');
+								break; // Stop trying more templates for this cover
+							}
+							
+							triedTemplatesCount++;
+							const templateId = templateToTry.id;
+							const templateName = templateToTry.name || `Template ID ${templateId}`;
+							
+							$progressText.text(`Cover ${i + 1}/${coversToProcess.length}: ID ${cover.id}. Evaluating template ${triedTemplatesCount}/${totalTemplatesToTry} ("${escapeHtml(templateName)}")...`);
+							
+							try {
+								const evalResponse = await $.ajax({
+									url: `${window.adminRoutes.aiEvaluateTemplateFitBase}/${cover.id}/templates/${templateId}/ai-evaluate-fit`,
+									type: 'POST',
+									dataType: 'json'
+								});
+								
+								if (evalResponse.success && typeof evalResponse.data.should_assign === 'boolean') {
+									if (evalResponse.data.should_assign) {
+										$assignableTemplatesList.find(`#template_assign_${templateId}`).prop('checked', true);
+										assignedCountForThisCover++;
+										addToSummary(`Cover ID: ${cover.id} - Template "${escapeHtml(templateName)}" (ID: ${templateId}) is a GOOD FIT. (${assignedCountForThisCover}/2)`, 'success');
+									} else {
+										addToSummary(`Cover ID: ${cover.id} - Template "${escapeHtml(templateName)}" (ID: ${templateId}) not a good fit.`, 'muted');
+									}
+								} else {
+									addToSummary(`Cover ID: ${cover.id} - AI eval issue for template "${escapeHtml(templateName)}" (ID: ${templateId}): ${escapeHtml(evalResponse.message || 'Invalid AI response')}`, 'warning');
+								}
+							} catch (xhrEval) {
+								let errorDetail = xhrEval.statusText || 'Unknown error';
+								if (xhrEval.responseJSON && xhrEval.responseJSON.message) {
+									errorDetail = xhrEval.responseJSON.message;
+								}
+								addToSummary(`Cover ID: ${cover.id} - AJAX error evaluating template "${escapeHtml(templateName)}" (ID: ${templateId}): ${escapeHtml(errorDetail)}`, 'danger');
+							}
+							
+							// API rate limit consideration, only if more templates to try and haven't found 2 yet
+							if (triedTemplatesCount < totalTemplatesToTry && assignedCountForThisCover < 2) {
+								await new Promise(resolve => setTimeout(resolve, 500)); // 0.5 second delay
+							}
+						} // End loop for templates of current cover
+						
+						if (assignedCountForThisCover > 0) {
+							$progressText.text(`Saving ${assignedCountForThisCover} assignment(s) for Cover ID: ${cover.id}...`);
 							const saveResult = await AssignTemplatesProgrammatic.saveAssignments({ skipUiUpdates: true });
 							if (saveResult.success) {
-								addToSummary(`Cover ID: ${cover.id} - Assignments saved. (AI suggested ${aiResult.goodFitCount})`, 'success');
+								addToSummary(`Cover ID: ${cover.id} - ${assignedCountForThisCover} assignments saved successfully.`, 'success');
 								successCount++;
 							} else {
-								throw new Error(saveResult.message || 'Save failed.');
+								throw new Error(saveResult.message || `Save failed for Cover ID ${cover.id}.`);
 							}
 						} else {
-							addToSummary(`Cover ID: ${cover.id} - AI evaluation had errors. Not saving.`, 'warning');
-							failCount++; // Count as failure if AI errors prevent saving
+							addToSummary(`Cover ID: ${cover.id} - No suitable templates found after trying ${triedTemplatesCount} options. Nothing to save.`, 'info');
+							successCount++; // Processed, even if no assignments
 						}
 					}
 					
-					// Step 4: Hide modal and wait for it to be fully hidden
-					// Ensure modal is hidden only if it was shown
+					// Hide modal and wait for it to be fully hidden
 					if ($('#assignTemplatesModal').hasClass('show')) {
 						await new Promise(resolve => {
 							AssignTemplatesProgrammatic.getModalElement().one('hidden.bs.modal', resolve);
@@ -119,7 +168,7 @@ AppAdmin.BatchAutoAssignTemplates = (function() {
 						});
 					}
 				}
-			}
+			} // End loop for covers
 			
 			$progressText.text(`Batch complete: ${successCount} covers processed, ${failCount} failed.`);
 			$progressBar.addClass(failCount > 0 ? 'bg-warning' : (successCount > 0 ? 'bg-success' : 'bg-info'));
@@ -128,12 +177,12 @@ AppAdmin.BatchAutoAssignTemplates = (function() {
 			} else {
 				addToSummary('Batch finished successfully.', 'success');
 			}
+			
 			// Refresh the covers list on the current tab, page 1
 			const activeTab = $('.nav-tabs .nav-link.active').attr('aria-controls').replace('-panel', '');
-			if (activeTab === 'covers') { // Only refresh if on covers tab, or always refresh covers
-				loadItems('covers', 1, '', '');
+			if (activeTab === 'covers') {
+				loadItems('covers', 1, '', '', $('#filterNoTemplatesBtn').hasClass('active'));
 			}
-			
 			
 		} catch (error) {
 			console.error("Batch Auto Assign Error:", error);
@@ -146,7 +195,7 @@ AppAdmin.BatchAutoAssignTemplates = (function() {
 	}
 	
 	function addToSummary(message, type = 'info') {
-		const colorClass = type === 'danger' ? 'text-danger' : (type === 'warning' ? 'text-warning' : (type === 'success' ? 'text-success' : 'text-muted'));
+		const colorClass = type === 'danger' ? 'text-danger' : (type === 'warning' ? 'text-warning' : (type === 'success' ? 'text-success' : (type === 'muted' ? 'text-muted' : 'text-info')));
 		const $list = $progressSummary.find('ul');
 		$list.append(`<li class="small ${colorClass}">${escapeHtml(message)}</li>`);
 		$list.scrollTop($list[0].scrollHeight); // Scroll to bottom
@@ -160,5 +209,7 @@ AppAdmin.BatchAutoAssignTemplates = (function() {
 		// setTimeout(() => $progressArea.hide(), 30000);
 	}
 	
-	return { init };
+	return {
+		init
+	};
 })();
