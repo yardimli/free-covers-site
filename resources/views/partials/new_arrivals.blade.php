@@ -9,7 +9,7 @@
 				@foreach($newArrivals as $cover)
 					<div class="col-xl-4 col-md-6">
 						<div class="bj_new_pr_item_two d-flex wow fadeInUp" data-wow-delay="0.{{ $loop->iteration + 1 }}s">
-							<a href="{{ route('covers.show', $cover->id) }}" class="img cover-image-container">
+							<a href="{{ route('covers.show', ['cover' => $cover->id, 'template' => $cover->random_template_overlay_id]) }}" class="img cover-image-container">
 								<img src="{{ asset('storage/' . $cover->mockup_2d_path) }}" alt="{{ $cover->name }}" class="cover-mockup-image" />
 								@if($cover->random_template_overlay_url)
 									<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image" />
@@ -20,11 +20,11 @@
 									@php $categoryName = Str::title($cover->categories[0]); @endphp
 									<a href="{{ route('shop.index', ['category' => $categoryName]) }}" class="category">{{ $categoryName }}</a>
 								@endif
-								<a href="{{ route('covers.show', $cover->id) }}">
+								<a href="{{ route('covers.show', ['cover' => $cover->id, 'template' => $cover->random_template_overlay_id]) }}">
 									<h6 class="bj_new_pr_title">#{{ $cover->id }}<br>{{$cover->name }}</h6>
 								</a>
 								<div class="writer_name">{{ $cover->caption ? Str::limit($cover->caption, 60) : '' }}</div>
-								<a href="#" class="bj_theme_btn">Customize</a>
+								<a href="{{ route('covers.show', ['cover' => $cover->id, 'template' => $cover->random_template_overlay_id]) }}" class="bj_theme_btn">Customize</a>
 							</div>
 						</div>
 					</div>

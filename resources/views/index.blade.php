@@ -14,8 +14,8 @@
 	
 	@include('partials.new_arrivals')
 	
-	@include('partials.testimonial')
-	
-	@include('partials.subscribe')
+{{--	@include('partials.testimonial')--}}
+
+{{--	@include('partials.subscribe')--}}
 
 @endsection

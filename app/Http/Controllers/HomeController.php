@@ -58,10 +58,12 @@
 					foreach ($coversForFirstTab[$firstGenreName] as &$cover) {
 						// Add random template overlay URL
 						$cover['random_template_overlay_url'] = null;
+						$cover['random_template_overlay_id'] = null; // Add this line to store the ID
 						if ($cover->templates->isNotEmpty()) {
 							$randomTemplate = $cover->templates->random();
 							if ($randomTemplate->cover_image_path) {
 								$cover['random_template_overlay_url'] = asset('storage/' . $randomTemplate->cover_image_path);
+								$cover['random_template_overlay_id'] = $randomTemplate->id; // Store the ID
 							}
 						}
 					}
@@ -79,10 +81,12 @@
 			foreach ($newArrivals as &$cover) {
 				// Add random template overlay URL
 				$cover['random_template_overlay_url'] = null;
+				$cover['random_template_overlay_id'] = null; // Add this line to store the ID
 				if ($cover->templates->isNotEmpty()) {
 					$randomTemplate = $cover->templates->random();
 					if ($randomTemplate->cover_image_path) {
 						$cover['random_template_overlay_url'] = asset('storage/' . $randomTemplate->cover_image_path);
+						$cover['random_template_overlay_id'] = $randomTemplate->id; // Store the ID
 					}
 				}
 			}
@@ -119,10 +123,12 @@
 
 			$formattedCovers = $covers->map(function ($cover) {
 				$randomTemplateOverlayUrl = null;
+				$randomTemplateOverlayId = null; // Initialize the ID
 				if ($cover->templates->isNotEmpty()) {
 					$randomTemplate = $cover->templates->random();
 					if ($randomTemplate->cover_image_path) {
 						$randomTemplateOverlayUrl = asset('storage/' . $randomTemplate->cover_image_path);
+						$randomTemplateOverlayId = $randomTemplate->id; // Store the ID
 					}
 				}
 				return [
@@ -130,6 +136,7 @@
 					'name' => $cover->name,
 					'mockup_2d_path' => $cover->mockup_2d_path ? asset('storage/' . $cover->mockup_2d_path) : null,
 					'random_template_overlay_url' => $randomTemplateOverlayUrl,
+					'random_template_overlay_id' => $randomTemplateOverlayId, // Include the ID
 					'show_url' => route('covers.show', $cover->id),
 					'limited_name' => Str::limit($cover->caption, 40),
 					'caption' => $cover->caption,

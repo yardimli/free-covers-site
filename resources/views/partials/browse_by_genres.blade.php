@@ -55,7 +55,7 @@
 												@foreach($currentCovers as $cover)
 													<div class="col-lg-4 col-md-6 mb-4"> {{-- 3 columns on large, 2 on medium --}}
 														<div class="bj_new_pr_item">
-															<a href="{{ route('covers.show', $cover->id) }}" class="img cover-image-container">
+															<a href="{{ route('covers.show', ['cover' => $cover->id, 'template' => $cover->random_template_overlay_id]) }}" class="img cover-image-container">
 																<img src="{{ asset('storage/' .$cover->mockup_2d_path) }}" alt="{{ $cover->name }}" class="cover-mockup-image" />
 																@if($cover->random_template_overlay_url)
 																	<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image" />
@@ -63,7 +63,7 @@
 															</a>
 															<div class="bj_new_pr_content_two">
 																<div class="d-flex justify-content-between">
-																	<a href="{{ route('covers.show', $cover->id) }}">
+																	<a href="{{ route('covers.show', ['cover' => $cover->id, 'template' => $cover->random_template_overlay_id]) }}">
 																		<h6>#{{$cover->id }} {{$cover->name }}</h6>
 																	</a>
 																</div>

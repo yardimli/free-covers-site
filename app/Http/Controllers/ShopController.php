@@ -89,10 +89,12 @@ class ShopController extends Controller
 		// Prepare covers with mockup and random template overlay
 		foreach ($covers as $cover) {
 			$cover->random_template_overlay_url = null;
+			$cover->random_template_overlay_id = null;
 			if ($cover->templates->isNotEmpty()) {
 				$randomTemplate = $cover->templates->random();
 				if ($randomTemplate->cover_image_path) {
 					$cover->random_template_overlay_url = asset('storage/' . $randomTemplate->cover_image_path);
+					$cover->random_template_overlay_id = $randomTemplate->id;
 				}
 			}
 		}

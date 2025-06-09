@@ -100,10 +100,12 @@
 
 			foreach ($relatedCovers as $related) {
 				$related->random_template_overlay_url = null;
+				$cover->random_template_overlay_id = null;
 				if ($related->templates->isNotEmpty()) {
 					$randomTemplate = $related->templates->random();
 					if ($randomTemplate->cover_image_path) {
 						$related->random_template_overlay_url = asset('storage/' . $randomTemplate->cover_image_path);
+						$cover->random_template_overlay_id = $randomTemplate->id;
 					}
 				}
 			}
