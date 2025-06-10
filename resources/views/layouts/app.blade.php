@@ -23,7 +23,11 @@
 	<link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon-16x16.png') }}">
 	<link rel="manifest" href="{{ asset('images/site.webmanifest') }}">
 	
-	<title>@yield('title', 'Free Kindle Covers')</title>
+	{{-- REMOVE the old title tag --}}
+	{{-- <title>@yield('title', 'Free Kindle Covers')</title> --}}
+	
+	{{-- ADD THIS LINE --}}
+	{!! SEO::generate() !!}
 	
 	<!-- Google tag (gtag.js) -->
 	<script async src="https://www.googletagmanager.com/gtag/js?id=G-VKZZWX2FN4"></script>

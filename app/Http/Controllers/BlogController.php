@@ -6,6 +6,7 @@
 	use App\Models\BlogCategory;
 	use Illuminate\Http\Request;
 	use Illuminate\Support\Str;
+	use Artesaos\SEOTools\Facades\SEOTools;
 
 	class BlogController extends Controller
 	{
@@ -79,6 +80,7 @@
 				->withQueryString(); // Appends current query parameters to pagination links
 
 			$sidebarData = $this->getSidebarData($request);
+
 			$pageTitle = 'Our Blog';
 			if ($request->filled('category')) {
 				$category = BlogCategory::where('slug', $request->category)->first();
@@ -89,6 +91,10 @@
 				$pageTitle = 'Tag: ' . Str::title(str_replace('-', ' ', $request->tag));
 			}
 
+			SEOTools::setTitle($pageTitle);
+			SEOTools::setDescription('The official blog for Free Kindle Covers. Find tips, tutorials, and announcements about our free book cover design tools.');
+			SEOTools::setCanonical(route('blog.index'));
+			SEOTools::opengraph()->setUrl(route('blog.index'));
 
 			return view('blog.index', array_merge(compact('posts', 'pageTitle'), $sidebarData));
 		}
@@ -100,6 +106,58 @@
 				->where('status', 'published')
 				->where('published_at', '<=', now())
 				->firstOrFail();
+
+			$pageTitle = $post->title;
+			$pageDescription = Str::limit($post->short_description, 155);
+
+			SEOTools::setTitle($pageTitle);
+			SEOTools::setDescription($pageDescription);
+			SEOTools::setCanonical(route('blog.show', $post->slug));
+
+			// OpenGraph & Twitter Cards for Articles
+			SEOTools::opengraph()->setUrl(route('blog.show', $post->slug));
+			SEOTools::opengraph()->addProperty('type', 'article');
+			SEOTools::opengraph()->setTitle($pageTitle);
+			SEOTools::opengraph()->setDescription($pageDescription);
+			SEOTools::opengraph()->addProperty('article:published_time', $post->published_at->toIso8601String());
+			SEOTools::opengraph()->addProperty('article:modified_time', $post->updated_at->toIso8601String());
+			if ($post->category) {
+				SEOTools::opengraph()->addProperty('article:section', $post->category->name);
+			}
+			if ($post->keywords && is_array($post->keywords)) {
+				foreach ($post->keywords as $tag) {
+					SEOTools::opengraph()->addProperty('article:tag', $tag);
+				}
+			}
+
+			if ($post->image_path) {
+				SEOTools::opengraph()->addImage(asset('storage/' . $post->image_path));
+				SEOTools::twitter()->setImage(asset('storage/' . $post->image_path));
+			}
+
+			// Structured Data (JSON-LD) for Blog Posts
+			SEOTools::jsonLd()->setType('BlogPosting');
+			SEOTools::jsonLd()->setTitle($pageTitle);
+			SEOTools::jsonLd()->setDescription($pageDescription);
+			SEOTools::jsonLd()->setUrl(route('blog.show', $post->slug));
+			SEOTools::jsonLd()->addValue('datePublished', $post->published_at->toIso8601String());
+			SEOTools::jsonLd()->addValue('dateModified', $post->updated_at->toIso8601String());
+			if ($post->image_path) {
+				SEOTools::jsonLd()->setImage(asset('storage/' . $post->image_path));
+			}
+			SEOTools::jsonLd()->addValue('author', [
+				'@type' => 'Person',
+				'name' => 'FreeKindleCovers Team' // Or add an author relationship to your post model
+			]);
+			SEOTools::jsonLd()->addValue('publisher', [
+				'@type' => 'Organization',
+				'name' => 'Free Kindle Covers',
+				'logo' => [
+					'@type' => 'ImageObject',
+					'url' => asset('images/favicon-32x32.png') // Or a proper logo image
+				]
+			]);
+
 
 			$relatedPosts = BlogPost::where('status', 'published')
 				->where('published_at', '<=', now())

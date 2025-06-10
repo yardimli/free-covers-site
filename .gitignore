@@ -23,3 +23,4 @@ composer.lock
 /public/template/assets/fonts
 /actions/InputImages
 /actions/OutputImages
+*.zip

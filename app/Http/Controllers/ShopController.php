@@ -1,8 +1,10 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Cover;
+use Artesaos\SEOTools\SEOTools;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Artesaos\SEOTools\Facades\SEOTools;
 
 class ShopController extends Controller
 {
@@ -12,6 +14,24 @@ class ShopController extends Controller
 		$sortBy = $request->input('orderby', 'latest'); // 'latest', 'name_asc', 'name_desc'
 		$selectedCategory = $request->input('category'); // This will be TitleCase from the dropdown
 		$selectedKeyword = $request->input('keyword'); // New: For keyword filtering
+
+		$pageTitle = 'Browse All Covers';
+		$pageDescription = 'Browse, search, and filter our entire collection of free, customizable book covers for Kindle and print.';
+
+		if ($selectedCategory) {
+			$pageTitle = "Covers in Category: {$selectedCategory}";
+			$pageDescription = "Find the perfect book cover in the {$selectedCategory} category. All templates are free and customizable.";
+		} elseif ($selectedKeyword) {
+			$pageTitle = "Covers with Keyword: {$selectedKeyword}";
+			$pageDescription = "Explore book covers tagged with the keyword '{$selectedKeyword}'.";
+		} elseif ($searchTerm) {
+			$pageTitle = "Search results for: '{$searchTerm}'";
+		}
+
+		SEOTools::setTitle($pageTitle);
+		SEOTools::setDescription($pageDescription);
+		SEOTools::setCanonical(route('shop.index'));
+		SEOTools::opengraph()->setUrl(route('shop.index'));
 
 		// Fetch all unique categories for the filter dropdown
 		$allCoversForCategories = Cover::select(['categories'])

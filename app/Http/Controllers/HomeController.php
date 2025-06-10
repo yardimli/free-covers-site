@@ -10,13 +10,21 @@
 	use App\Models\ContactMessage; // Added for contact form
 	use Illuminate\Support\Facades\Validator;
 	use Illuminate\View\View;
-
+	use Artesaos\SEOTools\Facades\SEOTools;
 	// Added for validation
 
 	class HomeController extends Controller
 	{
 		public function index()
 		{
+			// ADD THIS SEO LOGIC
+			SEOTools::setTitle('Home');
+			SEOTools::setDescription('Discover and customize professionally designed, high-quality book cover templates for your eBooks and print books, completely free.');
+			SEOTools::opengraph()->setUrl(route('home'));
+			SEOTools::setCanonical(route('home'));
+			// You can also add keywords, etc.
+			// SEOTools::metatags()->addKeyword(['your', 'main', 'keywords']);
+
 			// Fetch all covers to determine categories and their counts
 			$allCoversForCategories = Cover::select(['id', 'categories'])->where('cover_type_id', 1)->get();
 			$genreCounts = [];
@@ -152,6 +160,11 @@
 		 */
 		public function about()
 		{
+			SEOTools::setTitle('About Us');
+			SEOTools::setDescription('Learn about the mission of Free Kindle Covers and our dedication to providing high-quality, free resources for authors.');
+			SEOTools::opengraph()->setUrl(route('about'));
+			SEOTools::setCanonical(route('about'));
+
 			return view('about');
 		}
 
@@ -162,6 +175,11 @@
 		 */
 		public function showContactForm()
 		{
+			SEOTools::setTitle('Contact Us');
+			SEOTools::setDescription('Have a question or feedback? Get in touch with the Free Kindle Covers team. We would love to hear from you.');
+			SEOTools::opengraph()->setUrl(route('contact.show'));
+			SEOTools::setCanonical(route('contact.show'));
+
 			return view('contact');
 		}
 
@@ -196,6 +214,11 @@
 
 		public function faq(): View
 		{
+			SEOTools::setTitle('Frequently Asked Questions (FAQ)');
+			SEOTools::setDescription('Find answers to common questions about using our cover designer, licensing, and customizing Kindle and print covers.');
+			SEOTools::opengraph()->setUrl(route('faq'));
+			SEOTools::setCanonical(route('faq'));
+
 			return view('faq');
 		}
 	}

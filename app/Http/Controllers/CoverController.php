@@ -9,6 +9,7 @@
 	use Illuminate\Support\Facades\Auth;
 	use Illuminate\Support\Str;
 	use Illuminate\Support\Facades\Log; // Added for logging
+	use Artesaos\SEOTools\Facades\SEOTools;
 
 	class CoverController extends Controller
 	{
@@ -23,6 +24,44 @@
 		{
 			// Eager load templates (assigned) and coverType for the single cover view
 			$cover->load('templates', 'coverType');
+
+			$pageTitle = $cover->name ?: 'Untitled Cover';
+			$pageDescription = Str::limit($cover->caption ?: 'A free, customizable book cover template.', 155);
+
+			SEOTools::setTitle($pageTitle);
+			SEOTools::setDescription($pageDescription);
+			SEOTools::setCanonical(route('covers.show', ['cover' => $cover->id]));
+
+			// OpenGraph & Twitter Cards
+			SEOTools::opengraph()->setUrl(route('covers.show', ['cover' => $cover->id]));
+			SEOTools::opengraph()->addProperty('type', 'product');
+			SEOTools::opengraph()->setTitle($pageTitle);
+			SEOTools::opengraph()->setDescription($pageDescription);
+			if ($cover->mockup_2d_path) {
+				SEOTools::opengraph()->addImage(asset('storage/' . $cover->mockup_2d_path));
+				SEOTools::twitter()->setImage(asset('storage/' . $cover->mockup_2d_path));
+			}
+
+			// Add keywords from the cover model
+			if ($cover->keywords && is_array($cover->keywords)) {
+				SEOTools::metatags()->addKeyword($cover->keywords);
+			}
+
+			// Structured Data (JSON-LD) for Rich Snippets
+			SEOTools::jsonLd()->setType('Product');
+			SEOTools::jsonLd()->setTitle($pageTitle);
+			SEOTools::jsonLd()->setDescription($pageDescription);
+			SEOTools::jsonLd()->addValue('sku', $cover->id);
+			if ($cover->mockup_2d_path) {
+				SEOTools::jsonLd()->setImage(asset('storage/' . $cover->mockup_2d_path));
+			}
+			SEOTools::jsonLd()->addValue('offers', [
+				'@type' => 'Offer',
+				'price' => '0.00',
+				'priceCurrency' => 'USD',
+				'availability' => 'https://schema.org/InStock',
+				'url' => route('covers.show', ['cover' => $cover->id])
+			]);
 
 			$cover->active_template_overlay_url = null;
 			$activeTemplateForView = null;

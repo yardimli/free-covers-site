@@ -107,7 +107,7 @@
 
 		public function generateAiMetadata(Request $request)
 		{
-			$validator = Validator::make($request->all(), [
+			$validator = ValiFdator::make($request->all(), [
 				'item_type' => ['required', Rule::in(['covers', 'templates', 'elements', 'overlays'])],
 				'id' => 'required|integer',
 				'fields_to_generate' => 'nullable|string', // Comma-separated: name,caption,keywords,categories
