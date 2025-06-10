@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Cover;
-use Artesaos\SEOTools\SEOTools;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Artesaos\SEOTools\Facades\SEOTools;
