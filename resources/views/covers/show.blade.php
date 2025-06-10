@@ -172,6 +172,7 @@
       .available-styles-section .template-list-container {
           max-height: 600px; /* Adjust as needed */
           overflow-y: auto;
+		      overflow-x: hidden; /* Hide horizontal scrollbar */
           border: 1px solid #eee;
           padding: 3px; /* Add padding for the grid */
       }
