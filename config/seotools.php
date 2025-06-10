@@ -31,7 +31,7 @@
 				'url'         => null, // Set null for current URL
 				'type'        => 'website',
 				'site_name'   => 'Free Kindle Covers',
-				'images'      => [asset('images/og-image.png')], // IMPORTANT: Create a default OpenGraph image and place it in public/images/og-image.png
+				'images'      => ['/images/og-image.png'],// IMPORTANT: Create a default OpenGraph image and place it in public/images/og-image.png
 			],
 		],
 		'twitter' => [
@@ -52,7 +52,7 @@
 				'description' => 'Discover and customize professionally designed, high-quality book cover templates for your eBooks and print books, completely free.', // JSON-LD Description
 				'url'         => null, // Set null for current URL
 				'type'        => 'WebSite',
-				'images'      => [asset('images/og-image.png')], // Use the same default image
+				'images'      => ['/images/og-image.png'], // Use the same default image
 			],
 		],
 	];
