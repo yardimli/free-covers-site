@@ -173,13 +173,13 @@
           max-height: 600px; /* Adjust as needed */
           overflow-y: auto;
           border: 1px solid #eee;
-          padding: 1rem; /* Add padding for the grid */
+          padding: 3px; /* Add padding for the grid */
       }
 
       .available-styles-section .template-thumbnail-item {
           border: 2px solid transparent;
           border-radius: 6px;
-          padding: 5px;
+          padding: 2px;
           cursor: pointer;
           transition: border-color 0.2s ease-in-out;
           text-align: center;
@@ -406,8 +406,8 @@
 																@endif
 															</div>
 															<div class="d-flex justify-content-between align-items-center">
-																<div class="template-thumbnail-name"
-																     title="{{ $templateStyle->name }}">{{ $templateStyle->name }}</div>
+{{--																<div class="template-thumbnail-name"--}}
+{{--																     title="{{ $templateStyle->name }}">{{ $templateStyle->name }}</div>--}}
 																@auth
 																	@if(Auth::user()->isAdmin() && $isActuallyAssigned)
 																		<div class="admin-actions-inline">
