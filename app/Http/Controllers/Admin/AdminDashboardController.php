@@ -848,8 +848,8 @@ class AdminDashboardController extends Controller
 							$data['full_cover_path'] = null;
 							$data['full_cover_thumbnail_path'] = null;
 						}
-						$data['has_real_2d'] = $coverFiles['has_real_2d'] ? 1 : 0;
-						$data['has_real_3d'] = $coverFiles['has_real_3d'] ? 1 : 0;
+						$data['has_real_2d'] = $coverFiles['has_real_2d'];
+						$data['has_real_3d'] = $coverFiles['has_real_3d'];
 
 						if ($isNew) {
 							$cover = Cover::create($data);

@@ -238,7 +238,7 @@
 										@if($cover->active_template_overlay_url)
 											<img src="{{ $cover->active_template_overlay_url }}"
 											     alt="{{ $cover->favorited_template_name ?? 'Template Overlay' }}"
-											     class="template-overlay-image">
+											     class="{{ !($activeTemplateForView && $activeTemplateForView->cover_image_path) ? 'display:none;' : '' }}">
 										@endif
 									</a>
 									<div class="dashboard-item-content">

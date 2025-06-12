@@ -241,6 +241,15 @@
           object-fit: contain; /* Ensure the overlay image fits well */
       }
 
+      .available-styles-section .preview-area .kindle-template-overlay-image-non-2d {
+          position: absolute;
+          top: 0% !important; /* Adjust overlay position */
+          left: 0% !important;
+          width: 100% !important; /* Ensure it fits well within the thumbnail container */
+          height: 100% !important; /* Maintain aspect ratio and fit */
+          object-fit: contain; /* Ensure the overlay image fits well */
+      }
+
       .available-styles-section .preview-area .template-overlay-image {
           top: 1% !important; /* Adjust overlay position */
           left: 1% !important;
@@ -274,7 +283,7 @@
 								{{-- Use active_template_overlay_url --}}
 								@if($cover->active_template_overlay_url)
 									<img src="{{ $cover->active_template_overlay_url }}" alt="Template Overlay"
-									     class="template-overlay-image"/>
+									     class="{{ $cover->has_real_2d ? 'template-overlay-image' : 'template-overlay-image-non-2d' }}"/>
 								@endif
 							</div>
 							{{-- Additional Previews (Thumbnails) --}}

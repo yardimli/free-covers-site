@@ -25,12 +25,14 @@ class Cover extends Model
 	protected $fillable = [
 		'cover_type_id',
 		'name',
-		'cover_path',                 // Renamed from image_path
-		'cover_thumbnail_path',       // Renamed from thumbnail_path
-		'mockup_2d_path',             // New
-		'mockup_3d_path',             // New
-		'full_cover_path',            // New
-		'full_cover_thumbnail_path',  // New
+		'cover_path',
+		'cover_thumbnail_path',
+		'mockup_2d_path',
+		'has_real_2d',
+		'mockup_3d_path',
+		'has_real_3d',
+		'full_cover_path',
+		'full_cover_thumbnail_path',
 		'caption',
 		'keywords',
 		'categories',

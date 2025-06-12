@@ -24,3 +24,13 @@
     z-index: 1; /* Ensure it's above the mockup image */
 }
 
+.cover-image-container .template-overlay-image-non-2d {
+    position: absolute;
+    top: 0%;
+    left: 0%;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain; /* Ensures the entire overlay is visible, maintaining aspect ratio */
+    pointer-events: none; /* So the overlay doesn't interfere with clicks on the link */
+    z-index: 1; /* Ensure it's above the mockup image */
+}

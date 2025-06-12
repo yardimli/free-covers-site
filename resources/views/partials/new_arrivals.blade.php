@@ -12,7 +12,7 @@
 							<a href="{{ route('covers.show', ['cover' => $cover->id, 'template' => $cover->random_template_overlay_id]) }}" class="img cover-image-container">
 								<img src="{{ asset('storage/' . $cover->mockup_2d_path) }}" alt="{{ $cover->name }}" class="cover-mockup-image" />
 								@if($cover->random_template_overlay_url)
-									<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image" />
+									<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="{{ $cover->has_real_2d ? 'template-overlay-image' : 'template-overlay-image-non-2d' }}" />
 								@endif
 							</a>
 							<div class="bj_new_pr_content_two">

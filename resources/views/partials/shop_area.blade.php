@@ -56,7 +56,7 @@
 									<div class="img">
 											<img src="{{ asset('storage/' . $cover->mockup_2d_path ) }}" alt="{{ $cover->name }}" class="cover-mockup-image img-fluid">
 											@if($cover->random_template_overlay_url)
-												<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="template-overlay-image" />
+												<img src="{{ $cover->random_template_overlay_url }}" alt="Template Overlay" class="{{ $cover->has_real_2d ? 'template-overlay-image' : 'template-overlay-image-non-2d' }}" />
 											@endif
 										{{-- <div class="pr_ribbon">--}}
 										{{-- <span class="product-badge">New</span>--}}
