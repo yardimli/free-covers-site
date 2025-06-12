@@ -455,7 +455,7 @@
 													<img id="stylePreviewKindleOverlay"
 													     src="{{ $activeTemplateForView && $activeTemplateForView->cover_image_path ? asset('storage/' . $activeTemplateForView->cover_image_path) : '' }}"
 													     alt="Kindle Template Overlay"
-													     class="kindle-template-overlay-image"
+													     class="{{ $cover->has_real_2d ? 'kindle-template-overlay-image' : 'kindle-template-overlay-image-non-2d' }}"
 													     style="{{ !($activeTemplateForView && $activeTemplateForView->cover_image_path) ? 'display:none;' : '' }}">
 												</div>
 											</div>
