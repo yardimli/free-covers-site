@@ -686,13 +686,17 @@ class AdminDashboardController extends Controller
 					$coverNamePart = null;
 					$fileType = null;
 					$fileExt = null;
+					$hasReal2D = false;
+					$hasReal3D = false;
 
 					if (preg_match('/^(.*?)-front-mockup\.png$/i', $fileName, $matches)) {
 						$coverNamePart = $matches[1];
 						$fileType = 'mockup2d';
+						$hasReal2D = true;
 					} elseif (preg_match('/^(.*?)-3d-mockup\.png$/i', $fileName, $matches)) {
 						$coverNamePart = $matches[1];
 						$fileType = 'mockup3d';
+						$hasReal3D = true;
 					} elseif (preg_match('/^(.*?)-full-cover\.(jpg|jpeg|png|gif)$/i', $fileName, $matches)) {
 						$coverNamePart = $matches[1];
 						$fileType = 'full_cover';
@@ -706,6 +710,8 @@ class AdminDashboardController extends Controller
 					if ($coverNamePart && $fileType) {
 						if (!isset($groupedCovers[$coverNamePart])) {
 							$groupedCovers[$coverNamePart] = ['main' => null, 'mockup2d' => null, 'mockup3d' => null, 'full_cover' => null, 'main_ext' => null, 'full_cover_ext' => null, 'files' => []];
+							$groupedCovers[$coverNamePart]['has_real_2d'] = $hasReal2D;
+							$groupedCovers[$coverNamePart]['has_real_3d'] = $hasReal3D;
 						}
 						$groupedCovers[$coverNamePart]['files'][$fileType] = $file->getRealPath();
 						if ($fileType === 'main') $groupedCovers[$coverNamePart]['main_ext'] = $fileExt;
@@ -843,6 +849,8 @@ class AdminDashboardController extends Controller
 							$data['full_cover_path'] = null;
 							$data['full_cover_thumbnail_path'] = null;
 						}
+						$data['has_real_2d'] = $coverFiles['has_real_2d'] ?? false;
+						$data['has_real_3d'] = $coverFiles['has_real_3d'] ?? false;
 
 						if ($isNew) {
 							$cover = Cover::create($data);
