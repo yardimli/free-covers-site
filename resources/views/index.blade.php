@@ -84,7 +84,7 @@
 					
 					<!-- Tag Cloud -->
 					@if(isset($availableCategories) && !empty($availableCategories))
-						<div class="tag-cloud-container text-center mb-5 wow fadeInUp">
+						<div class="tag-cloud-container text-center mb-2 wow fadeInUp">
 							@foreach($availableCategories as $categoryName => $count)
 								<a href="{{ route('shop.index', ['category' => $categoryName]) }}" class="badge bg-light text-dark">
 									{{ $categoryName }}
@@ -97,7 +97,7 @@
 			
 			<!-- Covers Grid -->
 			@if($covers->isNotEmpty())
-				<div class="row mt-4">
+				<div class="row mt-2">
 					@foreach($covers as $cover)
 						<div class="col-lg-3 col-md-4 col-sm-6 projects_item">
 							<div class="best_product_item best_product_item_two shop_product">
