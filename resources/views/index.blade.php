@@ -7,9 +7,9 @@
 @push('styles')
 	<style>
       .tag-cloud-container .badge {
-          font-size: 0.9rem;
-          padding: 0.5em 1em;
-          margin: 0.25rem;
+          font-size: 0.8rem;
+          padding: 0.4em 0.8em;
+          margin: 0.2rem;
           transition: all 0.2s ease-in-out;
           border: 1px solid #dee2e6;
           font-weight: 500;
@@ -77,7 +77,7 @@
 			<div class="row justify-content-center">
 				<div class="col-lg-10">
 					<!-- Search Form -->
-					<form role="search" method="get" class="pr_search_form pr_search_form_two input-group mb-5" action="{{ route('shop.index') }}">
+					<form role="search" method="get" class="pr_search_form pr_search_form_two input-group mb-4" action="{{ route('shop.index') }}">
 						<input type="text" name="s" class="form-control search-field" placeholder="Search for covers by keyword, title, or genre...">
 						<button type="submit"><i class="ti-search"></i></button>
 					</form>
@@ -85,10 +85,9 @@
 					<!-- Tag Cloud -->
 					@if(isset($availableCategories) && !empty($availableCategories))
 						<div class="tag-cloud-container text-center mb-5 wow fadeInUp">
-							<h4 class="mb-3">Or Browse by Category</h4>
 							@foreach($availableCategories as $categoryName => $count)
 								<a href="{{ route('shop.index', ['category' => $categoryName]) }}" class="badge bg-light text-dark">
-									{{ $categoryName }} <span class="badge bg-secondary rounded-pill ms-1">{{ $count }}</span>
+									{{ $categoryName }}
 								</a>
 							@endforeach
 						</div>

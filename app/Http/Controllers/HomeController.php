@@ -38,9 +38,9 @@ class HomeController extends Controller
 				}
 			}
 		}
-		// Filter categories that have at least one cover
+		// Filter categories that have at least 20 covers
 		$availableCategories = array_filter($categoryCounts, function ($count) {
-			return $count >= 1;
+			return $count >= 20;
 		});
 		ksort($availableCategories); // Sort category names alphabetically
 
