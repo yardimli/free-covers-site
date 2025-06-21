@@ -1,4 +1,4 @@
-<section class="bj_banner_area" data-bg-color="#f5f5f5" style="padding: 80px 0;">
+<section class="bj_banner_area" data-bg-color="#f5f5f5" style="padding: 0px; margin-top: 0px; margin-bottom: 0px;">
 	<div class="container">
 		<div class="row justify-content-center">
 			<div class="col-lg-10">

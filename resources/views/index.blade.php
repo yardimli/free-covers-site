@@ -25,7 +25,7 @@
           text-decoration: none;
       }
       .home-search-section {
-          padding-top: 60px;
+          padding-top: 30px;
           padding-bottom: 60px;
       }
       /* Styles for the cover grid items, to ensure consistency */
