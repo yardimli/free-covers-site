@@ -34,7 +34,7 @@
       }
       .best_product_item {
           position: relative;
-          border-radius: 10px;
+          border-radius: 0px;
           overflow: hidden;
           background: #fff;
           box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
