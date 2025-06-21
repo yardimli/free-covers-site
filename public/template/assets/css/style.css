@@ -3417,7 +3417,7 @@ ul.ordered-list li::before {
 .projects_item .best_product_item .img {
   min-height: 350px;
   padding: 0px;
-  border-radius: 5px;
+  border-radius: 0px;
 }
 
 .promotion_add {
