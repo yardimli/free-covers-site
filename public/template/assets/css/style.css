@@ -3201,7 +3201,7 @@ ul.ordered-list li::before {
   /*background: #fff;*/
   overflow: hidden;
   z-index: 1;
-  border-radius: 5px;
+  /*border-radius: 5px;*/
 }
 .best_product_item_two .img:before {
   content: "";
